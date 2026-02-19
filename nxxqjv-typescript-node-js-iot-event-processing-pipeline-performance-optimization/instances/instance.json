@@ -5,7 +5,7 @@
 CPU spikes to 100% when parsing large batch payloads. WebSocket client count keeps growing even after clients disconnect. Duplicate events appear in database during retry scenarios. Logs show "MaxListenersExceededWarning" repeatedly. The service handles event ingestion via HTTP, queues with BullMQ, stores in PostgreSQL/TimescaleDB, and broadcasts via WebSocket. Core logic is in database.ts, queue.ts, websocket.ts, and app.ts.",
             "base_commit": "repository_before/",
             "test_patch": "tests/",
-            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/nxxqjv-typescript-node-js-iot-event-processing-pipeline-performance-optimization",
+            "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/nxxqjv-typescript-node-js-iot-event-processing-pipeline-performance-optimization",
             "environment_setup": "Dockerfile",
             "FAIL_TO_PASS": [],
             "PASS_TO_PASS": []

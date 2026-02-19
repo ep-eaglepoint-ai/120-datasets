@@ -1,12 +1,12 @@
 {
   "instance_id": "899d52-Rate_limiter_optimization",
-  "problem_statement": "Design and implement a high-performance, distributed rate limiter for a global payment platform handling tens of thousands of requests per second. The existing centralized limiter introduces unacceptable latency, inconsistency, and single-point-of-failure risks. Your task is to refactor it into a per-user, thread-safe token bucket rate limiter that operates independently on each server instance—without any external coordination—while producing deterministic, consistent allow/deny decisions across nodes. The solution must support dynamic rate changes, tolerate clock skew, handle bursty traffic, and maintain strict performance and memory guarantees under heavy concurrency.",
+  "problem_statement": "Design and implement a high-performance, distributed rate limiter for a global payment platform handling tens of thousands of requests per second. The existing centralized limiter introduces unacceptable latency, inconsistency, and single-point-of-failure risks. Your task is to refactor it into a per-user, thread-safe token bucket rate limiter that operates independently on each server instance\u2014without any external coordination\u2014while producing deterministic, consistent allow/deny decisions across nodes. The solution must support dynamic rate changes, tolerate clock skew, handle bursty traffic, and maintain strict performance and memory guarantees under heavy concurrency.",
   "requirements": [
     "1. Implement the token bucket algorithm without external dependencies",
-    "2. Support dynamic rate adjustment (e.g., from 1000 to 5000 requests/minute) without dropping requests", 
-    "3. Handle clock skew between servers (±100ms)",
+    "2. Support dynamic rate adjustment (e.g., from 1000 to 5000 requests/minute) without dropping requests",
+    "3. Handle clock skew between servers (\u00b1100ms)",
     "4. Thread-safe for 100+ concurrent threads",
-    "5. Memory efficient: ≤ 1KB per rate limit key",
+    "5. Memory efficient: \u2264 1KB per rate limit key",
     "6. Provide exactly-once semantics during rate limit window transitions"
   ],
   "base_commit": "repository_before",

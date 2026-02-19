@@ -1,20 +1,19 @@
 {
-    "instance_id": "3c78c3",
-    "problem_statement": "Create a system that accepts a webpage URL as input, fully loads the page including JavaScript-rendered content, traverses the entire DOM tree, and outputs a complete JSON representation. For each element, extract tag name, text content, attributes, visibility, and DOM depth. Generate a unique absolute XPath for every element and preserve parent-child hierarchy. Output valid JSON only in a single .json file named with a unique id containing a single JSON object with no explanations or formatting outside JSON.",
-    "base_commit": "repository_before",
-    "test_patch": "tests/",
-    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/3c78c3-DOM-mapping-and-extracting",
-    "environment_setup": "Dockerfile",
-    "FAIL_TO_PASS": [
-        "tests/domExtractor.test.js::Requirement 1: Accept webpage URL as input",
-        "tests/domExtractor.test.js::Requirement 2: Fully load page including JavaScript",
-        "tests/domExtractor.test.js::Requirement 3: Traverse entire DOM tree",
-        "tests/domExtractor.test.js::Requirement 4: Extract tag name, text, attributes, visibility, depth",
-        "tests/domExtractor.test.js::Requirement 5: Generate unique absolute XPath for every element",
-        "tests/domExtractor.test.js::Requirement 6: Preserve parent-child hierarchy",
-        "tests/domExtractor.test.js::Requirement 7: Output valid JSON only",
-        "tests/domExtractor.test.js::Requirement 8 & 9: Output single .json file with unique ID"
-    ],
-    "PASS_TO_PASS": []
+  "instance_id": "3c78c3",
+  "problem_statement": "Create a system that accepts a webpage URL as input, fully loads the page including JavaScript-rendered content, traverses the entire DOM tree, and outputs a complete JSON representation. For each element, extract tag name, text content, attributes, visibility, and DOM depth. Generate a unique absolute XPath for every element and preserve parent-child hierarchy. Output valid JSON only in a single .json file named with a unique id containing a single JSON object with no explanations or formatting outside JSON.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/3c78c3-DOM-mapping-and-extracting",
+  "environment_setup": "Dockerfile",
+  "FAIL_TO_PASS": [
+    "tests/domExtractor.test.js::Requirement 1: Accept webpage URL as input",
+    "tests/domExtractor.test.js::Requirement 2: Fully load page including JavaScript",
+    "tests/domExtractor.test.js::Requirement 3: Traverse entire DOM tree",
+    "tests/domExtractor.test.js::Requirement 4: Extract tag name, text, attributes, visibility, depth",
+    "tests/domExtractor.test.js::Requirement 5: Generate unique absolute XPath for every element",
+    "tests/domExtractor.test.js::Requirement 6: Preserve parent-child hierarchy",
+    "tests/domExtractor.test.js::Requirement 7: Output valid JSON only",
+    "tests/domExtractor.test.js::Requirement 8 & 9: Output single .json file with unique ID"
+  ],
+  "PASS_TO_PASS": []
 }
-  

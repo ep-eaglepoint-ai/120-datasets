@@ -1,8 +1,8 @@
 {
   "instance_id": "610d52",
-  "problem_statement": "Implement an in-memory key–value cache that supports arbitrarily nested transactions with precise commit and rollback semantics. The system must ensure correct visibility rules (“most recent write wins”), properly handle deletions via shadowing, and preserve strict isolation between transaction scopes and the base store. The design must be efficient, avoid full-state copies, respect negative constraints, and maintain clean invariants so that only committed data reaches the base store.",
+  "problem_statement": "Implement an in-memory key\u2013value cache that supports arbitrarily nested transactions with precise commit and rollback semantics. The system must ensure correct visibility rules (\u201cmost recent write wins\u201d), properly handle deletions via shadowing, and preserve strict isolation between transaction scopes and the base store. The design must be efficient, avoid full-state copies, respect negative constraints, and maintain clean invariants so that only committed data reaches the base store.",
   "base_commit": "repository_before",
   "test_patch": "tests/",
-  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/610d52-Nested_transaction_safe_in_memory_key_value_cache/610d52-Nested_transaction_safe_in_memory_key_value_cache",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/610d52-Nested_transaction_safe_in_memory_key_value_cache",
   "environment_setup": "Dockerfile"
 }

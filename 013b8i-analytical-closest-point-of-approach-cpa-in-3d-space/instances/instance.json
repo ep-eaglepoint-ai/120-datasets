@@ -4,7 +4,7 @@
 ",
             "base_commit": "repository_before/",
             "test_patch": "tests/",
-            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/013b8i-analytical-closest-point-of-approach-cpa-in-3d-space",
+            "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/013b8i-analytical-closest-point-of-approach-cpa-in-3d-space",
             "environment_setup": "Dockerfile",
             "FAIL_TO_PASS": [],
             "PASS_TO_PASS": []

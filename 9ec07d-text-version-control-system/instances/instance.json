@@ -1,9 +1,8 @@
 {
-    "instance_id": "9ec07d",
-    "problem_statement": "A full-stack system is required to manage wiki pages as immutable, version-controlled repositories where each edit creates a new, permanent node that can branch from any prior state, forming a directed acyclic graph (DAG) instead of a linear history. This application must support core version control operations—such as forking pages, merging divergent branches, and resolving text-based conflicts—while strictly enforcing the underlying DAG's integrity to prevent circular references and ensure traceability. Ultimately, the system must provide interfaces for users to navigate, compare, and reconcile any versions within this non-linear, branching history simultaneously.",
-    "base_commit": "repository_before",
-    "test_patch": "tests/",
-    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/9ec07d-text-version-control-system",
-    "environment_setup": "Dockerfile"
-  }
-  
+  "instance_id": "9ec07d",
+  "problem_statement": "A full-stack system is required to manage wiki pages as immutable, version-controlled repositories where each edit creates a new, permanent node that can branch from any prior state, forming a directed acyclic graph (DAG) instead of a linear history. This application must support core version control operations\u2014such as forking pages, merging divergent branches, and resolving text-based conflicts\u2014while strictly enforcing the underlying DAG's integrity to prevent circular references and ensure traceability. Ultimately, the system must provide interfaces for users to navigate, compare, and reconcile any versions within this non-linear, branching history simultaneously.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/9ec07d-text-version-control-system",
+  "environment_setup": "Dockerfile"
+}

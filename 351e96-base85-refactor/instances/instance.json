@@ -18,7 +18,7 @@
   ],
   "base_commit": "repository_before",
   "test_patch": "tests/",
-  "github_url": "https://github.com/eaglepoint-ai/sample-dataset/tree/main/351e96-base85-refactor",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/351e96-base85-refactor",
   "environment_setup": "Dockerfile",
   "FAIL_TO_PASS": [
     "tests/test_structure.py::test_helper_functions_exist",

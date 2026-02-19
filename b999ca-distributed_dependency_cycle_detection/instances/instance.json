@@ -3,7 +3,7 @@
   "problem_statement": "The current cycle detection algorithm assumes a fully connected graph and silently fails on disconnected components. As the system scaled globally, this flaw caused circular dependencies in isolated regions to go undetected. These missed cycles led to cascading failures, SLA violations, and compliance risks. The cycle detection logic must be refactored to correctly analyze all graph components while preserving backward compatibility.",
   "requirements": [
     "1. Time Complexity: O(V + E)",
-    "2. Space Complexity: O(V + E)", 
+    "2. Space Complexity: O(V + E)",
     "3. Must visit every node and edge exactly once",
     "4. Must restart DFS for each unvisited component",
     "5. Maintain global visited state with per-component recursion stacks",
@@ -11,12 +11,12 @@
   ],
   "base_commit": "repository_before",
   "test_patch": "tests/",
-  "github_url": "https://github.com/eaglepoint-ai/sample-dataset/tree/main/b999ca-distributed_dependency_cycle_detection",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/b999ca-distributed_dependency_cycle_detection",
   "environment_setup": "Dockerfile",
   "docker_commands": {
     "build": "docker-compose build",
     "test_before": "docker-compose run --rm test-before",
-    "test_after": "docker-compose run --rm test-after", 
+    "test_after": "docker-compose run --rm test-after",
     "evaluation": "docker-compose run --rm evaluation"
   },
   "test_results": {
@@ -74,4 +74,3 @@
     "recursion_stack_ordering_fixed": true
   }
 }
-  

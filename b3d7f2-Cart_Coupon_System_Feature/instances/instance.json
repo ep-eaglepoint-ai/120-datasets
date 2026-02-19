@@ -3,6 +3,6 @@
   "problem_statement": "Add coupon/promo code functionality to the CartService. Design Coupon and UserCouponUsage schemas. Update Cart schema for applied coupons. Implement validateCoupon, applyCoupon, removeCoupon methods with proper validation, stacking rules (max 1 percentage + 1 fixed), and auto-removal when cart changes invalidate coupons.",
   "base_commit": "repository_before",
   "test_patch": "tests/",
-  "github_url": "",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/b3d7f2-Cart_Coupon_System_Feature",
   "environment_setup": "Dockerfile"
 }

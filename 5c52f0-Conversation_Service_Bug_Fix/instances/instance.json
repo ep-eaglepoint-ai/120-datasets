@@ -3,6 +3,6 @@
   "problem_statement": "Fix the Conversation Service bugs including pagination errors, sequential queries, memory issues, race conditions, and foreign key constraint failures.",
   "base_commit": "repository_before",
   "test_patch": "tests/",
-  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/5c52f0-Conversation_Service_Bug_Fix",
   "environment_setup": "Dockerfile"
 }

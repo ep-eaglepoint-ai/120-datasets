@@ -23,7 +23,7 @@
   ],
   "base_commit": "repository_before",
   "test_patch": "tests/",
-  "github_url": "https://github.com/eaglepoint-ai/sample-dataset/tree/main/cfcfd6-Correct_functional_bugs_in_legacy_javascript_code",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/cfcfd6-Correct_functional_bugs_in_legacy_javascript_code",
   "environment_setup": "Dockerfile",
   "FAIL_TO_PASS": [
     "tests/test_bugs.test.js::Bug Fix Tests::processUserData function::Bug 1: Should not iterate beyond array bounds (i <= users.length)",

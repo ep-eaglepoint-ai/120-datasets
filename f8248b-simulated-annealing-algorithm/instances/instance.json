@@ -1,9 +1,8 @@
 {
-    "instance_id": "f8248b",
-    "problem_statement": "A Python implementation of the simulated annealing algorithm must be developed to approximate the global optimum of a user-defined objective function by mimicking the metallurgical annealing process. The core components require methods to generate a neighboring solution from the current state, calculate an acceptance probability for worse solutions using the Metropolis criterion based on a gradually decreasing temperature, and execute a cooling schedule that reduces the temperature over itåerations. The implementation must include a clear simulation loop and guidance for selecting critical parameters such as the initial temperature, cooling rate, and stopping condition to ensure effective convergence.",
-    "base_commit": "repository_before",
-    "test_patch": "tests/",
-    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/f8248b-simulated-annealing-algorithm",
-    "environment_setup": "Dockerfile"
-  }
-  
+  "instance_id": "f8248b",
+  "problem_statement": "A Python implementation of the simulated annealing algorithm must be developed to approximate the global optimum of a user-defined objective function by mimicking the metallurgical annealing process. The core components require methods to generate a neighboring solution from the current state, calculate an acceptance probability for worse solutions using the Metropolis criterion based on a gradually decreasing temperature, and execute a cooling schedule that reduces the temperature over it\u00e5erations. The implementation must include a clear simulation loop and guidance for selecting critical parameters such as the initial temperature, cooling rate, and stopping condition to ensure effective convergence.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/f8248b-simulated-annealing-algorithm",
+  "environment_setup": "Dockerfile"
+}

@@ -1,8 +1,8 @@
 {
-    "instance_id": "cd18fc",
-    "problem_statement": "I've encountered a performance challenge when dealing with heavy optimization requirements under strict time constraints, which introduced notable complexity into the development process. This situation required careful balancing between achieving optimal system efficiency and adhering to tight project deadlines. The constraint of limited development time made it particularly difficult to implement the comprehensive performance improvements the project truly needed.",
-    "base_commit": "repository_before",
-    "test_patch": "tests/",
-    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/cd18fc-parallel-counting-script",
-    "environment_setup": "Dockerfile"
-  }
+  "instance_id": "cd18fc",
+  "problem_statement": "I've encountered a performance challenge when dealing with heavy optimization requirements under strict time constraints, which introduced notable complexity into the development process. This situation required careful balancing between achieving optimal system efficiency and adhering to tight project deadlines. The constraint of limited development time made it particularly difficult to implement the comprehensive performance improvements the project truly needed.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/cd18fc-parallel-counting-script",
+  "environment_setup": "Dockerfile"
+}

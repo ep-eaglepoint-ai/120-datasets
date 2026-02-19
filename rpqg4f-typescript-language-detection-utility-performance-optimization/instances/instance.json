@@ -5,7 +5,7 @@
 The utility processes user messages to determine if they need translation before routing to English-speaking support agents, and the current performance is causing message queue backlogs during high-traffic periods when the system processes 50,000+ messages per hour. The system needs to maintain identical detection behavior while significantly improving throughput to meet the sub-second batch processing requirement.",
             "base_commit": "repository_before/",
             "test_patch": "tests/",
-            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/rpqg4f-typescript-language-detection-utility-performance-optimization",
+            "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/rpqg4f-typescript-language-detection-utility-performance-optimization",
             "environment_setup": "Dockerfile",
             "FAIL_TO_PASS": [],
             "PASS_TO_PASS": []

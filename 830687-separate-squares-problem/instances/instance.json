@@ -1,9 +1,8 @@
 {
-    "instance_id": "830687",
-    "problem_statement": "You are given a list of squares on a plane, where each square is defined by the coordinates of its bottom-left corner and its side length. All squares are aligned with the axes, meaning their sides are horizontal and vertical. Your task is to find the lowest possible horizontal line such that the total area of all squares above the line is equal to the total area of all squares below the line. If squares overlap, the overlapping area should only be counted once, and answers that are within a very small margin of error of the correct value are acceptable.",
-    "base_commit": "repository_before",
-    "test_patch": "tests/",
-    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/830687-separate-squares-problem",
-    "environment_setup": "Dockerfile"
-  }
-  
+  "instance_id": "830687",
+  "problem_statement": "You are given a list of squares on a plane, where each square is defined by the coordinates of its bottom-left corner and its side length. All squares are aligned with the axes, meaning their sides are horizontal and vertical. Your task is to find the lowest possible horizontal line such that the total area of all squares above the line is equal to the total area of all squares below the line. If squares overlap, the overlapping area should only be counted once, and answers that are within a very small margin of error of the correct value are acceptable.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/830687-separate-squares-problem",
+  "environment_setup": "Dockerfile"
+}

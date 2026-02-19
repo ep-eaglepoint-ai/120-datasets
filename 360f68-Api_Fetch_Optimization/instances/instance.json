@@ -1,8 +1,8 @@
 {
-    "instance_id": "360f68",
-    "problem_statement": "The existing Java method for fetching items simulates an API response but is not suitable for real-world usage because it removes duplicates inefficiently, leading to poor performance as data size grows, and provides no mechanism to limit or segment results for large datasets. In practical API scenarios, optimization is necessary to ensure scalable performance, pagination is required to control payload size and support client-side navigation through results, and input validation is essential to prevent invalid requests and unpredictable runtime failures. The goal is to refactor the method to address these limitations by improving time complexity, introducing optional pagination with clear and predictable behavior, and enforcing robust input validation, while preserving backward compatibility so that existing consumers of the method are not affected.",
-    "base_commit": "repository_before",
-    "test_patch": "tests/",
-    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/360f68-Api_Fetch_Optimization",
-    "environment_setup": "Dockerfile"
-}  
+  "instance_id": "360f68",
+  "problem_statement": "The existing Java method for fetching items simulates an API response but is not suitable for real-world usage because it removes duplicates inefficiently, leading to poor performance as data size grows, and provides no mechanism to limit or segment results for large datasets. In practical API scenarios, optimization is necessary to ensure scalable performance, pagination is required to control payload size and support client-side navigation through results, and input validation is essential to prevent invalid requests and unpredictable runtime failures. The goal is to refactor the method to address these limitations by improving time complexity, introducing optional pagination with clear and predictable behavior, and enforcing robust input validation, while preserving backward compatibility so that existing consumers of the method are not affected.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/360f68-Api_Fetch_Optimization",
+  "environment_setup": "Dockerfile"
+}

@@ -3,7 +3,6 @@
   "problem_statement": "A Rust text processing library has severe performance issues due to unnecessary cloning, O(n) stop word lookups with Vec instead of HashSet, missing Entry API usage, no capacity pre-allocation, and suboptimal iterator patterns. Optimize the code to handle large documents efficiently.",
   "base_commit": "repository_before",
   "test_patch": "tests/",
-  "github_url": "",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/1be8fa-Rust_Text_Processor_Performance",
   "environment_setup": "Dockerfile"
 }
-

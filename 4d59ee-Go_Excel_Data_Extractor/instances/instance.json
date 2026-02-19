@@ -3,7 +3,7 @@
   "problem_statement": "Extract data from Excel files and save it to a JSON file. The Excel file contains data in different formats, including numbers, strings, dates, and booleans. The JSON file should be saved in the same directory as the Excel file.",
   "base_commit": "repository_before",
   "test_patch": "tests/",
-  "github_url": "",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/4d59ee-Go_Excel_Data_Extractor",
   "environment_setup": "Dockerfile",
   "FAIL_TO_PASS": [
     "tests/extractor_test.go::TestExtractFunctionExists",

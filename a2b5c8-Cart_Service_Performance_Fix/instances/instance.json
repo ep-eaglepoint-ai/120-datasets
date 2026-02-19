@@ -3,6 +3,6 @@
   "problem_statement": "The CartService handles shopping cart operations for a food delivery app with 50K+ daily active users. After a recent deployment, performance monitoring shows severe degradation: P99 latency spiked from 80ms to 4500ms, memory usage doubled under load, and database connection pool is exhausting during peak hours. Profiling reveals multiple performance anti-patterns in the service code that compound under high traffic",
   "base_commit": "repository_before",
   "test_patch": "tests/",
-  "github_url": "",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/a2b5c8-Cart_Service_Performance_Fix",
   "environment_setup": "Dockerfile"
 }

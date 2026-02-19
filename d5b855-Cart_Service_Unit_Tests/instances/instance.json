@@ -3,7 +3,6 @@
   "problem_statement": "The CartService handles shopping cart operations for a food delivery app including getCart, addToCart, updateCartItem, removeFromCart, clearCart, deleteCart, and checkoutCart. Write comprehensive unit tests using Jest to achieve 80% code coverage across all methods.",
   "base_commit": "repository_before",
   "test_patch": "tests/",
-  "github_url": "",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/d5b855-Cart_Service_Unit_Tests",
   "environment_setup": "Dockerfile"
 }
-

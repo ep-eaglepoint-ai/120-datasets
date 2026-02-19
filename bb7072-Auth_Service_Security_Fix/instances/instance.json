@@ -1,10 +1,22 @@
 {
-  "categories": ["Security Fix"],
-  "languages": ["JavaScript", "Node.js"],
+  "categories": [
+    "Security Fix"
+  ],
+  "languages": [
+    "JavaScript",
+    "Node.js"
+  ],
   "project_type": "nodejs",
   "difficulty": "medium",
   "platform": "linux",
   "created_at": "2024-01-15T12:00:00Z",
-  "tags": ["security", "authentication", "jwt", "bcrypt", "session-management", "rate-limiting"]
+  "tags": [
+    "security",
+    "authentication",
+    "jwt",
+    "bcrypt",
+    "session-management",
+    "rate-limiting"
+  ],
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/bb7072-Auth_Service_Security_Fix"
 }
-

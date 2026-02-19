@@ -1,9 +1,8 @@
 {
-    "instance_id": "06e4b7",
-    "problem_statement": "",
-    "base_commit": "repository_before",
-    "test_patch": "tests/",
-    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/06e4b7-simplex-algorithm",
-    "environment_setup": "Dockerfile"
-  }
-  
+  "instance_id": "06e4b7",
+  "problem_statement": "",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/06e4b7-simplex-algorithm",
+  "environment_setup": "Dockerfile"
+}

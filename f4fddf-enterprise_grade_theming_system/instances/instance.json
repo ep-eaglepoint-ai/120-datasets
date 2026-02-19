@@ -1,9 +1,8 @@
 {
-    "instance_id": "f4fddf",
-    "problem_statement": "The application must support a fully accessible, high-performance theming system without relying on browser persistence or external libraries.Theme changes must be visually stable, performant, and isolated per user session.System theme preferences must be respected unless explicitly overridden by the user.The solution must meet enterprise accessibility, performance, and architectural standards.",
-    "base_commit": "repository_before",
-    "test_patch": "tests/",
-    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main",
-    "environment_setup": "Dockerfile"
-  }
-  
+  "instance_id": "f4fddf",
+  "problem_statement": "The application must support a fully accessible, high-performance theming system without relying on browser persistence or external libraries.Theme changes must be visually stable, performant, and isolated per user session.System theme preferences must be respected unless explicitly overridden by the user.The solution must meet enterprise accessibility, performance, and architectural standards.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/f4fddf-enterprise_grade_theming_system",
+  "environment_setup": "Dockerfile"
+}

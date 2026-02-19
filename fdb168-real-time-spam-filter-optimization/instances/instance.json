@@ -1,9 +1,8 @@
 {
-    "instance_id": "fdb168",
-    "problem_statement": "The current spam filter violates production constraints due to slow training, high inference latency, and excessive memory usage. The task is to optimize the existing implementation to meet strict performance and memory SLAs while preserving the same API, maintaining acceptable accuracy, and correctly handling obfuscated spam.",
-    "base_commit": "repository_before",
-    "test_patch": "tests/",
-    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main",
-    "environment_setup": "Dockerfile"
-  }
-  
+  "instance_id": "fdb168",
+  "problem_statement": "The current spam filter violates production constraints due to slow training, high inference latency, and excessive memory usage. The task is to optimize the existing implementation to meet strict performance and memory SLAs while preserving the same API, maintaining acceptable accuracy, and correctly handling obfuscated spam.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/fdb168-real-time-spam-filter-optimization",
+  "environment_setup": "Dockerfile"
+}

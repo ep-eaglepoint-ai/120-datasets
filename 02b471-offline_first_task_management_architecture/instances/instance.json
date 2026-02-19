@@ -1,9 +1,8 @@
 {
-    "instance_id": "02b471",
-    "problem_statement": "The existing task management application fails completely when network connectivity is lost, blocking user actions and causing irreversible data loss. Users cannot create, edit, or complete tasks offline, and changes made during outages are never synchronized. There is no optimistic UI, no offline queue, and no conflict resolution across devices. The system must be redesigned to operate **offline by default**, while ensuring reliable synchronization and zero data loss.",
-    "base_commit": "repository_before",
-    "test_patch": "tests/",
-    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/02b471-offline_first_task_management_architecture/02b471-offline_first_task_management_architecture",
-    "environment_setup": "Dockerfile"
-  }
-  
+  "instance_id": "02b471",
+  "problem_statement": "The existing task management application fails completely when network connectivity is lost, blocking user actions and causing irreversible data loss. Users cannot create, edit, or complete tasks offline, and changes made during outages are never synchronized. There is no optimistic UI, no offline queue, and no conflict resolution across devices. The system must be redesigned to operate **offline by default**, while ensuring reliable synchronization and zero data loss.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/02b471-offline_first_task_management_architecture",
+  "environment_setup": "Dockerfile"
+}

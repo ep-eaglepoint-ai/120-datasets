@@ -1,9 +1,8 @@
 {
-    "instance_id": "6b24e6",
-    "problem_statement": "You have a JSON Schema validator implementation that has 10 bugs. Fix all bugs while maintaining the exact same public API (constructor, addSchema, validate).",
-    "base_commit": "repository_before",
-    "test_patch": "tests/",
-    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/8235d7-Test_LRU_cache_test_generation",
-    "environment_setup": "Dockerfile"
-  }
-  
+  "instance_id": "6b24e6",
+  "problem_statement": "You have a JSON Schema validator implementation that has 10 bugs. Fix all bugs while maintaining the exact same public API (constructor, addSchema, validate).",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/6b24e6-JSON_schema_validator",
+  "environment_setup": "Dockerfile"
+}

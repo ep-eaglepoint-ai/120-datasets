@@ -23,6 +23,6 @@
     "tests/test_calc_score_equivalence.py::test_public_api_docstring_and_name_match",
     "tests/test_calc_score_equivalence.py::test_equivalence_on_handpicked_adversarial_inputs",
     "tests/test_calc_score_equivalence.py::test_equivalence_randomized_fuzz_deterministic"
-  ]
+  ],
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/0048ef-Expression_Parser_Calculator_Fix"
 }
-

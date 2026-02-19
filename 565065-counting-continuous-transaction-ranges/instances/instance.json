@@ -1,9 +1,8 @@
 {
-    "instance_id": "565065",
-    "problem_statement": "Store owners need a way to analyze their daily cash flow patterns by examining their transaction history. Specifically, they want to know how many different continuous periods during the day resulted in a net change that stayed within their defined “comfort zone” — a minimum and maximum total balance change.Given a list of transactions (positive for deposits, negative for withdrawals) and a comfort range defined by lower_bound and upper_bound, your task is to count all possible consecutive transaction sequences whose sums fall within this range.For example, if a store owner’s comfort zone is between losing $200 and gaining $200, they want to know how many sequences of consecutive transactions yield totals between -200 and 200.Your implementation must be efficient: a brute-force O(n²) approach that checks every possible sequence is too slow for large datasets (up to 100,000 transactions). The solution must run in O(n log n) time and use no more memory than O(n). Only Python’s standard library may be used.",
-    "base_commit": "repository_before",
-    "test_patch": "tests/",
-    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main",
-    "environment_setup": "Dockerfile"
-  }
-  
+  "instance_id": "565065",
+  "problem_statement": "Store owners need a way to analyze their daily cash flow patterns by examining their transaction history. Specifically, they want to know how many different continuous periods during the day resulted in a net change that stayed within their defined \u201ccomfort zone\u201d \u2014 a minimum and maximum total balance change.Given a list of transactions (positive for deposits, negative for withdrawals) and a comfort range defined by lower_bound and upper_bound, your task is to count all possible consecutive transaction sequences whose sums fall within this range.For example, if a store owner\u2019s comfort zone is between losing $200 and gaining $200, they want to know how many sequences of consecutive transactions yield totals between -200 and 200.Your implementation must be efficient: a brute-force O(n\u00b2) approach that checks every possible sequence is too slow for large datasets (up to 100,000 transactions). The solution must run in O(n log n) time and use no more memory than O(n). Only Python\u2019s standard library may be used.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/565065-counting-continuous-transaction-ranges",
+  "environment_setup": "Dockerfile"
+}

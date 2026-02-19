@@ -3,6 +3,6 @@
   "problem_statement": "Create a fun React app called MoodMorph that lets users input their mood and instantly visualize it as a dynamic, animated geometric shape with colors and motion. The app must feature two pages: one for mood input and shape generation, and a gallery page to save and view all created shapes using LocalStorage. Requirements include using SVG/Canvas for animations, ensuring full test coverage for user interactions, and handling edge cases like empty inputs.",
   "base_commit": "repository_before",
   "test_patch": "tests/",
-  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/471e62-mood-visualizer/471e62-mood-visualizer",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/471e62-mood-visualizer",
   "environment_setup": "Dockerfile"
 }

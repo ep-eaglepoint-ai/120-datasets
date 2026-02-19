@@ -1,9 +1,8 @@
 {
-    "instance_id": "6da20b",
-    "problem_statement": "A scheduling system must be developed to assign tasks from a JSON file across multiple days, strictly adhering to specified duration, time window, and dependency constraints, including \"after\" and \"not_same_day_as\" rules. The system's core logic must be fixed to correctly handle multi-day scheduling, avoid infinite recursion, manage global state, and validate all constraints, such as preventing time window overlaps and circular dependencies. Furthermore, robust error handling and debugging output must be implemented to ensure reliability and provide clear diagnostics for scheduling failures or invalid input data.",
-    "base_commit": "repository_before",
-    "test_patch": "tests/",
-    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/6da20b-task-scheduler",
-    "environment_setup": "Dockerfile"
-  }
-  
+  "instance_id": "6da20b",
+  "problem_statement": "A scheduling system must be developed to assign tasks from a JSON file across multiple days, strictly adhering to specified duration, time window, and dependency constraints, including \"after\" and \"not_same_day_as\" rules. The system's core logic must be fixed to correctly handle multi-day scheduling, avoid infinite recursion, manage global state, and validate all constraints, such as preventing time window overlaps and circular dependencies. Furthermore, robust error handling and debugging output must be implemented to ensure reliability and provide clear diagnostics for scheduling failures or invalid input data.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/6da20b-task-scheduler",
+  "environment_setup": "Dockerfile"
+}

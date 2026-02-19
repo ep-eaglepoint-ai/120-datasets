@@ -1,9 +1,8 @@
 {
-    "instance_id": "a2b5c8-Cart_Service_Performance_Fix",
-    "problem_statement": "A Java Trie-based contacts manager needs correction as it currently throws a NullPointerException due to improper HashMap initialization in child nodes and produces incorrect prefix counts because it fails to propagate count increments up the tree during insert operations. The code must be fixed to properly initialize all data structures, correctly parse input commands, and ensure string comparisons and prefix counting work efficiently using a per-node counter that increments with each added word. This will eliminate runtime exceptions and ensure the `find` operation returns accurate counts for partial prefix matches.",
-    "base_commit": "repository_before",
-    "test_patch": "tests/",
-    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/ab6da3-java-contact-list",
-    "environment_setup": "Dockerfile"
-  }
-  
+  "instance_id": "a2b5c8-Cart_Service_Performance_Fix",
+  "problem_statement": "A Java Trie-based contacts manager needs correction as it currently throws a NullPointerException due to improper HashMap initialization in child nodes and produces incorrect prefix counts because it fails to propagate count increments up the tree during insert operations. The code must be fixed to properly initialize all data structures, correctly parse input commands, and ensure string comparisons and prefix counting work efficiently using a per-node counter that increments with each added word. This will eliminate runtime exceptions and ensure the `find` operation returns accurate counts for partial prefix matches.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/ab6da3-java-contact-list",
+  "environment_setup": "Dockerfile"
+}
