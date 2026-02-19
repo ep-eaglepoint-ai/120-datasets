@@ -1,0 +1,9 @@
+{
+    "instance_id": "5g27e7",
+    "problem_statement": "Build a CRUD application for managing messages with conditional visibility based on user roles. The app must feature a dashboard with three tabs: 'All Messages', 'User Messages', and 'Admin Messages'. Each tab should display messages based on the user's role: 'All Messages' shows all messages, 'User Messages' shows only messages sent by the current user, and 'Admin Messages' shows only messages sent by admins. The app must use a database to store messages and implement proper authentication and authorization. The app must be fully tested for all CRUD operations and role-based visibility.",
+    "base_commit": "repository_before",
+    "test_patch": "tests/",
+    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/ae8593-conditional-message-crud",
+    "environment_setup": "Dockerfile"
+  }
+  

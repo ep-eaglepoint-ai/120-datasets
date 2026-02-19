@@ -1,0 +1,12 @@
+{
+            "instance_id": "013B8I",
+            "problem_statement": "Collision detection in gaming and simulation is often done by "stepping" through time (checking positions at t=1, t=2, t=3). In safety-critical avionics, this is unacceptable because a collision could occur at t=1.5, which the step check would miss. The challenge is to implement the CPA (Closest Point of Approach) algorithm, which uses calculus/geometry to find the exact time t when two 3D vectors are closest. This requires solving a quadratic equation (or minimizing the distance squared function) to find t without looping.
+",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/013b8i-analytical-closest-point-of-approach-cpa-in-3d-space",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

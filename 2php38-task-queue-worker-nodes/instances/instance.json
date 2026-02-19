@@ -1,0 +1,11 @@
+{
+            "instance_id": "2PHP38",
+            "problem_statement": "Implement a distributed task queue system in Python 3.11+ using asyncio and Redis Streams as the message broker to process millions of jobs daily with guaranteed delivery, priority scheduling, and job dependencies. Support delayed/recurring execution, automatic retries, dead‑letter queues, and real‑time monitoring via Prometheus, while using Pydantic for validation and multiprocessing/asyncio for mixed workload concurrency. Package the system as an installable library with a CLI for worker management, ensuring high performance, reliability, and comprehensive job lifecycle tracking.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/2php38-task-queue-worker-nodes",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

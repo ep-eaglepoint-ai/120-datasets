@@ -1,0 +1,79 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "taskqueue"
+version = "1.0.0"
+description = "High-performance distributed task queue system with Redis Streams"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.11"
+authors = [
+    {name = "Task Queue Team", email = "taskqueue@example.com"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Distributed Computing",
+]
+keywords = ["task-queue", "distributed", "redis", "asyncio", "workers"]
+
+dependencies = [
+    "redis>=5.0.0",
+    "pydantic>=2.0.0",
+    "structlog>=24.0.0",
+    "prometheus-client>=0.19.0",
+    "fastapi>=0.109.0",
+    "uvicorn>=0.27.0",
+    "msgpack>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "httpx>=0.26.0",
+    "black>=23.0.0",
+    "mypy>=1.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+taskqueue = "taskqueue.cli:main"
+taskqueue-worker = "taskqueue.cli:run_worker"
+taskqueue-api = "taskqueue.cli:run_api"
+
+[project.urls]
+Homepage = "https://github.com/example/taskqueue"
+Documentation = "https://github.com/example/taskqueue#readme"
+Repository = "https://github.com/example/taskqueue"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["taskqueue*"]
+
+[tool.setuptools.package-dir]
+taskqueue = "."
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true

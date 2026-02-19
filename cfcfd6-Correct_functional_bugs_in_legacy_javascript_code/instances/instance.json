@@ -1,0 +1,46 @@
+{
+  "instance_id": "cfcfd6-Correct_functional_bugs_in_legacy_javascript_code",
+  "problem_statement": "The provided JavaScript code contains multiple functional bugs that cause incorrect behavior, and these defects must be fixed without altering the existing structure, logic, variable names, or ES5-based implementation style.",
+  "requirements": [
+    "1. Fix functional bugs only",
+    "2. Do not change the overall structure or algorithm",
+    "3. Do not rewrite entire functions",
+    "4. Do not add new helper functions",
+    "5. Do not rename existing variables",
+    "6. Do not use any ES6+ features (no arrow functions, no let/const, no template literals)",
+    "7. No refactoring, optimizations, or stylistic changes",
+    "8. Preserve all existing logic except where a bug must be corrected"
+  ],
+  "bugs_to_fix": [
+    "Bug 1: Array iteration beyond bounds (i <= users.length should be i < users.length)",
+    "Bug 2: Type coercion in age comparison (== should be ===)",
+    "Bug 3: Assignment instead of comparison (= should be ===)",
+    "Bug 4: Type coercion in email validation (!= should be !==)",
+    "Bug 5: Closure issue in setTimeout capturing wrong variable",
+    "Bug 6: Incorrect operator in calculateTotal (= + should be += or total +)",
+    "Bug 7: Type coercion in id comparison (== should be ===)",
+    "Bug 8: Off-by-one error in retry loop (<= should be <)"
+  ],
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/sample-dataset/tree/main/cfcfd6-Correct_functional_bugs_in_legacy_javascript_code",
+  "environment_setup": "Dockerfile",
+  "FAIL_TO_PASS": [
+    "tests/test_bugs.test.js::Bug Fix Tests::processUserData function::Bug 1: Should not iterate beyond array bounds (i <= users.length)",
+    "tests/test_bugs.test.js::Bug Fix Tests::processUserData function::Bug 2: Should use strict equality for age comparison (== vs ===)",
+    "tests/test_bugs.test.js::Bug Fix Tests::processUserData function::Bug 3: Should use comparison not assignment for name check (= vs ===)",
+    "tests/test_bugs.test.js::Bug Fix Tests::calculateTotal function::Bug 6: Should use += or total + items[i].price, not = +",
+    "tests/test_bugs.test.js::Bug Fix Tests::calculateTotal function::Bug 6: Should correctly sum multiple items",
+    "tests/test_bugs.test.js::Bug Fix Tests::findUser function::Bug 7: Should use strict equality for id comparison (== vs ===)",
+    "tests/test_bugs.test.js::Bug Fix Tests::fetchData function::Bug 8: Should use < instead of <= for retry comparison"
+  ],
+  "PASS_TO_PASS": [
+    "tests/test_bugs.test.js::Bug Fix Tests::processUserData function::Bug 4: Should use strict inequality for email validation (!= vs !==)",
+    "tests/test_bugs.test.js::Bug Fix Tests::processUserData function::Bug 5: Closure issue in setTimeout - should capture correct index",
+    "tests/test_bugs.test.js::Bug Fix Tests::findUser function::Should return null when user not found",
+    "tests/test_bugs.test.js::Structure Preservation Tests::Should not use ES6+ features (arrow functions)",
+    "tests/test_bugs.test.js::Structure Preservation Tests::Should not use let or const",
+    "tests/test_bugs.test.js::Structure Preservation Tests::Should not use template literals",
+    "tests/test_bugs.test.js::Structure Preservation Tests::Should preserve function names"
+  ]
+}

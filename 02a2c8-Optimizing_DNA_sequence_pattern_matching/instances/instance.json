@@ -1,0 +1,8 @@
+{
+  "instance_id": "02a2c8",
+  "problem_statement": "A genomic research facility needs to efficiently search for specific DNA patterns within very large genome sequences, but the current implementation—based on a standard Shift-Or (Bitap) algorithm with a fallback to Rabin–Karp for long patterns—is too slow in practice, taking around 20 seconds on large inputs (e.g., millions of base pairs). The task is to optimize this DNA sequence search code by improving its algorithmic efficiency, data structures, and constant factors, while preserving correctness, so that pattern matching can be performed significantly faster and scale effectively to large genomic datasets.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/02a2c8-Optimizing_DNA_sequence_pattern_matching",
+  "environment_setup": "Dockerfile"
+}

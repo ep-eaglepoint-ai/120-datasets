@@ -1,0 +1,11 @@
+{
+            "instance_id": "NHGKZR",
+            "problem_statement": "In a high-throughput, real-time data processing pipeline, long-running async execution leads to unbounded memory growth, leaked file descriptors, and saturated connection pools due to improperly managed async tasks and pooled resources that outlive their intended scope. Over days of continuous operation, pending tasks retain references to database connections, HTTP clients, and file handles, eventually causing out-of-memory crashes, “too many open files” errors, degraded latency, and forced restarts that violate uptime and regulatory requirements.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/nhgkzr-async-resource-pool-leak-stabilization-and-bounded-cleanup",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

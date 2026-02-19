@@ -1,0 +1,11 @@
+{
+            "instance_id": "0DVSTL",
+            "problem_statement": "Generation of a comprehensive test suite for a stateful financial ledger. The task requires achieving 100% code coverage (statement and branch) while validating complex behaviors like idempotency, Decimal precision handling, and multi-step state consistency during rollbacks.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/0dvstl-high-fidelity-ledger-testing",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

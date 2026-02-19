@@ -1,0 +1,86 @@
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Build outputs
+dist/
+dist-ssr/
+build/
+.next/
+out/
+*.local
+
+# Test results
+test-results/
+playwright-report/
+coverage/
+.nyc_output/
+*.lcov
+
+# Evaluation reports (keep structure, ignore actual reports)
+evaluation/*/*/
+!evaluation/.gitkeep
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+
+# IDE and editors
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+/tmp/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Cache directories
+.cache/
+.npm/
+.eslintcache
+.stylelintcache
+.parcel-cache/
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Playwright
+playwright/.cache/

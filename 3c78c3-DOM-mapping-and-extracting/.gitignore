@@ -1,0 +1,67 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Evaluation reports
+evaluation/reports/
+evaluation/*/
+evaluation/report.json
+/report.json
+
+# Output files
+*.json
+!instances/*.json
+!package.json
+!package-lock.json
+!*/package.json
+!*/package-lock.json
+!*/*/package.json
+!*/*/package-lock.json
+!jest.config.js
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Selenium
+*.log
+chromedriver
+geckodriver
+
+/node_modules

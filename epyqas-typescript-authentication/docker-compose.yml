@@ -1,0 +1,8 @@
+services:
+  app:
+    build: .
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - SESSION_SECRET=docker-secure-secret-123456789

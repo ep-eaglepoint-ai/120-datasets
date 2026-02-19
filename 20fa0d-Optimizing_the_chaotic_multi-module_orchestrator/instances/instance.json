@@ -1,0 +1,8 @@
+{
+  "instance_id": "20fa0d",
+  "problem_statement": "You have inherited a critical legacy component, ChaoticComponent.jsx, which serves as a central orchestrator for a complex data dashboard. The original author used unconventional patterns, cryptic naming, and non-standard synchronization methods to prevent unauthorized tampering. Current performance logs show that the component is causing dropped frames (jank) during state updates, especially in the recursive tree view (Beta) and the data pipeline (Gamma). Furthermore, there are reports of ghost state where UI elements update based on stale data. The business requires this component to be refactored into a modern, type-safe, and performant TypeScript implementation without changing its visible behavior.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/20fa0d-Optimizing_the_chaotic_multi-module_orchestrator",
+  "environment_setup": "Dockerfile"
+}

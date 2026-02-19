@@ -1,0 +1,12 @@
+{
+            "instance_id": "EHHFJ9",
+            "problem_statement": "Develop a fullstack logistics application using Next.js and Prisma to manage a fleet of bike couriers. The system must prevent over-assigning packages based on physical weight limits and ensure atomic updates to vehicle capacity.
+",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/ehhfj9-urban-cargo-capacity-manager",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

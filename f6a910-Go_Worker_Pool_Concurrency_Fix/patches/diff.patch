@@ -1,0 +1,173 @@
+diff --git a/repository_before/worker_pool.go b/repository_after/worker_pool.go
+index f55a259..012a141 100644
+--- a/repository_before/worker_pool.go
++++ b/repository_after/worker_pool.go
+@@ -2,52 +2,150 @@ package main
+ 
+ import (
+ 	"context"
++	"errors"
+ 	"sync"
++	"sync/atomic"
+ )
+ 
++// Define sentinel errors for API consumers.
++var (
++	ErrPoolClosed = errors.New("worker pool is closed")
++	ErrNoWorkers  = errors.New("worker pool has no workers")
++	ErrNilTask    = errors.New("task cannot be nil")
++)
++
++// Task represents a unit of work for the worker pool.
+ type Task func() error
+ 
+ type WorkerPool struct {
+-	workers   int
++	workerCount int // Number of workers
++
++	// taskQueue holds submitted tasks. Buffered to match worker count for efficiency.
+ 	taskQueue chan Task
++
++	// quit signals the pool to stop accepting new tasks and shut down.
++	quit chan struct{}
++
++	// results stores task results, protected by resultsMu for safe concurrent access.
++	resultsMu sync.RWMutex
+ 	results   map[int]error
+-	wg        sync.WaitGroup
++
++	// taskIDCounter gives each task a unique result key.
++	taskIDCounter int32
++
++	// stopOnce ensures Stop() is only executed once.
++	stopOnce sync.Once
++
++	wg sync.WaitGroup // Waits for all workers to finish
+ }
+ 
+-func NewWorkerPool(workers int) *WorkerPool {
++// NewWorkerPool creates a new WorkerPool with the given number of workers.
++// If workers is negative, it is treated as zero.
++func NewWorkerPool(workerCount int) *WorkerPool {
++	if workerCount < 0 {
++		workerCount = 0
++	}
+ 	return &WorkerPool{
+-		workers:   workers,
+-		taskQueue: make(chan Task),
+-		results:   make(map[int]error),
++		workerCount: workerCount,
++		taskQueue:   make(chan Task, workerCount),
++		quit:        make(chan struct{}),
++		results:     make(map[int]error),
+ 	}
+ }
+ 
++// Start launches the worker goroutines. Does nothing if workerCount is zero.
+ func (wp *WorkerPool) Start(ctx context.Context) {
+-	for i := 0; i < wp.workers; i++ {
++	if wp.workerCount == 0 {
++		return
++	}
++	for i := 0; i < wp.workerCount; i++ {
+ 		wp.wg.Add(1)
+-		go wp.worker(i, ctx)
++		go wp.worker(ctx)
+ 	}
+ }
+ 
+-func (wp *WorkerPool) worker(id int, ctx context.Context) {
++// worker processes tasks from the queue until the context is cancelled or the pool is stopped.
++func (wp *WorkerPool) worker(ctx context.Context) {
+ 	defer wp.wg.Done()
+-
+-	for task := range wp.taskQueue {
+-		err := task()
+-		wp.results[id] = err
++	for {
++		select {
++		case <-ctx.Done():
++			// Context cancelled, exit worker immediately.
++			return
++		case task, ok := <-wp.taskQueue:
++			if !ok {
++				// taskQueue closed and empty, return.
++				return
++			}
++			if task != nil {
++				err := task()
++				wp.saveResult(err)
++			}
++		}
+ 	}
+ }
+ 
+-func (wp *WorkerPool) Submit(task Task) error {
+-	wp.taskQueue <- task
+-	return nil
++// saveResult stores the result of a task with a unique ID.
++func (wp *WorkerPool) saveResult(err error) {
++	id := int(atomic.AddInt32(&wp.taskIDCounter, 1))
++	wp.resultsMu.Lock()
++	wp.results[id] = err
++	wp.resultsMu.Unlock()
+ }
+ 
++// Submit adds a task to the pool. Returns error if the pool is stopped, has no workers, or task is nil.
++func (wp *WorkerPool) Submit(task Task) (err error) {
++	if task == nil {
++		return ErrNilTask
++	}
++	if wp.workerCount == 0 {
++		return ErrNoWorkers
++	}
++
++	// Double-check quit channel to avoid panic-recover if possible
++	select {
++	case <-wp.quit:
++		return ErrPoolClosed
++	default:
++	}
++
++	// Handle race condition where taskQueue is closed during send
++	defer func() {
++		if r := recover(); r != nil {
++			err = ErrPoolClosed
++		}
++	}()
++
++	// Try to submit the task.
++	// If taskQueue is closed by Stop() while we are blocked here, it triggers a panic, caught by recover.
++	select {
++	case wp.taskQueue <- task:
++		return nil
++	case <-wp.quit:
++		return ErrPoolClosed
++	}
++}
++
++// Stop shuts down the pool, waits for all workers to finish, and is safe to call multiple times.
+ func (wp *WorkerPool) Stop() {
+-	close(wp.taskQueue)
++	wp.stopOnce.Do(func() {
++		// Signal submitters to stop accepting new tasks.
++		close(wp.quit)
++		// Close taskQueue so workers finish current tasks and exit.
++		close(wp.taskQueue)
++	})
++	// Wait for all workers to finish.
+ 	wp.wg.Wait()
+ }
+ 
++// GetResults returns a copy of all task results.
++// The copy prevents callers from modifying internal state or causing data races.
+ func (wp *WorkerPool) GetResults() map[int]error {
+-	return wp.results
++	wp.resultsMu.RLock()
++	defer wp.resultsMu.RUnlock()
++	resultsCopy := make(map[int]error, len(wp.results))
++	for id, err := range wp.results {
++		resultsCopy[id] = err
++	}
++	return resultsCopy
+ }

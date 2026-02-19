@@ -1,0 +1,5 @@
+evaluation/reports/**
+evaluation/reports/*
+pycache/
+__pycache__/
+*.pyc

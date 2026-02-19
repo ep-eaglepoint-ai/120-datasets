@@ -1,0 +1,26 @@
+{
+  "name": "adonis-hierarchical-rbac",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "Hierarchical RBAC system with temporal role escalation for AdonisJS v6",
+  "scripts": {
+    "test": "jest --config tests/jest.config.cjs"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/luxon": "^3.7.1",
+    "@types/node": "^20.11.5",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@adonisjs/auth": "^9.1.1",
+    "@adonisjs/bouncer": "^3.0.2",
+    "@adonisjs/core": "^6.2.0",
+    "@adonisjs/lucid": "^21.8.2",
+    "luxon": "^3.4.4",
+    "reflect-metadata": "^0.2.1",
+    "sqlite3": "^5.0.2"
+  }
+}

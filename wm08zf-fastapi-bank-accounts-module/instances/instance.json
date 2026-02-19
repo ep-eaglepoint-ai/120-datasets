@@ -1,0 +1,11 @@
+{
+            "instance_id": "WM08ZF",
+            "problem_statement": "The current FastAPI accounts module is bugged and inefficient due to an incorrect use of external task queues (Celery with Redis) and the absence of a proper background task strategy. The API directly triggers and waits for Celery tasks inside asynchronous endpoints, blocking the event loop and degrading performance. Email notifications are tightly coupled to the request lifecycle, making account creation dependent on external services such as Redis and SMTP. Failures in these services are silently ignored, leading to unreliable email delivery, hidden errors, and inconsistent system behavior. The lack of retries, observability, fault isolation, and clear separation of concerns makes the system fragile, unscalable, and unsuitable for production use.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/wm08zf-fastapi-bank-accounts-module",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

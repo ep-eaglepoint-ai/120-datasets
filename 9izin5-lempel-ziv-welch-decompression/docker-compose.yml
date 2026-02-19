@@ -1,0 +1,9 @@
+services:
+  app:
+    build: .
+    image: parallelizing-app
+    volumes:
+      - .:/app
+    environment:
+      TEST_IMPLEMENTATION: ${TEST_IMPLEMENTATION:-}
+    command: python evaluation/evaluation.py

@@ -1,0 +1,757 @@
+diff --git a/repository_before/.gitkeep b/repository_before/.gitkeep
+deleted file mode 100644
+index e69de29b..00000000
+diff --git a/repository_after/client/index.html b/repository_after/client/index.html
+new file mode 100644
+index 00000000..3023f5cc
+--- /dev/null
++++ b/repository_after/client/index.html
+@@ -0,0 +1,12 @@
++<!DOCTYPE html>
++<html lang="en">
++  <head>
++    <meta charset="UTF-8" />
++    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
++    <title>Raffle Dashboard</title>
++  </head>
++  <body>
++    <div id="root"></div>
++    <script type="module" src="/src/main.tsx"></script>
++  </body>
++</html>
+diff --git a/repository_after/client/package.json b/repository_after/client/package.json
+new file mode 100644
+index 00000000..4c177085
+--- /dev/null
++++ b/repository_after/client/package.json
+@@ -0,0 +1,23 @@
++{
++  "name": "raffle-client",
++  "version": "1.0.0",
++  "private": true,
++  "description": "Raffle dashboard client (React + Vite)",
++  "type": "module",
++  "scripts": {
++    "dev": "vite",
++    "build": "tsc && vite build",
++    "preview": "vite preview"
++  },
++  "dependencies": {
++    "react": "^18.2.0",
++    "react-dom": "^18.2.0"
++  },
++  "devDependencies": {
++    "@types/react": "^18.2.48",
++    "@types/react-dom": "^18.2.18",
++    "@vitejs/plugin-react": "^4.2.1",
++    "typescript": "^5.3.3",
++    "vite": "^5.0.10"
++  }
++}
+diff --git a/repository_after/client/src/App.tsx b/repository_after/client/src/App.tsx
+new file mode 100644
+index 00000000..f549a837
+--- /dev/null
++++ b/repository_after/client/src/App.tsx
+@@ -0,0 +1,131 @@
++import { useState, useEffect, useCallback } from "react";
++import { Toast } from "./Toast";
++
++const API_BASE = "/api";
++
++interface RaffleState {
++  status: "OPEN" | "CLOSED";
++  remainingTickets: number;
++  userTicketCount?: number;
++  winningTicketId?: number;
++}
++
++function getUserId(): string {
++  if (typeof window === "undefined") return "demo-user";
++  const params = new URLSearchParams(window.location.search);
++  const q = params.get("userId");
++  if (q) return q;
++  let stored = localStorage.getItem("raffle_user_id");
++  if (!stored) {
++    stored = "user-" + Math.random().toString(36).slice(2, 10);
++    localStorage.setItem("raffle_user_id", stored);
++  }
++  return stored;
++}
++
++export default function App() {
++  const [state, setState] = useState<RaffleState | null>(null);
++  const [loading, setLoading] = useState(true);
++  const [purchasing, setPurchasing] = useState(false);
++  const [error, setError] = useState<string | null>(null);
++  const [userId] = useState(() => getUserId());
++
++  const fetchState = useCallback(
++    async (silent = false) => {
++      if (!silent) setLoading(true);
++      setError(null);
++      try {
++        const res = await fetch(
++          `${API_BASE}/raffle/state?userId=${encodeURIComponent(userId)}`,
++        );
++        if (!res.ok) throw new Error("Failed to load state");
++        const data: RaffleState = await res.json();
++        setState(data);
++      } catch (e) {
++        if (!silent) setError(e instanceof Error ? e.message : "Network error");
++      } finally {
++        if (!silent) setLoading(false);
++      }
++    },
++    [userId],
++  );
++
++  useEffect(() => {
++    fetchState();
++
++    const interval = setInterval(() => {
++      fetchState(true);
++    }, 3000);
++
++    return () => clearInterval(interval);
++  }, [fetchState]);
++
++  const handlePurchase = async () => {
++    setPurchasing(true);
++    setError(null);
++    try {
++      const res = await fetch(`${API_BASE}/purchase`, {
++        method: "POST",
++        headers: { "Content-Type": "application/json" },
++        body: JSON.stringify({ userId, quantity: 1 }),
++      });
++      const data = await res.json();
++      if (data.success) {
++        await fetchState();
++      } else {
++        setError(data.error || "Purchase failed");
++      }
++    } catch (e) {
++      setError(e instanceof Error ? e.message : "Network timeout or error");
++    } finally {
++      setPurchasing(false);
++    }
++  };
++
++  const isDisabled =
++    !state ||
++    state.remainingTickets === 0 ||
++    (state.userTicketCount ?? 0) >= 2 ||
++    state.status === "CLOSED" ||
++    purchasing;
++
++  if (loading && !state) {
++    return (
++      <div style={{ padding: 24, textAlign: "center" }}>
++        <p>Loading raffle state…</p>
++      </div>
++    );
++  }
++
++  return (
++    <div style={{ maxWidth: 480, margin: "0 auto", padding: 24 }}>
++      <h1>Raffle Dashboard</h1>
++      {state && (
++        <>
++          <p data-testid="remaining-tickets">
++            <strong>Tickets remaining:</strong> {state.remainingTickets}
++          </p>
++          <p data-testid="user-ticket-count">
++            <strong>Your tickets:</strong> {state.userTicketCount ?? 0}
++          </p>
++          <p data-testid="raffle-status">
++            <strong>Status:</strong> {state.status}
++          </p>
++          {state.status === "CLOSED" && state.winningTicketId != null && (
++            <p data-testid="winner">Winner: ticket #{state.winningTicketId}</p>
++          )}
++          <button
++            data-testid="purchase-button"
++            type="button"
++            onClick={handlePurchase}
++            disabled={isDisabled}
++            aria-busy={purchasing}
++          >
++            {purchasing ? "Purchasing…" : "Purchase 1 ticket"}
++          </button>
++        </>
++      )}
++      {error && <Toast message={error} variant="error" />}
++    </div>
++  );
++}
+diff --git a/repository_after/client/src/Toast.tsx b/repository_after/client/src/Toast.tsx
+new file mode 100644
+index 00000000..f804e219
+--- /dev/null
++++ b/repository_after/client/src/Toast.tsx
+@@ -0,0 +1,37 @@
++import React from 'react';
++
++interface ToastProps {
++  message: string;
++  /** For testing: 'error' shows as error toast with data-testid="error-toast" */
++  variant?: 'error';
++}
++
++/**
++ * Simple toast notification. Used for error feedback (REQ-7).
++ * Renders as a fixed-position toast so tests can assert on it via jsdom/RTL.
++ */
++export function Toast({ message, variant = 'error' }: ToastProps) {
++  const isError = variant === 'error';
++  return (
++    <div
++      role="alert"
++      data-testid={isError ? 'error-toast' : 'toast'}
++      aria-live="assertive"
++      style={{
++        position: 'fixed',
++        bottom: 24,
++        right: 24,
++        maxWidth: 320,
++        padding: '12px 16px',
++        borderRadius: 8,
++        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
++        backgroundColor: isError ? '#fde8e8' : '#f5f5f5',
++        color: isError ? '#c00' : '#333',
++        fontSize: 14,
++        zIndex: 9999,
++      }}
++    >
++      {message}
++    </div>
++  );
++}
+diff --git a/repository_after/client/src/index.css b/repository_after/client/src/index.css
+new file mode 100644
+index 00000000..af024346
+--- /dev/null
++++ b/repository_after/client/src/index.css
+@@ -0,0 +1,8 @@
++* {
++  box-sizing: border-box;
++}
++body {
++  margin: 0;
++  font-family: system-ui, -apple-system, sans-serif;
++  background: #f5f5f5;
++}
+diff --git a/repository_after/client/src/main.tsx b/repository_after/client/src/main.tsx
+new file mode 100644
+index 00000000..2339d59c
+--- /dev/null
++++ b/repository_after/client/src/main.tsx
+@@ -0,0 +1,10 @@
++import React from 'react';
++import ReactDOM from 'react-dom/client';
++import App from './App';
++import './index.css';
++
++ReactDOM.createRoot(document.getElementById('root')!).render(
++  <React.StrictMode>
++    <App />
++  </React.StrictMode>
++);
+diff --git a/repository_after/client/src/vite-env.d.ts b/repository_after/client/src/vite-env.d.ts
+new file mode 100644
+index 00000000..11f02fe2
+--- /dev/null
++++ b/repository_after/client/src/vite-env.d.ts
+@@ -0,0 +1 @@
++/// <reference types="vite/client" />
+diff --git a/repository_after/client/tsconfig.json b/repository_after/client/tsconfig.json
+new file mode 100644
+index 00000000..3934b8f6
+--- /dev/null
++++ b/repository_after/client/tsconfig.json
+@@ -0,0 +1,21 @@
++{
++  "compilerOptions": {
++    "target": "ES2020",
++    "useDefineForClassFields": true,
++    "lib": ["ES2020", "DOM", "DOM.Iterable"],
++    "module": "ESNext",
++    "skipLibCheck": true,
++    "moduleResolution": "bundler",
++    "allowImportingTsExtensions": true,
++    "resolveJsonModule": true,
++    "isolatedModules": true,
++    "noEmit": true,
++    "jsx": "react-jsx",
++    "strict": true,
++    "noUnusedLocals": true,
++    "noUnusedParameters": true,
++    "noFallthroughCasesInSwitch": true
++  },
++  "include": ["src"],
++  "references": [{ "path": "./tsconfig.node.json" }]
++}
+diff --git a/repository_after/client/tsconfig.node.json b/repository_after/client/tsconfig.node.json
+new file mode 100644
+index 00000000..42872c59
+--- /dev/null
++++ b/repository_after/client/tsconfig.node.json
+@@ -0,0 +1,10 @@
++{
++  "compilerOptions": {
++    "composite": true,
++    "skipLibCheck": true,
++    "module": "ESNext",
++    "moduleResolution": "bundler",
++    "allowSyntheticDefaultImports": true
++  },
++  "include": ["vite.config.ts"]
++}
+diff --git a/repository_after/client/vite.config.ts b/repository_after/client/vite.config.ts
+new file mode 100644
+index 00000000..d58ebdb7
+--- /dev/null
++++ b/repository_after/client/vite.config.ts
+@@ -0,0 +1,15 @@
++import { defineConfig } from 'vite';
++import react from '@vitejs/plugin-react';
++
++export default defineConfig({
++  plugins: [react()],
++  server: {
++    port: 3000,
++    proxy: {
++      '/api': {
++        target: 'http://localhost:5000',
++        changeOrigin: true,
++      },
++    },
++  },
++});
+diff --git a/repository_after/server/adminAuth.ts b/repository_after/server/adminAuth.ts
+new file mode 100644
+index 00000000..96037475
+--- /dev/null
++++ b/repository_after/server/adminAuth.ts
+@@ -0,0 +1,14 @@
++import { Request, Response, NextFunction } from 'express';
++
++export function requireAdmin(req: Request, res: Response, next: NextFunction): void {
++  const authHeader = req.headers.authorization;
++  const adminKey = req.headers['x-admin-key'] as string | undefined;
++  const secret = process.env.ADMIN_SECRET || '';
++
++  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : adminKey;
++  if (!secret || token !== secret) {
++    res.status(401).json({ success: false, error: 'Unauthorized' });
++    return;
++  }
++  next();
++}
+diff --git a/repository_after/server/db.ts b/repository_after/server/db.ts
+new file mode 100644
+index 00000000..3c25dadc
+--- /dev/null
++++ b/repository_after/server/db.ts
+@@ -0,0 +1,32 @@
++import { Pool } from 'pg';
++import * as fs from 'fs';
++import * as path from 'path';
++
++const DEFAULT_DATABASE_URL = 'postgresql://postgres:postgres@localhost:5432/raffle_test';
++
++let pool: Pool | null = null;
++
++export function getPool(): Pool {
++  if (!pool) {
++    const connectionString = process.env.DATABASE_URL || DEFAULT_DATABASE_URL;
++    pool = new Pool({
++      connectionString,
++      max: 10,
++      idleTimeoutMillis: 30000,
++    });
++  }
++  return pool;
++}
++
++export async function initSchema(pgPool: Pool): Promise<void> {
++  const schemaPath = path.join(__dirname, 'schema.sql');
++  const sql = fs.readFileSync(schemaPath, 'utf8');
++  await pgPool.query(sql);
++}
++
++export async function closePool(): Promise<void> {
++  if (pool) {
++    await pool.end();
++    pool = null;
++  }
++}
+diff --git a/repository_after/server/index.ts b/repository_after/server/index.ts
+new file mode 100644
+index 00000000..388f6ed7
+--- /dev/null
++++ b/repository_after/server/index.ts
+@@ -0,0 +1,41 @@
++import express from 'express';
++import cors from 'cors';
++import path from 'path';
++import routes from './routes';
++import { getPool, initSchema } from './db';
++
++const app = express();
++app.use(cors());
++app.use(express.json());
++
++app.use('/api', routes);
++
++// Optional: serve React build (only for non-API GET)
++const clientDist = path.join(__dirname, '..', 'client', 'dist');
++const fs = require('fs');
++if (fs.existsSync(clientDist)) {
++  app.use(express.static(clientDist));
++  app.get('*', (_req, res) => {
++    res.sendFile(path.join(clientDist, 'index.html'));
++  });
++}
++
++const PORT = process.env.PORT || 5000;
++
++async function start() {
++  const pool = getPool();
++  await initSchema(pool);
++  app.listen(PORT, () => {
++    console.log(`Raffle server listening on port ${PORT}`);
++  });
++}
++
++if (require.main === module) {
++  start().catch((err) => {
++    console.error(err);
++    process.exit(1);
++  });
++}
++
++export default app;
++export { initSchema, getPool };
+diff --git a/repository_after/server/package.json b/repository_after/server/package.json
+new file mode 100644
+index 00000000..3355d5ca
+--- /dev/null
++++ b/repository_after/server/package.json
+@@ -0,0 +1,24 @@
++{
++  "name": "raffle-server",
++  "version": "1.0.0",
++  "private": true,
++  "description": "Raffle API server (Express + PostgreSQL)",
++  "scripts": {
++    "dev": "ts-node index.ts",
++    "build": "tsc",
++    "start": "node dist/index.js"
++  },
++  "dependencies": {
++    "cors": "^2.8.5",
++    "express": "^4.18.2",
++    "pg": "^8.11.3"
++  },
++  "devDependencies": {
++    "@types/cors": "^2.8.17",
++    "@types/express": "^4.17.21",
++    "@types/node": "^20.11.5",
++    "@types/pg": "^8.10.9",
++    "ts-node": "^10.9.2",
++    "typescript": "^5.3.3"
++  }
++}
+diff --git a/repository_after/server/raffleService.ts b/repository_after/server/raffleService.ts
+new file mode 100644
+index 00000000..ededcf4f
+--- /dev/null
++++ b/repository_after/server/raffleService.ts
+@@ -0,0 +1,195 @@
++import { Pool } from 'pg';
++import { getPool } from './db';
++import { randomInt } from 'crypto';
++
++const MAX_TICKETS = 100;
++const MAX_TICKETS_PER_USER = 2;
++const RAFFLE_META_ID = 1;
++
++export type RaffleStatus = 'OPEN' | 'CLOSED';
++
++export interface RaffleState {
++  status: RaffleStatus;
++  remainingTickets: number;
++  userTicketCount?: number;
++  winningTicketId?: number; // only when status === 'CLOSED'
++}
++
++export interface PurchaseResult {
++  success: true;
++  tickets: { id: number; userId: string; createdAt: Date }[];
++  remaining: number;
++}
++
++export interface PurchaseError {
++  success: false;
++  error: 'Sold Out' | 'Limit Reached' | 'Raffle Closed' | 'Invalid request';
++}
++
++/**
++ * Atomic purchase: PostgreSQL transaction with SELECT ... FOR UPDATE on raffle_meta
++ * serializes purchase checks; total tickets and per-user limits are enforced atomically under concurrency.
++ */
++export async function purchaseTickets(
++  userId: string,
++  quantity: number,
++  pgPool?: Pool
++): Promise<PurchaseResult | PurchaseError> {
++  const pool = pgPool || getPool();
++  const qty = Math.min(Math.max(1, Math.floor(quantity)), 2); // clamp to 1 or 2
++
++  const client = await pool.connect();
++  try {
++    await client.query('BEGIN');
++
++    // Lock raffle_meta row so concurrent purchases serialize
++    const metaResult = await client.query(
++      'SELECT status FROM raffle_meta WHERE id = $1 FOR UPDATE',
++      [RAFFLE_META_ID]
++    );
++    if (metaResult.rows.length === 0) {
++      await client.query('ROLLBACK');
++      return { success: false, error: 'Raffle Closed' };
++    }
++    const status = metaResult.rows[0].status as string;
++    if (status !== 'OPEN') {
++      await client.query('ROLLBACK');
++      return { success: false, error: 'Raffle Closed' };
++    }
++
++    const totalResult = await client.query('SELECT COUNT(*)::int AS count FROM tickets');
++    const total = totalResult.rows[0].count;
++    if (total >= MAX_TICKETS) {
++      await client.query('ROLLBACK');
++      return { success: false, error: 'Sold Out' };
++    }
++
++    const userResult = await client.query(
++      'SELECT COUNT(*)::int AS count FROM tickets WHERE user_id = $1',
++      [userId]
++    );
++    const userCount = userResult.rows[0].count;
++    if (userCount >= MAX_TICKETS_PER_USER) {
++      await client.query('ROLLBACK');
++      return { success: false, error: 'Limit Reached' };
++    }
++    const toInsert = Math.min(qty, MAX_TICKETS_PER_USER - userCount, MAX_TICKETS - total);
++    if (toInsert <= 0) {
++      await client.query('ROLLBACK');
++      return { success: false, error: userCount >= MAX_TICKETS_PER_USER ? 'Limit Reached' : 'Sold Out' };
++    }
++
++    const inserted: { id: number; userId: string; createdAt: Date }[] = [];
++    for (let i = 0; i < toInsert; i++) {
++      const insertResult = await client.query(
++        'INSERT INTO tickets (user_id) VALUES ($1) RETURNING id, user_id, created_at',
++        [userId]
++      );
++      const row = insertResult.rows[0];
++      inserted.push({
++        id: row.id,
++        userId: row.user_id,
++        createdAt: row.created_at,
++      });
++    }
++
++    await client.query('COMMIT');
++    const newTotal = total + inserted.length;
++    return {
++      success: true,
++      tickets: inserted,
++      remaining: MAX_TICKETS - newTotal,
++    };
++  } catch (e) {
++    await client.query('ROLLBACK').catch(() => {});
++    throw e;
++  } finally {
++    client.release();
++  }
++}
++
++export async function getRaffleState(userId?: string | null, pgPool?: Pool): Promise<RaffleState> {
++  const pool = pgPool || getPool();
++  const metaResult = await pool.query(
++    'SELECT status, winning_ticket_id FROM raffle_meta WHERE id = $1',
++    [RAFFLE_META_ID]
++  );
++  if (metaResult.rows.length === 0) {
++    return { status: 'OPEN', remainingTickets: 100 };
++  }
++  const status = metaResult.rows[0].status as RaffleStatus;
++  const winningTicketId = metaResult.rows[0].winning_ticket_id as number | null;
++
++  const countResult = await pool.query('SELECT COUNT(*)::int AS count FROM tickets');
++  const total = countResult.rows[0].count;
++  const remainingTickets = MAX_TICKETS - total;
++
++  const state: RaffleState = { status, remainingTickets };
++  if (status === 'CLOSED' && winningTicketId != null) {
++    state.winningTicketId = winningTicketId;
++  }
++  if (userId) {
++    const userResult = await pool.query(
++      'SELECT COUNT(*)::int AS count FROM tickets WHERE user_id = $1',
++      [userId]
++    );
++    state.userTicketCount = userResult.rows[0].count;
++  }
++  return state;
++}
++
++/**
++ * Winner selection using Node.js cryptographically secure randomness (crypto.randomInt).
++ * Persists winning ticket and sets raffle to CLOSED.
++ */
++export async function drawWinner(pgPool?: Pool): Promise<{ success: true; winningTicketId: number } | { success: false; error: string }> {
++  const pool = pgPool || getPool();
++  const client = await pool.connect();
++  try {
++    await client.query('BEGIN');
++    const metaResult = await client.query(
++      'SELECT status FROM raffle_meta WHERE id = $1 FOR UPDATE',
++      [RAFFLE_META_ID]
++    );
++    if (metaResult.rows.length === 0) {
++      await client.query('ROLLBACK');
++      return { success: false, error: 'Raffle not initialized' };
++    }
++    if (metaResult.rows[0].status !== 'OPEN') {
++      await client.query('ROLLBACK');
++      return { success: false, error: 'Raffle already closed' };
++    }
++
++    const idsResult = await client.query('SELECT id FROM tickets ORDER BY id');
++    const ticketIds = idsResult.rows.map((r) => r.id as number);
++    if (ticketIds.length === 0) {
++      await client.query('ROLLBACK');
++      return { success: false, error: 'No tickets sold' };
++    }
++
++    const index = randomInt(0, ticketIds.length);
++    const winningTicketId = ticketIds[index];
++
++    await client.query(
++      'UPDATE raffle_meta SET status = $1, winning_ticket_id = $2, updated_at = now() WHERE id = $3',
++      ['CLOSED', winningTicketId, RAFFLE_META_ID]
++    );
++    await client.query('COMMIT');
++    return { success: true, winningTicketId };
++  } catch (e) {
++    await client.query('ROLLBACK').catch(() => {});
++    throw e;
++  } finally {
++    client.release();
++  }
++}
++
++/**
++ * Pure function for winner selection from a pool of ticket IDs (for unit testing fairness).
++ * Uses crypto.randomInt; never returns ID outside the pool.
++ */
++export function selectWinningTicketId(ticketIds: number[]): number {
++  if (ticketIds.length === 0) throw new Error('Cannot draw from empty pool');
++  const index = randomInt(0, ticketIds.length);
++  return ticketIds[index];
++}
+diff --git a/repository_after/server/routes.ts b/repository_after/server/routes.ts
+new file mode 100644
+index 00000000..3502d0ae
+--- /dev/null
++++ b/repository_after/server/routes.ts
+@@ -0,0 +1,38 @@
++import { Router, Request, Response } from 'express';
++import { purchaseTickets, getRaffleState, drawWinner } from './raffleService';
++import { requireAdmin } from './adminAuth';
++
++const router = Router();
++
++router.post('/purchase', async (req: Request, res: Response) => {
++  const userId = req.body?.userId;
++  const quantity = req.body?.quantity;
++  if (typeof userId !== 'string' || !userId.trim()) {
++    res.status(400).json({ success: false, error: 'Invalid request' });
++    return;
++  }
++  const result = await purchaseTickets(userId.trim(), typeof quantity === 'number' ? quantity : 1);
++  if (result.success) {
++    res.status(200).json(result);
++  } else {
++    const status = result.error === 'Raffle Closed' ? 400 : result.error === 'Sold Out' || result.error === 'Limit Reached' ? 409 : 400;
++    res.status(status).json(result);
++  }
++});
++
++router.get('/raffle/state', async (req: Request, res: Response) => {
++  const userId = typeof req.query.userId === 'string' ? req.query.userId : undefined;
++  const state = await getRaffleState(userId || null);
++  res.json(state);
++});
++
++router.post('/admin/draw-winner', requireAdmin, async (_req: Request, res: Response) => {
++  const result = await drawWinner();
++  if (result.success) {
++    res.status(200).json({ success: true, winningTicketId: result.winningTicketId });
++  } else {
++    res.status(400).json({ success: false, error: result.error });
++  }
++});
++
++export default router;
+diff --git a/repository_after/server/schema.sql b/repository_after/server/schema.sql
+new file mode 100644
+index 00000000..c8a8e48e
+--- /dev/null
++++ b/repository_after/server/schema.sql
+@@ -0,0 +1,21 @@
++-- Raffle meta: single row (id=1), status OPEN|CLOSED, winning_ticket_id only set after draw
++CREATE TABLE IF NOT EXISTS raffle_meta (
++  id SERIAL PRIMARY KEY,
++  status TEXT NOT NULL CHECK (status IN ('OPEN', 'CLOSED')),
++  winning_ticket_id INTEGER NULL,
++  created_at TIMESTAMPTZ DEFAULT now(),
++  updated_at TIMESTAMPTZ DEFAULT now()
++);
++
++-- Tickets: one row per ticket, user_id for per-user limit
++CREATE TABLE IF NOT EXISTS tickets (
++  id SERIAL PRIMARY KEY,
++  user_id TEXT NOT NULL,
++  created_at TIMESTAMPTZ DEFAULT now()
++);
++
++CREATE INDEX IF NOT EXISTS idx_tickets_user_id ON tickets(user_id);
++
++-- Seed single raffle row if not present
++INSERT INTO raffle_meta (id, status) VALUES (1, 'OPEN')
++ON CONFLICT (id) DO NOTHING;
+diff --git a/repository_after/server/tsconfig.json b/repository_after/server/tsconfig.json
+new file mode 100644
+index 00000000..aac29153
+--- /dev/null
++++ b/repository_after/server/tsconfig.json
+@@ -0,0 +1,13 @@
++{
++  "compilerOptions": {
++    "target": "ES2020",
++    "module": "commonjs",
++    "strict": true,
++    "esModuleInterop": true,
++    "skipLibCheck": true,
++    "outDir": "./dist",
++    "rootDir": "."
++  },
++  "include": ["./**/*.ts"],
++  "exclude": ["node_modules", "dist"]
++}

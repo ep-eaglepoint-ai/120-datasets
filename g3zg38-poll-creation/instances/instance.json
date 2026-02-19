@@ -1,0 +1,11 @@
+{
+            "instance_id": "G3ZG38",
+            "problem_statement": "Build a real‑time poll creation and voting web application using React 18 with TypeScript and Tailwind CSS, backed by Node.js/Express with Socket.IO for live vote updates and MongoDB for document storage. Implement browser fingerprinting or localStorage tokens to prevent duplicate votes, generate short unique shareable links with nanoid, and display results with vote counts and visual charts. The system must allow anonymous voting, real‑time result tracking for creators, and a seamless, responsive user experience without requiring accounts.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/g3zg38-poll-creation",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

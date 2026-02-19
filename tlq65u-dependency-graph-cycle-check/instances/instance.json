@@ -1,0 +1,11 @@
+{
+            "instance_id": "TLQ65U",
+            "problem_statement": "In large-scale build systems and task scheduling platforms, tasks often depend on the completion of other tasks, forming a directed dependency graph that determines execution order; if this graph contains a cycle, the system becomes impossible to execute because at least one task is waiting on itself either directly or indirectly, resulting in a deadlock that can halt builds, deployments, or automated workflows. Given the potentially massive size of such systems, with tens of thousands of tasks and dependencies, it is essential to detect these circular dependencies efficiently and reliably before execution begins. The goal of this task is to determine whether a directed task dependency graph contains any cycle, ensuring that invalid configurations are identified early, system resources are not wasted, and the build process can complete successfully without runtime failures.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/tlq65u-dependency-graph-cycle-check",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

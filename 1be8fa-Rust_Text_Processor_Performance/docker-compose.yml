@@ -1,0 +1,22 @@
+services:
+  before:
+    build:
+      context: .
+      args:
+        REPO_NAME: repository_before
+    image: text-processor-before:latest
+
+  after:
+    build:
+      context: .
+      args:
+        REPO_NAME: repository_after
+    image: text-processor-after:latest
+
+  evaluate:
+    build:
+      context: .
+    image: text-processor-eval:latest
+    command: [ "sh", "-c", "cd evaluation && cargo run --release" ]
+    volumes:
+      - ./evaluation/reports:/usr/src/app/evaluation/reports

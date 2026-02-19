@@ -1,0 +1,3 @@
+
+# Test runner (docker-compose runs `pytest`)
+pytest>=7.0

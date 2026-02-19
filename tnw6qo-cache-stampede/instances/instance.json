@@ -1,0 +1,11 @@
+{
+            "instance_id": "TNW6QO",
+            "problem_statement": "Modern backend systems often rely on caching to shield expensive computations from repeated execution, but under high concurrency a simple cache miss can trigger a thundering-herd problem where many threads redundantly perform the same costly work, waste resources, and produce inconsistent failure behavior. This problem is especially critical in latency-sensitive and high-throughput systems, where incorrect synchronization can silently degrade performance, exhaust compute capacity, or cause cascading failures. Solving this correctly is non-trivial because the solution must coordinate concurrent callers without global locks, avoid blocking unrelated keys, propagate both successes and failures consistently, and clean up internal state to remain stable under sustained load. A robust design here directly impacts system reliability, scalability, and correctness, making it a foundational concurrency problem rather than a simple caching optimization.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/tnw6qo-cache-stampede",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

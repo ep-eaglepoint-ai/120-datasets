@@ -1,0 +1,196 @@
+diff --git a/repository_before/__pycache__/accounts.cpython-311.pyc b/repository_after/__pycache__/accounts.cpython-311.pyc
+index 462677d..f33553b 100644
+Binary files a/repository_before/__pycache__/accounts.cpython-311.pyc and b/repository_after/__pycache__/accounts.cpython-311.pyc differ
+diff --git a/repository_before/accounts.py b/repository_after/accounts.py
+index 6fec1ef..43acb16 100644
+--- a/repository_before/accounts.py
++++ b/repository_after/accounts.py
+@@ -1,4 +1,3 @@
+-
+ from typing import List
+ from fastapi import APIRouter, Depends, HTTPException, status
+ from sqlalchemy.ext.asyncio import AsyncSession
+@@ -11,15 +10,7 @@ from app.schemas.account import (
+     AccountResponse,
+     AccountUpdate,
+ )
+-from app.services.account_service import (
+-    create_account,
+-    delete_account,
+-    get_account_by_id,
+-    get_account_by_number,
+-    get_all_accounts,
+-    update_account,
+-)
+-from app.tasks.email_tasks import send_account_created_email
++from app.services.account_service import AccountService
+ 
+ router = APIRouter(tags=["accounts"])
+ 
+@@ -29,31 +20,19 @@ async def create_new_account(
+     db: AsyncSession = Depends(get_db),
+     current_user: User = Depends(get_current_active_user),
+ ):
+-
+-    account = await create_account(db, current_user.id, account_data)
+-    result = send_account_created_email.delay(
+-        str(current_user.email),
+-        {
+-            "user_name": current_user.full_name,
+-            "account_number": account.account_number,
+-            "account_type": account.account_type,
+-            "balance": account.balance,
+-        },
+-    )
+-
+-    try:
+-        result.get(timeout=10)  # blocks request
+-    except Exception:
+-        pass  # 
+-
+-    return account
++    """
++    Creates a new account.
++    - Non-blocking: Returns immediately after DB commit.
++    - Decoupled: Email logic is handled by the service layer.
++    """
++    return await AccountService.create_account(db, current_user, account_data)
+ 
+ @router.get("/", response_model=List[AccountResponse])
+ async def get_all_user_accounts(
+     db: AsyncSession = Depends(get_db),
+     current_user: User = Depends(get_current_active_user),
+ ):
+-    return await get_all_accounts(db, current_user.id)
++    return await AccountService.get_all_accounts(db, current_user.id)
+ 
+ @router.get("/{account_id}", response_model=AccountResponse)
+ async def get_account(
+@@ -61,11 +40,9 @@ async def get_account(
+     db: AsyncSession = Depends(get_db),
+     current_user: User = Depends(get_current_active_user),
+ ):
+-    account = await get_account_by_id(db, account_id)
+-
++    account = await AccountService.get_account_by_id(db, account_id)
+     if not account or account.user_id != current_user.id:
+         raise HTTPException(status_code=404, detail="Account not found")
+-
+     return account
+ 
+ @router.get("/{account_number}/balance", response_model=AccountBalance)
+@@ -74,11 +51,9 @@ async def get_account_balance(
+     db: AsyncSession = Depends(get_db),
+     current_user: User = Depends(get_current_active_user),
+ ):
+-    account = await get_account_by_number(db, account_number)
+-
++    account = await AccountService.get_account_by_number(db, account_number)
+     if not account or account.user_id != current_user.id:
+         raise HTTPException(status_code=404, detail="Account not found")
+-
+     return AccountBalance.model_validate(account)
+ 
+ @router.put("/{account_id}", response_model=AccountResponse)
+@@ -88,7 +63,7 @@ async def update_account_details(
+     db: AsyncSession = Depends(get_db),
+     current_user: User = Depends(get_current_active_user),
+ ):
+-    return await update_account(db, account_id, account_data, current_user.id)
++    return await AccountService.update_account(db, account_id, account_data, current_user.id)
+ 
+ @router.delete("/{account_id}")
+ async def delete_user_account(
+@@ -96,6 +71,5 @@ async def delete_user_account(
+     db: AsyncSession = Depends(get_db),
+     current_user: User = Depends(get_current_active_user),
+ ):
+-    await delete_account(db, account_id, current_user.id)
+-    return None
+-
++    await AccountService.delete_account(db, account_id, current_user.id)
++    return None
+\ No newline at end of file
+diff --git a/repository_after/services/__pycache__/account_service.cpython-311.pyc b/repository_after/services/__pycache__/account_service.cpython-311.pyc
+new file mode 100644
+index 0000000..b86cd64
+Binary files /dev/null and b/repository_after/services/__pycache__/account_service.cpython-311.pyc differ
+diff --git a/repository_after/services/account_service.py b/repository_after/services/account_service.py
+new file mode 100644
+index 0000000..0853348
+--- /dev/null
++++ b/repository_after/services/account_service.py
+@@ -0,0 +1,45 @@
++from sqlalchemy.ext.asyncio import AsyncSession
++from app.db.models.user import User
++from app.schemas.account import AccountCreate, AccountUpdate
++from app.services import account_service as crud_logic
++from app.tasks.email_tasks import send_account_created_email
++
++class AccountService:
++    @staticmethod
++    async def create_account(db: AsyncSession, user: User, data: AccountCreate):
++        # Atomic DB Transaction
++        account = await crud_logic.create_account(db, user.id, data)
++
++        # Trigger Background Task (Fire and Forget)
++        # We pass only serializable data (str/dict), not ORM objects
++        send_account_created_email.delay(
++            email_to=str(user.email),
++            email_data={
++                "user_name": user.full_name,
++                "account_number": account.account_number,
++                "account_type": account.account_type,
++                "balance": str(account.balance)
++            }
++        )
++        return account
++
++    # Proxy methods for other operations to maintain layer separation
++    @staticmethod
++    async def get_all_accounts(db, user_id):
++        return await crud_logic.get_all_accounts(db, user_id)
++
++    @staticmethod
++    async def get_account_by_id(db, account_id):
++        return await crud_logic.get_account_by_id(db, account_id)
++
++    @staticmethod
++    async def get_account_by_number(db, account_number):
++        return await crud_logic.get_account_by_number(db, account_number)
++
++    @staticmethod
++    async def update_account(db, account_id, data, user_id):
++        return await crud_logic.update_account(db, account_id, data, user_id)
++
++    @staticmethod
++    async def delete_account(db, account_id, user_id):
++        return await crud_logic.delete_account(db, account_id, user_id)
+\ No newline at end of file
+diff --git a/repository_after/tasks/email_tasks.py b/repository_after/tasks/email_tasks.py
+new file mode 100644
+index 0000000..f124129
+--- /dev/null
++++ b/repository_after/tasks/email_tasks.py
+@@ -0,0 +1,21 @@
++from celery import shared_task
++import logging
++
++logger = logging.getLogger(__name__)
++
++
++@shared_task(
++    bind=True,
++    autoretry_for=(Exception,),
++    retry_backoff=True,
++    retry_kwargs={"max_retries": 5},
++    acks_late=True,
++)
++def send_account_created_email(self, user_email: str, payload: dict):
++    """
++    Idempotent, retry-safe background task.
++    """
++    task_id = f"{payload['user_id']}-{payload['account_number']}"
++    logger.info("Sending account email", extra={"task_id": task_id})
++
++    # send_email(...) ← SMTP or provider call

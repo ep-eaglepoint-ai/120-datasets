@@ -1,0 +1,11 @@
+{
+            "instance_id": "DD2552",
+            "problem_statement": "In a high-volume PostgreSQL system, allocating inventory for orders using per-item queries and updates can create performance bottlenecks and increase the risk of partial allocations under concurrency. A function is needed that efficiently checks and reserves stock for all items in an order, ensuring that inventory is only updated if all items are available, locks are held for minimal time, and allocations remain consistent even under high concurrency. The solution must preserve exact allocation behavior, handle large orders efficiently, and maintain the existing function signature and PL/pgSQL implementation without using temporary tables, schema changes, or additional notices.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/dd2552-inventory-allocation",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

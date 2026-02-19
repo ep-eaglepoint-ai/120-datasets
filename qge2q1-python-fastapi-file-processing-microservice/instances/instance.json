@@ -1,0 +1,11 @@
+{
+            "instance_id": "QGE2Q1",
+            "problem_statement": "The data team manually processes CSV and Excel files uploaded by clients, causing 48-hour turnaround delays. Files range from 10KB to 500MB. Processing includes validation, transformation, and loading into PostgreSQL. Large files block the API, timing out after 30 seconds. The team needs an async file processing service with status tracking, webhook notifications on completion, and ability to handle 50 concurrent uploads without degrading response times for status checks.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/qge2q1-python-fastapi-file-processing-microservice",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

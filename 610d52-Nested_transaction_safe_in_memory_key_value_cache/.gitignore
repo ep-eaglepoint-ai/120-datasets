@@ -1,0 +1,24 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Evaluation reports - all evaluation reports should be ignored
+evaluation/20*/
+evaluation/*/report.json
+evaluation/reports/
+evaluation/report/
+report.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

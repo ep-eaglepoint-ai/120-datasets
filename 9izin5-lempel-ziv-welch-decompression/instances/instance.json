@@ -1,0 +1,11 @@
+{
+            "instance_id": "9IZIN5",
+            "problem_statement": "Debug a Python LZW decompression implementation that reads compressed binary files, removes a size prefix, decompresses data via LZW dictionary reconstruction, and writes output—currently producing incorrect or incomplete results despite running without errors. Identify and fix all defects in the file reading, prefix removal, decompression logic, or file writing stages to ensure byte-identical output matches the original uncompressed data when round-tripped through a valid LZW encoder. The solution must preserve the algorithm’s core logic, maintain naming consistency, and include a minimal test case demonstrating the bug and confirming the fix while guaranteeing no data loss during writing.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/9izin5-lempel-ziv-welch-decompression",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

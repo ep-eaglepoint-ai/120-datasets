@@ -1,0 +1,1436 @@
+diff -ruN repository_before/app.ts repository_after/app.ts
+--- repository_before/app.ts	2026-02-11 23:24:48
++++ repository_after/app.ts	1970-01-01 03:00:00
+@@ -1,116 +0,0 @@
+-import express, { Request, Response, NextFunction } from 'express';
+-import { createServer } from 'http';
+-import { config } from './config';
+-import { SensorEvent, BatchPayload } from './types';
+-import { addEventToQueue, addEventsToQueue, getQueueStats, startWorker } from './queue';
+-import { setupWebSocket, getConnectedClients } from './websocket';
+-import { getEventStats } from './database';
+-
+-const app = express();
+-app.use(express.json({ limit: '10mb' }));
+-
+-function validateEvent(event: unknown): event is SensorEvent {
+-    if (typeof event !== 'object' || event === null) return false;
+-    const e = event as Record<string, unknown>;
+-    return (
+-        typeof e.event_id === 'string' &&
+-        typeof e.device_id === 'string' &&
+-        typeof e.sensor_type === 'string' &&
+-        typeof e.value === 'number' &&
+-        typeof e.unit === 'string' &&
+-        typeof e.timestamp === 'string'
+-    );
+-}
+-
+-app.post('/events', async (req: Request, res: Response, next: NextFunction) => {
+-    try {
+-        const event = req.body;
+-        
+-        if (!validateEvent(event)) {
+-            return res.status(400).json({ error: 'Invalid event format' });
+-        }
+-        
+-        await addEventToQueue(event);
+-        
+-        res.status(202).json({ status: 'accepted', event_id: event.event_id });
+-    } catch (error) {
+-        next(error);
+-    }
+-});
+-
+-app.post('/events/batch', async (req: Request, res: Response, next: NextFunction) => {
+-    try {
+-        const payload: BatchPayload = req.body;
+-        
+-        if (!Array.isArray(payload.events)) {
+-            return res.status(400).json({ error: 'Invalid batch format' });
+-        }
+-        
+-        const validEvents: SensorEvent[] = [];
+-        const invalidIndexes: number[] = [];
+-        
+-        for (let i = 0; i < payload.events.length; i++) {
+-            if (validateEvent(payload.events[i])) {
+-                validEvents.push(payload.events[i]);
+-            } else {
+-                invalidIndexes.push(i);
+-            }
+-        }
+-        
+-        await addEventsToQueue(validEvents);
+-        
+-        res.status(202).json({
+-            status: 'accepted',
+-            accepted: validEvents.length,
+-            rejected: invalidIndexes.length,
+-            invalid_indexes: invalidIndexes,
+-        });
+-    } catch (error) {
+-        next(error);
+-    }
+-});
+-
+-app.get('/stats', async (req: Request, res: Response, next: NextFunction) => {
+-    try {
+-        const queueStats = await getQueueStats();
+-        const dbStats = await getEventStats();
+-        
+-        res.json({
+-            queue: queueStats,
+-            database: dbStats,
+-            websocket_clients: getConnectedClients(),
+-        });
+-    } catch (error) {
+-        next(error);
+-    }
+-});
+-
+-app.get('/health', (req: Request, res: Response) => {
+-    res.json({ status: 'healthy' });
+-});
+-
+-app.use((error: Error, req: Request, res: Response, next: NextFunction) => {
+-    console.error('Unhandled error:', error);
+-    res.status(500).json({ error: 'Internal server error' });
+-});
+-
+-const server = createServer(app);
+-
+-const wss = setupWebSocket(server);
+-
+-startWorker();
+-
+-export function getServer(): ReturnType<typeof createServer> {
+-    return server;
+-}
+-
+-if (require.main === module) {
+-    server.listen(config.port, () => {
+-        console.log(`Server running on port ${config.port}`);
+-    });
+-    
+-    process.on('SIGTERM', () => {
+-        console.log('Shutting down...');
+-        process.exit(0);
+-    });
+-}
+diff -ruN repository_before/circuitBreaker.ts repository_after/circuitBreaker.ts
+--- repository_before/circuitBreaker.ts	2026-02-11 23:24:48
++++ repository_after/circuitBreaker.ts	1970-01-01 03:00:00
+@@ -1,31 +0,0 @@
+-export class DatabaseUnavailableError extends Error {
+-    constructor(message: string) {
+-        super(message);
+-        this.name = 'DatabaseUnavailableError';
+-        Object.setPrototypeOf(this, DatabaseUnavailableError.prototype);
+-    }
+-}
+-
+-export function createCircuitBreaker(_options?: { failureThreshold?: number; cooldownMs?: number }) {
+-    return {
+-        async execute<T>(fn: () => Promise<T>): Promise<T> {
+-            return fn();
+-        },
+-        isOpen(): boolean {
+-            return false;
+-        },
+-        getState(): 'closed' | 'open' | 'half-open' {
+-            return 'closed';
+-        },
+-        reset(): void {},
+-    };
+-}
+-
+-let defaultBreaker: ReturnType<typeof createCircuitBreaker> | null = null;
+-
+-export function getCircuitBreaker(): ReturnType<typeof createCircuitBreaker> {
+-    if (!defaultBreaker) {
+-        defaultBreaker = createCircuitBreaker();
+-    }
+-    return defaultBreaker;
+-}
+diff -ruN repository_before/config.ts repository_after/config.ts
+--- repository_before/config.ts	2026-02-11 23:04:31
++++ repository_after/config.ts	1970-01-01 03:00:00
+@@ -1,21 +0,0 @@
+-export const config = {
+-    port: parseInt(String(process.env.PORT || '3000'), 10),
+-    redis: {
+-        host: process.env.REDIS_HOST || 'localhost',
+-        port: parseInt(String(process.env.REDIS_PORT || '6379'), 10),
+-    },
+-    database: {
+-        host: process.env.DB_HOST || 'localhost',
+-        port: parseInt(String(process.env.DB_PORT || '5432'), 10),
+-        user: process.env.DB_USER || 'postgres',
+-        password: process.env.DB_PASSWORD || 'postgres',
+-        database: process.env.DB_NAME || 'events',
+-        max: parseInt(String(process.env.DB_POOL_MAX || '20'), 10),
+-    },
+-    queue: {
+-        name: process.env.QUEUE_NAME || 'event-processing',
+-        concurrency: parseInt(String(process.env.QUEUE_CONCURRENCY || '5'), 10),
+-        backpressureThreshold: parseInt(String(process.env.QUEUE_BACKPRESSURE_THRESHOLD || '100000'), 10),
+-    },
+-};
+-
+diff -ruN repository_before/database.ts repository_after/database.ts
+--- repository_before/database.ts	2026-02-11 23:24:48
++++ repository_after/database.ts	1970-01-01 03:00:00
+@@ -1,63 +0,0 @@
+-import { Client } from 'pg';
+-import { config } from './config';
+-import { ProcessedEvent } from './types';
+-
+-export async function insertEvent(event: ProcessedEvent): Promise<void> {
+-    const client = new Client(config.database);
+-    await client.connect();
+-    
+-    try {
+-        await client.query(
+-            `INSERT INTO events (event_id, device_id, sensor_type, value, unit, timestamp, metadata, processed_at, received_at)
+-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+-            [
+-                event.event_id,
+-                event.device_id,
+-                event.sensor_type,
+-                event.value,
+-                event.unit,
+-                event.timestamp,
+-                JSON.stringify(event.metadata || {}),
+-                event.processed_at,
+-                event.received_at,
+-            ]
+-        );
+-    } finally {
+-        await client.end();
+-    }
+-}
+-
+-export async function getEventStats(): Promise<{ total: number }> {
+-    const client = new Client(config.database);
+-    await client.connect();
+-    
+-    try {
+-        const result = await client.query('SELECT COUNT(*) as total FROM events');
+-        return { total: parseInt(result.rows[0].total) };
+-    } finally {
+-        await client.end();
+-    }
+-}
+-
+-export async function insertEventsBatch(events: ProcessedEvent[]): Promise<void> {
+-    for (const event of events) {
+-        await insertEvent(event);
+-    }
+-}
+-
+-export async function closePool(): Promise<void> {
+-    return Promise.resolve();
+-}
+-
+-export async function isDatabaseHealthy(): Promise<boolean> {
+-    const client = new Client(config.database);
+-    try {
+-        await client.connect();
+-        await client.query('SELECT 1');
+-        return true;
+-    } catch {
+-        return false;
+-    } finally {
+-        await client.end();
+-    }
+-}
+diff -ruN repository_before/db-schema.sql repository_after/db-schema.sql
+--- repository_before/db-schema.sql	1970-01-01 03:00:00
++++ repository_after/db-schema.sql	2026-02-11 23:04:31
+@@ -0,0 +1,13 @@
++
++
++CREATE TABLE IF NOT EXISTS events (
++    event_id TEXT PRIMARY KEY,
++    device_id TEXT NOT NULL,
++    sensor_type TEXT NOT NULL,
++    value DOUBLE PRECISION NOT NULL,
++    unit TEXT NOT NULL,
++    timestamp TIMESTAMPTZ NOT NULL,
++    metadata JSONB DEFAULT '{}',
++    processed_at TIMESTAMPTZ NOT NULL,
++    received_at TIMESTAMPTZ NOT NULL
++);
+diff -ruN repository_before/metrics.ts repository_after/metrics.ts
+--- repository_before/metrics.ts	2026-02-11 23:24:48
++++ repository_after/metrics.ts	1970-01-01 03:00:00
+@@ -1,54 +0,0 @@
+-let totalReceived = 0;
+-let totalProcessed = 0;
+-let totalFailed = 0;
+-const processedTimestamps: number[] = [];
+-const WINDOW_MS = 60_000;
+-
+-export function incrementReceived(count: number): void {
+-    totalReceived += count;
+-}
+-
+-export function incrementProcessed(count: number): void {
+-    totalProcessed += count;
+-    const now = Date.now();
+-    for (let i = 0; i < count; i++) processedTimestamps.push(now);
+-    const cutoff = now - WINDOW_MS;
+-    while (processedTimestamps.length > 0 && processedTimestamps[0] < cutoff) {
+-        processedTimestamps.shift();
+-    }
+-}
+-
+-export function incrementFailed(count: number): void {
+-    totalFailed += count;
+-}
+-
+-export function getTotalReceived(): number {
+-    return totalReceived;
+-}
+-
+-export function getTotalProcessed(): number {
+-    return totalProcessed;
+-}
+-
+-export function getTotalFailed(): number {
+-    return totalFailed;
+-}
+-
+-export function getEventsPerSecond(): number {
+-    const now = Date.now();
+-    const cutoff = now - WINDOW_MS;
+-    const inWindow = processedTimestamps.filter((t) => t >= cutoff).length;
+-    return WINDOW_MS > 0 ? (inWindow / WINDOW_MS) * 1000 : 0;
+-}
+-
+-export function getMemoryUsageMb(): number {
+-    const usage = process.memoryUsage();
+-    return Math.round((usage.heapUsed ?? 0) / 1024 / 1024);
+-}
+-
+-export function resetMetrics(): void {
+-    totalReceived = 0;
+-    totalProcessed = 0;
+-    totalFailed = 0;
+-    processedTimestamps.length = 0;
+-}
+diff -ruN repository_before/parseLargeJson.ts repository_after/parseLargeJson.ts
+--- repository_before/parseLargeJson.ts	2026-02-12 05:53:51
++++ repository_after/parseLargeJson.ts	1970-01-01 03:00:00
+@@ -1,3 +0,0 @@
+-export function parseLargeJsonInWorker(buffer: Buffer): Promise<unknown> {
+-    return Promise.resolve(JSON.parse(buffer.toString('utf8')));
+-}
+diff -ruN repository_before/queue.ts repository_after/queue.ts
+--- repository_before/queue.ts	2026-02-11 23:24:48
++++ repository_after/queue.ts	1970-01-01 03:00:00
+@@ -1,93 +0,0 @@
+-import { Queue, Worker, Job } from 'bullmq';
+-import { EventEmitter } from 'events';
+-import { config } from './config';
+-import { SensorEvent, ProcessedEvent } from './types';
+-import { insertEvent } from './database';
+-
+-export const eventEmitter = new EventEmitter();
+-
+-export class QueueOverloadedError extends Error {
+-    constructor(message: string) {
+-        super(message);
+-        this.name = 'QueueOverloadedError';
+-        Object.setPrototypeOf(this, QueueOverloadedError.prototype);
+-    }
+-}
+-
+-export const eventQueue = new Queue(config.queue.name, {
+-    connection: config.redis,
+-});
+-
+-let workerInstance: Worker | null = null;
+-
+-export function startWorker(): Worker {
+-    const worker = new Worker(
+-        config.queue.name,
+-        async (job: Job<SensorEvent>) => {
+-            const event = job.data;
+-            
+-            const processedEvent: ProcessedEvent = {
+-                ...event,
+-                timestamp: new Date(event.timestamp).toISOString(),
+-                processed_at: new Date(),
+-                received_at: new Date(job.timestamp || Date.now()),
+-            };
+-            
+-            await insertEvent(processedEvent);
+-            
+-            eventEmitter.emit('event_processed', processedEvent);
+-        },
+-        {
+-            connection: config.redis,
+-        }
+-    );
+-    
+-    worker.on('completed', (job) => {
+-        console.log(`Job ${job.id} completed`);
+-    });
+-    
+-    worker.on('failed', (job, err) => {
+-        console.error(`Job ${job?.id} failed:`, err);
+-    });
+-
+-    workerInstance = worker;
+-    return worker;
+-}
+-
+-export function getWorker(): Worker | null {
+-    return workerInstance;
+-}
+-
+-export async function addEventToQueue(event: SensorEvent): Promise<void> {
+-    await eventQueue.add('process-event', event);
+-}
+-
+-export async function addEventsToQueue(events: SensorEvent[]): Promise<void> {
+-    for (const event of events) {
+-        await eventQueue.add('process-event', event);
+-    }
+-}
+-
+-export async function getQueueStats(): Promise<{ waiting: number; active: number }> {
+-    const waiting = await eventQueue.getWaitingCount();
+-    const active = await eventQueue.getActiveCount();
+-    return { waiting, active };
+-}
+-
+-export async function getQueueDepth(): Promise<number> {
+-    const waiting = await eventQueue.getWaitingCount();
+-    const active = await eventQueue.getActiveCount();
+-    return waiting + active;
+-}
+-
+-export function canAcceptJob(): Promise<boolean> {
+-    return Promise.resolve(true);
+-}
+-
+-export function subscribeToProcessedEvents(broadcastFn: (event: ProcessedEvent) => void): void {
+-    eventEmitter.on('event_processed', broadcastFn);
+-}
+-
+-export function removeProcessedEventsListener(broadcastFn: (event: ProcessedEvent) => void): void {
+-    eventEmitter.removeListener('event_processed', broadcastFn);
+-}
+diff -ruN repository_before/shutdown.ts repository_after/shutdown.ts
+--- repository_before/shutdown.ts	2026-02-12 05:53:51
++++ repository_after/shutdown.ts	1970-01-01 03:00:00
+@@ -1,24 +0,0 @@
+-import { Server } from 'http';
+-import { WebSocketServer } from 'ws';
+-
+-export type ShutdownHandles = {
+-    server: Server;
+-    wss: WebSocketServer | null;
+-};
+-
+-let isShuttingDown = false;
+-
+-export function isShutdownInProgress(): boolean {
+-    return isShuttingDown;
+-}
+-
+-export function resetShutdownState(): void {
+-    isShuttingDown = false;
+-}
+-
+-export async function gracefulShutdown(handles: ShutdownHandles): Promise<void> {
+-    if (isShuttingDown) return;
+-    isShuttingDown = true;
+-    console.log('Shutting down...');
+-    process.exit(0);
+-}
+diff -ruN repository_before/src/app.ts repository_after/src/app.ts
+--- repository_before/src/app.ts	1970-01-01 03:00:00
++++ repository_after/src/app.ts	2026-02-11 23:04:31
+@@ -0,0 +1,185 @@
++import express, { Request, Response, NextFunction } from 'express';
++import { createServer } from 'http';
++import { config } from './config';
++import { SensorEvent, BatchPayload } from './types';
++import {
++    addEventToQueue,
++    addEventsToQueue,
++    getQueueStats,
++    getQueueDepth,
++    startWorker,
++    subscribeToProcessedEvents,
++    QueueOverloadedError,
++} from './queue';
++import { setupWebSocket, getBroadcastFn, getConnectedClients } from './websocket';
++import { getEventStats, isDatabaseHealthy } from './database';
++import { getCircuitBreaker } from './circuitBreaker';
++import { requestTimeoutMiddleware } from './timeoutMiddleware';
++import { gracefulShutdown, ShutdownHandles } from './shutdown';
++import { getTotalReceived, getTotalProcessed, getTotalFailed, getEventsPerSecond, getMemoryUsageMb, incrementReceived } from './metrics';
++import { parseLargeJsonInWorker } from './parseLargeJson';
++
++const app = express();
++
++app.use((req: Request, res: Response, next: NextFunction) => {
++    if (req.path === '/events/batch' && req.method === 'POST') return next();
++    return express.json({ limit: '10mb' })(req, res, next);
++});
++app.use(requestTimeoutMiddleware());
++
++function validateEvent(event: unknown): event is SensorEvent {
++    if (typeof event !== 'object' || event === null) return false;
++    const e = event as Record<string, unknown>;
++    return (
++        typeof e.event_id === 'string' &&
++        typeof e.device_id === 'string' &&
++        typeof e.sensor_type === 'string' &&
++        typeof e.value === 'number' &&
++        typeof e.unit === 'string' &&
++        typeof e.timestamp === 'string'
++    );
++}
++
++app.post('/events', async (req: Request, res: Response, next: NextFunction) => {
++    try {
++        const event = req.body;
++        if (!validateEvent(event)) {
++            return res.status(400).json({ error: 'Invalid event format' });
++        }
++        await addEventToQueue(event);
++        incrementReceived(1);
++        res.status(202).json({ status: 'accepted', event_id: event.event_id });
++    } catch (error) {
++        if (error instanceof QueueOverloadedError) {
++            return res.status(503).json({ error: 'Service Unavailable', reason: 'Queue overloaded' });
++        }
++        next(error);
++    }
++});
++
++const rawJsonParser = express.raw({ type: 'application/json', limit: '10mb' });
++
++app.post('/events/batch', rawJsonParser, async (req: Request, res: Response, next: NextFunction) => {
++    if (Buffer.isBuffer(req.body) && req.body.length > config.largePayloadThresholdBytes) {
++        try {
++            req.body = await parseLargeJsonInWorker(req.body);
++        } catch (err) {
++            return next(err);
++        }
++    } else if (Buffer.isBuffer(req.body)) {
++        try {
++            req.body = JSON.parse(req.body.toString('utf8'));
++        } catch (err) {
++            return next(err);
++        }
++    }
++    next();
++}, async (req: Request, res: Response, next: NextFunction) => {
++    try {
++        const payload = req.body as BatchPayload;
++        if (!payload || !Array.isArray(payload.events)) {
++            return res.status(400).json({ error: 'Invalid batch format' });
++        }
++        if (payload.events.length > config.maxEventsPerBatch) {
++            return res.status(400).json({ error: 'Batch size exceeds maximum ' + config.maxEventsPerBatch });
++        }
++        const validEvents: SensorEvent[] = [];
++        const invalidIndexes: number[] = [];
++        for (let i = 0; i < payload.events.length; i++) {
++            if (validateEvent(payload.events[i])) {
++                validEvents.push(payload.events[i]);
++            } else {
++                invalidIndexes.push(i);
++            }
++        }
++        await addEventsToQueue(validEvents);
++        incrementReceived(validEvents.length);
++        res.status(202).json({
++            status: 'accepted',
++            accepted: validEvents.length,
++            rejected: invalidIndexes.length,
++            invalid_indexes: invalidIndexes,
++        });
++    } catch (error) {
++        if (error instanceof QueueOverloadedError) {
++            return res.status(503).json({ error: 'Service Unavailable', reason: 'Queue overloaded' });
++        }
++        next(error);
++    }
++});
++
++app.get('/stats', async (req: Request, res: Response, next: NextFunction) => {
++    try {
++        const queueStats = await getQueueStats();
++        const dbStats = await getEventStats();
++        res.json({ queue: queueStats, database: dbStats, websocket_clients: getConnectedClients() });
++    } catch (error) {
++        next(error);
++    }
++});
++
++app.get('/metrics', async (req: Request, res: Response, next: NextFunction) => {
++    try {
++        const queueDepth = await getQueueDepth();
++        res.json({
++            total_received: getTotalReceived(),
++            total_processed: getTotalProcessed(),
++            total_failed: getTotalFailed(),
++            queue_depth: queueDepth,
++            events_per_second: Math.round(getEventsPerSecond() * 100) / 100,
++            memory_usage_mb: getMemoryUsageMb(),
++            websocket_clients: getConnectedClients(),
++        });
++    } catch (error) {
++        next(error);
++    }
++});
++
++app.get('/health', async (req: Request, res: Response) => {
++    if (getCircuitBreaker().isOpen()) {
++        return res.status(503).json({ status: 'unhealthy', reason: 'Circuit breaker open' });
++    }
++    const depth = await getQueueDepth();
++    if (depth >= config.queue.backpressureThreshold) {
++        return res.status(503).json({ status: 'unhealthy', reason: 'Queue overloaded' });
++    }
++    if (!(await isDatabaseHealthy())) {
++        return res.status(503).json({ status: 'unhealthy', reason: 'Database unreachable' });
++    }
++    res.json({ status: 'healthy' });
++});
++
++app.use((error: Error, req: Request, res: Response, _next: NextFunction) => {
++    console.error('Unhandled error:', error);
++    if (!res.headersSent) {
++        res.status(500).json({ error: 'Internal server error' });
++    }
++});
++
++const server = createServer(app);
++const wss = setupWebSocket(server);
++subscribeToProcessedEvents(getBroadcastFn());
++startWorker();
++
++process.on('unhandledRejection', (reason, promise) => {
++    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
++});
++
++const handles: ShutdownHandles = { server, wss };
++process.on('SIGTERM', () => gracefulShutdown(handles));
++process.on('SIGINT', () => gracefulShutdown(handles));
++
++export function getServer(): ReturnType<typeof createServer> {
++    return server;
++}
++
++export function listen(callback?: () => void): void {
++    server.listen(config.port, () => {
++        console.log('Server running on port ' + config.port);
++        callback?.();
++    });
++}
++
++if (require.main === module) {
++    listen();
++}
+diff -ruN repository_before/src/circuitBreaker.ts repository_after/src/circuitBreaker.ts
+--- repository_before/src/circuitBreaker.ts	1970-01-01 03:00:00
++++ repository_after/src/circuitBreaker.ts	2026-02-11 23:04:31
+@@ -0,0 +1,81 @@
++/**
++ * In-memory circuit breaker: after failureThreshold failures, open for cooldownMs.
++ * State is per-instance so multiple breakers (e.g. in tests) do not interfere.
++ */
++
++const DEFAULT_FAILURE_THRESHOLD = 5;
++const DEFAULT_COOLDOWN_MS = 30_000;
++
++export class DatabaseUnavailableError extends Error {
++    constructor(message: string) {
++        super(message);
++        this.name = 'DatabaseUnavailableError';
++        Object.setPrototypeOf(this, DatabaseUnavailableError.prototype);
++    }
++}
++
++export function createCircuitBreaker(options?: { failureThreshold?: number; cooldownMs?: number }) {
++    const failureThreshold = options?.failureThreshold ?? DEFAULT_FAILURE_THRESHOLD;
++    const cooldownMs = options?.cooldownMs ?? DEFAULT_COOLDOWN_MS;
++
++    let failureCount = 0;
++    let openUntil = 0;
++    let state: 'closed' | 'open' | 'half-open' = 'closed';
++
++    return {
++        async execute<T>(fn: () => Promise<T>): Promise<T> {
++            const now = Date.now();
++            if (state === 'open') {
++                if (now < openUntil) {
++                    throw new DatabaseUnavailableError('Circuit breaker is open');
++                }
++                state = 'half-open';
++            }
++            try {
++                const result = await fn();
++                if (state === 'half-open') {
++                    state = 'closed';
++                    failureCount = 0;
++                } else {
++                    failureCount = 0;
++                }
++                return result;
++            } catch (err) {
++                failureCount++;
++                if (state === 'half-open' || failureCount >= failureThreshold) {
++                    state = 'open';
++                    openUntil = Date.now() + cooldownMs;
++                }
++                throw err;
++            }
++        },
++        isOpen(): boolean {
++            const now = Date.now();
++            if (state === 'open' && now >= openUntil) {
++                state = 'half-open';
++            }
++            return state === 'open';
++        },
++        getState(): 'closed' | 'open' | 'half-open' {
++            const now = Date.now();
++            if (state === 'open' && now >= openUntil) {
++                state = 'half-open';
++            }
++            return state;
++        },
++        reset(): void {
++            state = 'closed';
++            failureCount = 0;
++            openUntil = 0;
++        },
++    };
++}
++
++let defaultBreaker: ReturnType<typeof createCircuitBreaker> | null = null;
++
++export function getCircuitBreaker(): ReturnType<typeof createCircuitBreaker> {
++    if (!defaultBreaker) {
++        defaultBreaker = createCircuitBreaker({ failureThreshold: 5, cooldownMs: 30_000 });
++    }
++    return defaultBreaker;
++}
+diff -ruN repository_before/src/config.ts repository_after/src/config.ts
+--- repository_before/src/config.ts	1970-01-01 03:00:00
++++ repository_after/src/config.ts	2026-02-11 23:04:31
+@@ -0,0 +1,23 @@
++export const config = {
++    port: parseInt(process.env.PORT || '3000', 10),
++    redis: {
++        host: process.env.REDIS_HOST || 'localhost',
++        port: parseInt(process.env.REDIS_PORT || '6379', 10),
++    },
++    database: {
++        host: process.env.DB_HOST || 'localhost',
++        port: parseInt(process.env.DB_PORT || '5432', 10),
++        user: process.env.DB_USER || 'postgres',
++        password: process.env.DB_PASSWORD || 'postgres',
++        database: process.env.DB_NAME || 'events',
++        max: 20,
++    },
++    queue: {
++        name: process.env.QUEUE_NAME || 'event-processing',
++        concurrency: parseInt(process.env.QUEUE_CONCURRENCY || '20', 10),
++        backpressureThreshold: parseInt(process.env.QUEUE_BACKPRESSURE_THRESHOLD || '10000', 10),
++    },
++    requestTimeoutMs: parseInt(process.env.REQUEST_TIMEOUT_MS || '30000', 10),
++    largePayloadThresholdBytes: parseInt(process.env.LARGE_PAYLOAD_THRESHOLD_BYTES || '1048576', 10), // 1MB
++    maxEventsPerBatch: parseInt(process.env.MAX_EVENTS_PER_BATCH || '10000', 10),
++};
+diff -ruN repository_before/src/database.ts repository_after/src/database.ts
+--- repository_before/src/database.ts	1970-01-01 03:00:00
++++ repository_after/src/database.ts	2026-02-11 23:04:31
+@@ -0,0 +1,86 @@
++import { Pool, PoolClient } from 'pg';
++import { config } from './config';
++import { ProcessedEvent } from './types';
++import { getCircuitBreaker } from './circuitBreaker';
++
++const pool = new Pool({
++    host: config.database.host,
++    port: config.database.port,
++    user: config.database.user,
++    password: config.database.password,
++    database: config.database.database,
++    max: config.database.max,
++});
++
++const BATCH_SIZE = 1000;
++
++export async function query(text: string, params?: unknown[]): Promise<{ rows: unknown[] }> {
++    const result = await getCircuitBreaker().execute(() => pool.query(text, params || []));
++    return { rows: result.rows };
++}
++
++export async function withClient<T>(cb: (client: PoolClient) => Promise<T>): Promise<T> {
++    const client = await pool.connect();
++    try {
++        return await cb(client);
++    } finally {
++        client.release();
++    }
++}
++
++function rowToParams(event: ProcessedEvent): unknown[] {
++    return [
++        event.event_id,
++        event.device_id,
++        event.sensor_type,
++        event.value,
++        event.unit,
++        event.timestamp,
++        JSON.stringify(event.metadata || {}),
++        event.processed_at,
++        event.received_at,
++    ];
++}
++
++export async function insertEvent(event: ProcessedEvent): Promise<void> {
++    await insertEventsBatch([event]);
++}
++
++export async function insertEventsBatch(events: ProcessedEvent[]): Promise<void> {
++    if (events.length === 0) return;
++
++    for (let i = 0; i < events.length; i += BATCH_SIZE) {
++        const chunk = events.slice(i, i + BATCH_SIZE);
++        const placeholders: string[] = [];
++        const values: unknown[] = [];
++        let paramIndex = 1;
++        for (const event of chunk) {
++            placeholders.push(
++                `($${paramIndex}, $${paramIndex + 1}, $${paramIndex + 2}, $${paramIndex + 3}, $${paramIndex + 4}, $${paramIndex + 5}, $${paramIndex + 6}, $${paramIndex + 7}, $${paramIndex + 8})`
++            );
++            values.push(...rowToParams(event));
++            paramIndex += 9;
++        }
++        const sql =
++            `INSERT INTO events (event_id, device_id, sensor_type, value, unit, timestamp, metadata, processed_at, received_at) VALUES ${placeholders.join(', ')} ON CONFLICT (event_id) DO NOTHING`;
++        await getCircuitBreaker().execute(() => pool.query(sql, values));
++    }
++}
++
++export async function getEventStats(): Promise<{ total: number }> {
++    const result = await getCircuitBreaker().execute(() => pool.query('SELECT COUNT(*) as total FROM events'));
++    return { total: parseInt(String(result.rows[0]?.total ?? 0), 10) };
++}
++
++export async function isDatabaseHealthy(): Promise<boolean> {
++    try {
++        await getCircuitBreaker().execute(() => pool.query('SELECT 1'));
++        return true;
++    } catch {
++        return false;
++    }
++}
++
++export async function closePool(): Promise<void> {
++    await pool.end();
++}
+diff -ruN repository_before/src/largePayloadHandler.ts repository_after/src/largePayloadHandler.ts
+--- repository_before/src/largePayloadHandler.ts	1970-01-01 03:00:00
++++ repository_after/src/largePayloadHandler.ts	2026-02-11 23:04:31
+@@ -0,0 +1,11 @@
++import { parentPort, workerData } from 'worker_threads';
++
++if (parentPort && workerData?.buffer) {
++    const str = (workerData.buffer as Buffer).toString('utf8');
++    try {
++        const parsed = JSON.parse(str);
++        parentPort!.postMessage({ ok: true, data: parsed });
++    } catch (err) {
++        parentPort!.postMessage({ ok: false, error: (err as Error).message });
++    }
++}
+diff -ruN repository_before/src/metrics.ts repository_after/src/metrics.ts
+--- repository_before/src/metrics.ts	1970-01-01 03:00:00
++++ repository_after/src/metrics.ts	2026-02-11 23:04:31
+@@ -0,0 +1,59 @@
++/**
++ * In-memory metrics for monitoring.
++ */
++
++const WINDOW_MS = 60_000;
++
++let totalReceived = 0;
++let totalProcessed = 0;
++let totalFailed = 0;
++const processedTimestamps: number[] = [];
++
++export function incrementReceived(count: number): void {
++    totalReceived += count;
++}
++
++export function incrementProcessed(count: number): void {
++    totalProcessed += count;
++    const now = Date.now();
++    for (let i = 0; i < count; i++) processedTimestamps.push(now);
++    const cutoff = now - WINDOW_MS;
++    while (processedTimestamps.length > 0 && processedTimestamps[0] < cutoff) {
++        processedTimestamps.shift();
++    }
++}
++
++export function incrementFailed(count: number): void {
++    totalFailed += count;
++}
++
++export function getTotalReceived(): number {
++    return totalReceived;
++}
++
++export function getTotalProcessed(): number {
++    return totalProcessed;
++}
++
++export function getTotalFailed(): number {
++    return totalFailed;
++}
++
++export function getEventsPerSecond(): number {
++    const now = Date.now();
++    const cutoff = now - WINDOW_MS;
++    const inWindow = processedTimestamps.filter((t) => t >= cutoff).length;
++    return WINDOW_MS > 0 ? (inWindow / WINDOW_MS) * 1000 : 0;
++}
++
++export function getMemoryUsageMb(): number {
++    const usage = process.memoryUsage();
++    return Math.round((usage.heapUsed ?? 0) / 1024 / 1024);
++}
++
++export function resetMetrics(): void {
++    totalReceived = 0;
++    totalProcessed = 0;
++    totalFailed = 0;
++    processedTimestamps.length = 0;
++}
+diff -ruN repository_before/src/parseLargeJson.ts repository_after/src/parseLargeJson.ts
+--- repository_before/src/parseLargeJson.ts	1970-01-01 03:00:00
++++ repository_after/src/parseLargeJson.ts	2026-02-11 23:04:31
+@@ -0,0 +1,24 @@
++import { Worker } from 'worker_threads';
++import path from 'path';
++
++export function parseLargeJsonInWorker(buffer: Buffer): Promise<unknown> {
++    return new Promise((resolve, reject) => {
++        const workerPath = path.join(__dirname, 'largePayloadHandler.js');
++        const worker = new Worker(workerPath, {
++            workerData: { buffer },
++        });
++        worker.on('message', (msg: { ok: boolean; data?: unknown; error?: string }) => {
++            if (msg.ok && msg.data !== undefined) {
++                resolve(msg.data);
++            } else {
++                reject(new Error(msg.error || 'Parse failed'));
++            }
++        });
++        worker.on('error', reject);
++        worker.on('exit', (code) => {
++            if (code !== 0) {
++                reject(new Error('Worker stopped with code ' + code));
++            }
++        });
++    });
++}
+diff -ruN repository_before/src/queue.ts repository_after/src/queue.ts
+--- repository_before/src/queue.ts	1970-01-01 03:00:00
++++ repository_after/src/queue.ts	2026-02-11 23:04:31
+@@ -0,0 +1,159 @@
++import { Queue, Worker, Job } from 'bullmq';
++import { EventEmitter } from 'events';
++import { config } from './config';
++import { SensorEvent, ProcessedEvent } from './types';
++import { insertEventsBatch } from './database';
++import { incrementProcessed, incrementFailed } from './metrics';
++
++export const eventEmitter = new EventEmitter();
++eventEmitter.setMaxListeners(1000);
++
++export class QueueOverloadedError extends Error {
++    constructor(message: string) {
++        super(message);
++        this.name = 'QueueOverloadedError';
++        Object.setPrototypeOf(this, QueueOverloadedError.prototype);
++    }
++}
++
++export const eventQueue = new Queue(config.queue.name, {
++    connection: config.redis,
++});
++
++let workerInstance: Worker | null = null;
++
++function toProcessedEvent(event: SensorEvent, receivedAt: number): ProcessedEvent {
++    return {
++        ...event,
++        timestamp: new Date(event.timestamp).toISOString(),
++        processed_at: new Date(),
++        received_at: new Date(receivedAt),
++    };
++}
++
++async function processSingleJob(job: Job<SensorEvent>): Promise<void> {
++    const event = job.data;
++    const processed = toProcessedEvent(event, job.timestamp || Date.now());
++    await insertEventsBatch([processed]);
++    eventEmitter.emit('event_processed', processed);
++    incrementProcessed(1);
++}
++
++async function processBatchJob(job: Job<{ events: SensorEvent[] }>): Promise<void> {
++    const { events } = job.data;
++    const receivedAt = job.timestamp || Date.now();
++    const processed: ProcessedEvent[] = events.map((e) => toProcessedEvent(e, receivedAt));
++    await insertEventsBatch(processed);
++    for (const p of processed) {
++        eventEmitter.emit('event_processed', p);
++    }
++    incrementProcessed(processed.length);
++}
++
++export function startWorker(): Worker {
++    const worker = new Worker(
++        config.queue.name,
++        async (job: Job<SensorEvent | { events: SensorEvent[] }>) => {
++            try {
++                if ('events' in job.data && Array.isArray(job.data.events)) {
++                    await processBatchJob(job as Job<{ events: SensorEvent[] }>);
++                } else {
++                    await processSingleJob(job as Job<SensorEvent>);
++                }
++            } catch (err) {
++                const count = 'events' in job.data && Array.isArray(job.data.events) ? (job.data as { events: SensorEvent[] }).events.length : 1;
++                incrementFailed(count);
++                const eventId = 'event_id' in job.data ? (job.data as SensorEvent).event_id : 'batch';
++                const deviceId = 'device_id' in job.data ? (job.data as SensorEvent).device_id : 'n/a';
++                console.error('Job ' + job.id + ' failed (event_id=' + eventId + ', device_id=' + deviceId + '):', err);
++                throw err;
++            }
++        },
++        {
++            connection: config.redis,
++            concurrency: config.queue.concurrency,
++        }
++    );
++
++    worker.on('completed', (job) => {
++        if (process.env.NODE_ENV !== 'test') {
++            console.log('Job ' + job.id + ' completed');
++        }
++    });
++
++    worker.on('failed', (job, err) => {
++        console.error('Job ' + (job?.id ?? '') + ' failed:', err);
++    });
++
++    workerInstance = worker;
++    return worker;
++}
++
++export function getWorker(): Worker | null {
++    return workerInstance;
++}
++
++export async function getQueueDepth(): Promise<number> {
++    const waiting = await eventQueue.getWaitingCount();
++    const active = await eventQueue.getActiveCount();
++    return waiting + active;
++}
++
++export function canAcceptJob(): Promise<boolean> {
++    return getQueueDepth().then((depth) => depth < config.queue.backpressureThreshold);
++}
++
++export async function addEventToQueue(event: SensorEvent): Promise<void> {
++    const depth = await getQueueDepth();
++    if (depth >= config.queue.backpressureThreshold) {
++        throw new QueueOverloadedError('Queue depth ' + depth + ' exceeds threshold ' + config.queue.backpressureThreshold);
++    }
++    await eventQueue.add('process-event', event, { jobId: event.event_id });
++}
++
++const BATCH_CHUNK_SIZE = 1000;
++
++export async function addEventsToQueue(events: SensorEvent[]): Promise<void> {
++    const depth = await getQueueDepth();
++    if (depth >= config.queue.backpressureThreshold) {
++        throw new QueueOverloadedError('Queue depth ' + depth + ' exceeds threshold ' + config.queue.backpressureThreshold);
++    }
++    if (events.length === 0) return;
++
++    if (events.length <= BATCH_CHUNK_SIZE) {
++        const jobs = events.map((event) => ({
++            name: 'process-event' as const,
++            data: event,
++            opts: { jobId: event.event_id },
++        }));
++        await eventQueue.addBulk(jobs);
++        return;
++    }
++
++    const jobs: { name: string; data: SensorEvent | { events: SensorEvent[] }; opts: { jobId: string } }[] = [];
++    for (let i = 0; i < events.length; i += BATCH_CHUNK_SIZE) {
++        const chunk = events.slice(i, i + BATCH_CHUNK_SIZE);
++        const firstId = chunk[0].event_id;
++        const jobId = 'batch-' + i + '-' + firstId + '-' + chunk.length;
++        jobs.push({
++            name: 'process-batch',
++            data: { events: chunk },
++            opts: { jobId },
++        });
++    }
++    await eventQueue.addBulk(jobs);
++}
++
++export async function getQueueStats(): Promise<{ waiting: number; active: number }> {
++    const waiting = await eventQueue.getWaitingCount();
++    const active = await eventQueue.getActiveCount();
++    return { waiting, active };
++}
++
++export function subscribeToProcessedEvents(broadcastFn: (event: ProcessedEvent) => void): void {
++    eventEmitter.on('event_processed', broadcastFn);
++}
++
++export function removeProcessedEventsListener(broadcastFn: (event: ProcessedEvent) => void): void {
++    eventEmitter.removeListener('event_processed', broadcastFn);
++}
+diff -ruN repository_before/src/shutdown.ts repository_after/src/shutdown.ts
+--- repository_before/src/shutdown.ts	1970-01-01 03:00:00
++++ repository_after/src/shutdown.ts	2026-02-11 23:04:31
+@@ -0,0 +1,69 @@
++import { Server } from 'http';
++import { WebSocketServer } from 'ws';
++import { closePool } from './database';
++import { closeWebSocketServer } from './websocket';
++import { getWorker, eventQueue, removeProcessedEventsListener } from './queue';
++import { getBroadcastFn } from './websocket';
++
++const SHUTDOWN_TIMEOUT_MS = 60_000;
++
++export type ShutdownHandles = {
++    server: Server;
++    wss: WebSocketServer | null;
++};
++
++let isShuttingDown = false;
++
++export function isShutdownInProgress(): boolean {
++    return isShuttingDown;
++}
++
++/** For tests only: reset shutdown state so isShutdownInProgress() can be false again. */
++export function resetShutdownState(): void {
++    isShuttingDown = false;
++}
++
++export async function gracefulShutdown(handles: ShutdownHandles): Promise<void> {
++    if (isShuttingDown) return;
++    isShuttingDown = true;
++
++    const timeout = setTimeout(() => {
++        console.error('Graceful shutdown timeout; forcing exit');
++        process.exit(1);
++    }, SHUTDOWN_TIMEOUT_MS);
++
++    try {
++        console.log('Shutting down: stopping HTTP server from accepting new connections...');
++        if (handles.server.listening) {
++            await new Promise<void>((resolve, reject) => {
++                handles.server.close((err) => (err ? reject(err) : resolve()));
++            });
++        }
++
++        removeProcessedEventsListener(getBroadcastFn());
++
++        const worker = getWorker();
++        if (worker) {
++            console.log('Closing queue worker...');
++            await worker.close();
++        }
++        await eventQueue.close();
++
++        if (handles.wss) {
++            console.log('Closing WebSocket server...');
++            await closeWebSocketServer(handles.wss);
++        }
++
++        console.log('Closing database pool...');
++        await closePool();
++
++        clearTimeout(timeout);
++        isShuttingDown = false;
++        process.exit(0);
++    } catch (err) {
++        console.error('Shutdown error:', err);
++        isShuttingDown = false;
++        clearTimeout(timeout);
++        process.exit(1);
++    }
++}
+diff -ruN repository_before/src/timeoutMiddleware.ts repository_after/src/timeoutMiddleware.ts
+--- repository_before/src/timeoutMiddleware.ts	1970-01-01 03:00:00
++++ repository_after/src/timeoutMiddleware.ts	2026-02-11 23:04:31
+@@ -0,0 +1,22 @@
++import { Request, Response, NextFunction } from 'express';
++import { config } from './config';
++
++export function requestTimeoutMiddleware(timeoutMs: number = config.requestTimeoutMs) {
++    return (req: Request, res: Response, next: NextFunction) => {
++        const timer = setTimeout(() => {
++            if (!res.headersSent) {
++                res.status(504).json({ error: 'Gateway Timeout' });
++                res.end();
++            }
++        }, timeoutMs);
++
++        const onFinish = () => {
++            clearTimeout(timer);
++            res.removeListener('finish', onFinish);
++            res.removeListener('close', onFinish);
++        };
++        res.once('finish', onFinish);
++        res.once('close', onFinish);
++        next();
++    };
++}
+diff -ruN repository_before/src/types.ts repository_after/src/types.ts
+--- repository_before/src/types.ts	1970-01-01 03:00:00
++++ repository_after/src/types.ts	2026-02-11 23:04:31
+@@ -0,0 +1,29 @@
++export interface SensorEvent {
++    event_id: string;
++    device_id: string;
++    sensor_type: string;
++    value: number;
++    unit: string;
++    timestamp: string;
++    metadata?: Record<string, unknown>;
++}
++
++export interface ProcessedEvent extends SensorEvent {
++    processed_at: Date;
++    received_at: Date;
++}
++
++export interface BatchPayload {
++    events: SensorEvent[];
++}
++
++export interface EventStats {
++    total_received: number;
++    total_processed: number;
++    total_failed: number;
++    queue_depth: number;
++    events_per_second: number;
++    processing_latency_ms?: number;
++    memory_usage_mb?: number;
++    websocket_clients?: number;
++}
+diff -ruN repository_before/src/websocket.ts repository_after/src/websocket.ts
+--- repository_before/src/websocket.ts	1970-01-01 03:00:00
++++ repository_after/src/websocket.ts	2026-02-11 23:04:31
+@@ -0,0 +1,62 @@
++import { WebSocket, WebSocketServer } from 'ws';
++import { Server } from 'http';
++import { ProcessedEvent } from './types';
++
++const clients: Set<WebSocket> = new Set();
++
++function cleanupClient(ws: WebSocket): void {
++    clients.delete(ws);
++}
++
++function broadcastEvent(event: ProcessedEvent): void {
++    const payload = JSON.stringify({ type: 'event', data: event });
++    clients.forEach((client) => {
++        if (client.readyState === WebSocket.OPEN) {
++            client.send(payload);
++        }
++    });
++}
++
++export function setupWebSocket(server: Server): WebSocketServer {
++    const wss = new WebSocketServer({ server, path: '/ws/events' });
++
++    wss.on('connection', (ws: WebSocket) => {
++        if (process.env.NODE_ENV !== 'test') {
++            console.log('New WebSocket client connected');
++        }
++        clients.add(ws);
++
++        ws.on('message', (message: string) => {
++            if (process.env.NODE_ENV !== 'test') {
++                console.log('Received:', message);
++            }
++        });
++
++        ws.on('error', (error) => {
++            console.error('WebSocket error:', error);
++            cleanupClient(ws);
++        });
++
++        ws.on('close', () => {
++            cleanupClient(ws);
++        });
++    });
++
++    return wss;
++}
++
++export function getBroadcastFn(): (event: ProcessedEvent) => void {
++    return broadcastEvent;
++}
++
++export function getConnectedClients(): number {
++    return clients.size;
++}
++
++export function closeWebSocketServer(wss: WebSocketServer | null): Promise<void> {
++    if (!wss) return Promise.resolve();
++    clients.clear();
++    return new Promise((resolve) => {
++        wss.close(() => resolve());
++    });
++}
+diff -ruN repository_before/timeoutMiddleware.ts repository_after/timeoutMiddleware.ts
+--- repository_before/timeoutMiddleware.ts	2026-02-12 05:53:51
++++ repository_after/timeoutMiddleware.ts	1970-01-01 03:00:00
+@@ -1,11 +0,0 @@
+-import { Request, Response, NextFunction } from 'express';
+-
+-export function requestTimeoutMiddleware(timeoutMs: number = 30000) {
+-    return (req: Request, res: Response, next: NextFunction) => {
+-        next();
+-    };
+-}
+-
+-export function createTimeoutMiddleware(timeoutMs: number = 30000) {
+-    return requestTimeoutMiddleware(timeoutMs);
+-}
+diff -ruN repository_before/tsconfig.json repository_after/tsconfig.json
+--- repository_before/tsconfig.json	2026-02-11 23:04:31
++++ repository_after/tsconfig.json	2026-02-11 23:04:31
+@@ -3,7 +3,7 @@
+     "target": "ES2022",
+     "module": "commonjs",
+     "outDir": "./dist",
+-    "rootDir": "./",
++    "rootDir": "./src",
+     "strict": true,
+     "esModuleInterop": true,
+     "skipLibCheck": true,
+@@ -11,7 +11,6 @@
+     "resolveJsonModule": true,
+     "declaration": true
+   },
+-  "include": ["./**/*.ts"],
++  "include": ["./src/**/*.ts"],
+   "exclude": ["node_modules", "dist"]
+ }
+-
+diff -ruN repository_before/types.ts repository_after/types.ts
+--- repository_before/types.ts	2026-02-11 23:04:31
++++ repository_after/types.ts	1970-01-01 03:00:00
+@@ -1,27 +0,0 @@
+-export interface SensorEvent {
+-    event_id: string;
+-    device_id: string;
+-    sensor_type: string;
+-    value: number;
+-    unit: string;
+-    timestamp: string;
+-    metadata?: Record<string, unknown>;
+-}
+-
+-export interface ProcessedEvent extends SensorEvent {
+-    processed_at: Date;
+-    received_at: Date;
+-}
+-
+-export interface BatchPayload {
+-    events: SensorEvent[];
+-}
+-
+-export interface EventStats {
+-    total_received: number;
+-    total_processed: number;
+-    total_failed: number;
+-    queue_depth: number;
+-    events_per_second: number;
+-}
+-
+diff -ruN repository_before/websocket.ts repository_after/websocket.ts
+--- repository_before/websocket.ts	2026-02-11 23:24:48
++++ repository_after/websocket.ts	1970-01-01 03:00:00
+@@ -1,53 +0,0 @@
+-import { WebSocket, WebSocketServer } from 'ws';
+-import { Server } from 'http';
+-import { eventEmitter } from './queue';
+-import { ProcessedEvent } from './types';
+-
+-const clients: Set<WebSocket> = new Set();
+-
+-export function setupWebSocket(server: Server): WebSocketServer {
+-    const wss = new WebSocketServer({ server, path: '/ws/events' });
+-
+-    wss.on('connection', (ws: WebSocket) => {
+-        console.log('New WebSocket client connected');
+-        clients.add(ws);
+-
+-        ws.on('error', (error) => {
+-            console.error('WebSocket error:', error);
+-        });
+-
+-        ws.on('message', (message: string) => {
+-            console.log('Received:', message);
+-        });
+-    });
+-
+-    eventEmitter.on('event_processed', (event: ProcessedEvent) => {
+-        broadcastEvent(event);
+-    });
+-
+-    return wss;
+-}
+-
+-function broadcastEvent(event: ProcessedEvent): void {
+-    const payload = JSON.stringify({ type: 'event', data: event });
+-    clients.forEach((client) => {
+-        if (client.readyState === WebSocket.OPEN) {
+-            client.send(payload);
+-        }
+-    });
+-}
+-
+-export function getBroadcastFn(): (event: ProcessedEvent) => void {
+-    return broadcastEvent;
+-}
+-
+-export function closeWebSocketServer(wss: WebSocketServer | null): Promise<void> {
+-    if (!wss) return Promise.resolve();
+-    return new Promise((resolve) => {
+-        wss.close(() => resolve());
+-    });
+-}
+-
+-export function getConnectedClients(): number {
+-    return clients.size;
+-}

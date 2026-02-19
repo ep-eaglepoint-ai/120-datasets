@@ -1,0 +1,15 @@
+{
+  "instance_id": "fa4ad4",
+  "problem_statement": "Refactor the footer component to fix mobile alignment issues and migrate the project from JavaScript to TypeScript. The refactoring involves converting components to .tsx, adding TypeScript configuration (tsconfig.json), types, and modernizing the build setup. The footer's mobile layout should be centered with ~20% margins, and social icons should be positioned below content sections on mobile.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main",
+  "environment_setup": "Dockerfile",
+  "FAIL_TO_PASS": [
+    "tests/test_structure.ts::TypeScript Config: tsconfig.json",
+    "tests/test_structure.ts::Footer Component (TSX): src/components/Footer.tsx"
+  ],
+  "PASS_TO_PASS": [
+    "tests/test_structure.ts::Package JSON: package.json"
+  ]
+}

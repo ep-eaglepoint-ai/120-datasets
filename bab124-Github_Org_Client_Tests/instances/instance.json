@@ -1,0 +1,8 @@
+{
+    "instance_id": "bab124",
+    "problem_statement": "The existing test suite for the GithubOrgClient class provides only partial coverage of the class functionality, focusing mainly on the org method and the _public_repos_url property. Important behaviors such as retrieving public repositories, filtering repositories by license, and validating license data are not currently tested. This lack of test coverage increases the risk that bugs or regressions in these untested methods could go unnoticed during future changes. Additionally, without tests for edge cases and error handling, the reliability of the client cannot be fully verified. To ensure the correctness and stability of the GithubOrgClient implementation, additional unit tests are required to extend coverage while preserving all existing tests and maintaining the current testing structure.",
+    "base_commit": "repository_before",
+    "test_patch": "tests/",
+    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/bab124-Github_Org_Client_Tests",
+    "environment_setup": "Dockerfile"
+}  

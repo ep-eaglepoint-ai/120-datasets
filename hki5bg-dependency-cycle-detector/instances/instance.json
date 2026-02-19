@@ -1,0 +1,11 @@
+{
+            "instance_id": "HKI5BG",
+            "problem_statement": "In a Java application where tasks are executed based on declared dependencies, an invalid dependency configuration can cause the system to hang, crash, or behave unpredictably if circular dependencies exist. Writing a function to detect cycles in the dependency graph is necessary to ensure reliable task execution, prevent infinite execution loops, and fail fast on invalid configurations before runtime. This validation step is especially important because real-world task graphs may be large, disconnected, or incorrectly defined, and the application must scale while maintaining correctness and performance. A robust cycle-detection solution protects system stability, improves debuggability, and guarantees that only valid, executable dependency configurations are accepted.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/hki5bg-dependency-cycle-detector",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

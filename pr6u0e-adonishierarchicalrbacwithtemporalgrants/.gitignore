@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
+
+# Node
+node_modules/
+coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+
+# AdonisJS / build artifacts
+tmp/
+dist/
+build/
+.adonisjs/
+
+# Local tooling
+.vscode/
+.idea/
+
+# Generated evaluation outputs
+evaluation/**/report.json
+evaluation/**/report.md
+evaluation/**/raw.json
+test_output.json

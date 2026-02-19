@@ -1,0 +1,15 @@
+{
+  "name": "a2b5c8-cart-service-performance-fix",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Evaluation harness for CartService performance refactor",
+  "scripts": {
+    "test:before": "node tests/test_all.js before",
+    "test:after": "node tests/test_all.js after",
+    "evaluate": "node evaluation/evaluation.js"
+  },
+  "dependencies": {
+    "mongoose": "^8.0.0"
+  }
+}
+

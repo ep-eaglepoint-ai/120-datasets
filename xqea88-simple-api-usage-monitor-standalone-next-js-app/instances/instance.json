@@ -1,0 +1,11 @@
+{
+            "instance_id": "XQEA88",
+            "problem_statement": "As our SaaS platform grows, we lack clear visibility into how our APIs are being used across tenants, endpoints, and time ranges. This makes it difficult to troubleshoot customer issues, understand traffic patterns, and monitor basic performance and error rates. We need a simple, reliable API Usage Monitor that can ingest API call events and present clear usage metrics and request logs, while remaining lightweight, easy to deploy, and maintainable as a standalone service.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/xqea88-simple-api-usage-monitor-standalone-next-js-app",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

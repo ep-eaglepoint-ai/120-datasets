@@ -1,0 +1,9 @@
+{
+  "name": "a2b5c8-cartservice-evaluation",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node evaluation.js"
+  }
+}
+

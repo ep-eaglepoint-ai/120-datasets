@@ -1,0 +1,26 @@
+{
+  "name": "27241e-hardened_zero_knowledge_authentication_module",
+  "version": "1.0.0",
+  "description": "Authentication",
+  "keywords": [
+    "authentication"
+  ],
+  "license": "ISC",
+  "author": "Binyam Mulat",
+  "type": "commonjs",
+  "main": "repository_after/index.js",
+  "scripts": {
+    "test": "jest",
+    "test:before": "jest tests/test_before.test.js",
+    "test:after": "jest tests/test_after.test.js",
+    "evaluate": "node evaluation/evaluation.js"
+  },
+  "devDependencies": {
+    "jest": "^29.5.0"
+  },
+  "jest": {
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "cfcfd6-bug-fix-tests",
+  "version": "1.0.0",
+  "description": "Test suite for JavaScript bug fixes",
+  "scripts": {
+    "test": "jest --verbose"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

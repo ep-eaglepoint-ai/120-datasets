@@ -1,0 +1,13 @@
+# No external dependencies required
+# This project uses only Python standard library modules:
+# - socket (TCP networking)
+# - threading (concurrent client handling)
+# - logging (operation logging)
+# - hashlib (MD5 checksums)
+# - struct (binary data packing)
+# - signal (graceful shutdown)
+# - pathlib (file system operations)
+# - os, sys, time, datetime (utilities)
+
+# Minimum Python version: 3.6
+# Recommended Python version: 3.8+

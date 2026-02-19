@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+*.pyo
+.pytest_cache/
+.mypy_cache/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+.yarn-integrity
+.pnp
+.pnp.js
+
+# Build / output
+dist/
+build/
+*.tsbuildinfo
+repository_after/dist
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Logs
+*.log
+logs/
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Evaluation output (generated report dirs: evaluation/YYYY-MM-DD/HH-MM-SS/)
+evaluation/*/

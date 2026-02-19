@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    container_name: hourly-unique-visitor-aggregation-app
+    # Mount evaluation output so report.json is available on the host
+    volumes:
+      - .:/app
+    # Default command runs full evaluation; override for individual commands:
+    # 1) pytest against repository_before
+    # 2) pytest against repository_after
+    # 3) generate evaluation report
+    command: ["python", "evaluation/evaluation.py"]

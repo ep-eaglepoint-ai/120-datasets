@@ -1,0 +1,18 @@
+services:
+  test-before:
+    build: .
+    environment:
+      - PYTHONPATH=/app/repository_before
+    command: pytest tests/test_async_generator.py -v
+
+  test-after:
+    build: .
+    environment:
+      - PYTHONPATH=/app/repository_after
+    command: pytest tests/test_async_generator.py -v
+
+  evaluation:
+    build: .
+    command: python evaluation/evaluation.py
+    volumes:
+      - ./evaluation/reports:/app/evaluation/reports

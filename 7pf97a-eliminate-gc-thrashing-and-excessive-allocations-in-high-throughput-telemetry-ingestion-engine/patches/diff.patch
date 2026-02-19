@@ -1,0 +1,131 @@
+diff --git a/repository_before/go.mod b/repository_after/go.mod
+index 106cdbdf4..1fd704d79 100644
+--- a/repository_before/go.mod
++++ b/repository_after/go.mod
+@@ -1,3 +1,3 @@
+-module scenario-008-go-slice-realloc
++module repository_after
+ 
+ go 1.21
+diff --git a/repository_before/main.go b/repository_after/main.go
+index c615f3161..fe43164a8 100644
+--- a/repository_before/main.go
++++ b/repository_after/main.go
+@@ -3,35 +3,32 @@ package main
+ import (
+ 	"fmt"
+ 	"runtime"
+-	"scenario-008-go-slice-realloc/telemetry"
++	"repository_after/telemetry"
+ 	"time"
+ )
+ 
+ func main() {
+-	buffer := telemetry.NewIngestionBuffer()
++	const numPackets = 1_000_000
++	buffer := telemetry.NewIngestionBuffer(numPackets)
+ 
+ 	packet := telemetry.TelemetryPacket{
+ 		ID:    1,
+ 		Value: 99.9,
+ 	}
+ 
+-	fmt.Println("=== Bug Scenario 008: GC Thrashing Test ===")
++	fmt.Println("=== Optimized Telemetry Ingestion Test ===")
+ 
+ 	var m1, m2 runtime.MemStats
+-	runtime.GC()
++	runtime.GC()           
+ 	runtime.ReadMemStats(&m1)
+ 
+ 	start := time.Now()
+-	iterations := 1000000 // 1 Million packets
+ 
+-	fmt.Printf("Processing %d packets...\n", iterations)
+-
+-	for i := 0; i < iterations; i++ {
++	for i := 0; i < numPackets; i++ {
+ 		buffer.Push(packet)
+ 
+-		// Flush every 10,000 packets to simulate batch processing
+-		if i%10000 == 0 {
+-			buffer.Flush()
++		if i%10000 == 0 && i > 0 {
++			_ = buffer.Flush()
+ 		}
+ 	}
+ 
+@@ -41,15 +38,15 @@ func main() {
+ 	fmt.Printf("\n--- Performance Metrics ---\n")
+ 	fmt.Printf("Time taken: %v\n", duration)
+ 	fmt.Printf("Total allocations (Mallocs): %d\n", m2.Mallocs-m1.Mallocs)
+-	fmt.Printf("Total bytes allocated (HeapAlloc): %d MB\n", (m2.TotalAlloc-m1.TotalAlloc)/1024/1024)
++	fmt.Printf("Total heap allocated (HeapAlloc): %d MB\n", (m2.TotalAlloc-m1.TotalAlloc)/1024/1024)
+ 	fmt.Printf("Number of GC cycles: %d\n", m2.NumGC-m1.NumGC)
+ 
+-	// A well-tuned buffer should have very few heap allocations and GC cycles.
+-	// In the buggy version, we'll see thousands of mallocs and high TotalAlloc.
+ 	if m2.NumGC-m1.NumGC > 5 {
+-		fmt.Printf("\n❌ BUG DETECTED: High GC pressure and allocation count!\n")
+-		fmt.Printf("   Resizing slices and creating new objects frequently causes GC thrashing.\n")
++		fmt.Println("\n❌ BUG DETECTED: High GC pressure!")
+ 	} else {
+ 		fmt.Println("\n✅ Memory management is efficient.")
+ 	}
++
++	finalBatch := buffer.Flush()
++	fmt.Printf("Flushed %d packets\n", len(finalBatch))
+ }
+diff --git a/repository_before/telemetry/buffer.go b/repository_after/telemetry/telemetry.go
+similarity index 51%
+rename from repository_before/telemetry/buffer.go
+rename to repository_after/telemetry/telemetry.go
+index 6edae01a7..8a0615bb7 100644
+--- a/repository_before/telemetry/buffer.go
++++ b/repository_after/telemetry/telemetry.go
+@@ -8,14 +8,18 @@ type TelemetryPacket struct {
+ 	Value     float64
+ 	Payload   [64]byte
+ }
++
+ type IngestionBuffer struct {
+ 	mu   sync.Mutex
+ 	data []TelemetryPacket
++	head int
++	cap  int
+ }
+ 
+-func NewIngestionBuffer() *IngestionBuffer {
++func NewIngestionBuffer(capacity int) *IngestionBuffer {
+ 	return &IngestionBuffer{
+-		data: make([]TelemetryPacket, 0),
++		data: make([]TelemetryPacket, capacity),
++		cap:  capacity,
+ 	}
+ }
+ 
+@@ -23,13 +27,21 @@ func (b *IngestionBuffer) Push(p TelemetryPacket) {
+ 	b.mu.Lock()
+ 	defer b.mu.Unlock()
+ 
+-	b.data = append(b.data, p)
++	b.data[b.head] = p
++	b.head++
++
++	if b.head >= b.cap {
++		b.head = 0
++	}
+ }
++
++// Flush returns packets from the buffer. The returned slice shares the backing
++// array; the caller must consume it before calling Push again, or data may be overwritten.
+ func (b *IngestionBuffer) Flush() []TelemetryPacket {
+ 	b.mu.Lock()
+ 	defer b.mu.Unlock()
+ 
+-	batch := b.data
+-	b.data = make([]TelemetryPacket, 0)
++	batch := b.data[:b.head]
++	b.head = 0
+ 	return batch
+ }

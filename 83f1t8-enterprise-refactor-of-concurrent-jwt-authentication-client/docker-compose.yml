@@ -1,0 +1,10 @@
+services:
+  app:
+    build: .
+    environment:
+      # Defaults to repo_after unless overridden at runtime.
+      - TARGET_REPO=after
+    command: npm test
+    volumes:
+      - .:/app
+      - /app/node_modules

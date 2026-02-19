@@ -1,0 +1,638 @@
+import re
+import time
+import math
+from collections import defaultdict
+
+
+class Document:
+    def __init__(self, doc_id, title, content, tags=None):
+        self.doc_id = doc_id
+        self.title = title
+        self.content = content
+        self.tags = tags if tags else []
+        self.word_count = 0
+        self.indexed_at = None
+
+
+class UnoptimizedSearchEngine:
+    def __init__(self):
+        self.documents = []
+        self.index = {}
+        self.search_history = ""
+    
+    def add_document(self, doc):
+        self.documents.append(doc)
+        self._index_document(doc)
+    
+    def _tokenize(self, text):
+        tokens = []
+        current_word = ""
+        for char in text:
+            if char.isalnum():
+                current_word = current_word + char.lower()
+            else:
+                if current_word != "":
+                    tokens.append(current_word)
+                    current_word = ""
+        if current_word != "":
+            tokens.append(current_word)
+        return tokens
+    
+    def _remove_stopwords(self, tokens):
+        stopwords = ["the", "a", "an", "is", "are", "was", "were", "be", "been", 
+                     "being", "have", "has", "had", "do", "does", "did", "will",
+                     "would", "could", "should", "may", "might", "must", "shall",
+                     "can", "need", "dare", "ought", "used", "to", "of", "in",
+                     "for", "on", "with", "at", "by", "from", "as", "into",
+                     "through", "during", "before", "after", "above", "below",
+                     "between", "under", "again", "further", "then", "once",
+                     "here", "there", "when", "where", "why", "how", "all",
+                     "each", "few", "more", "most", "other", "some", "such",
+                     "no", "nor", "not", "only", "own", "same", "so", "than",
+                     "too", "very", "just", "and", "but", "if", "or", "because",
+                     "until", "while", "this", "that", "these", "those"]
+        
+        filtered = []
+        for token in tokens:
+            is_stopword = False
+            for sw in stopwords:
+                if token == sw:
+                    is_stopword = True
+                    break
+            if not is_stopword:
+                filtered.append(token)
+        return filtered
+    
+    def _stem_word(self, word):
+        if len(word) > 4:
+            if word.endswith("ing"):
+                return word[:-3]
+            if word.endswith("ed"):
+                return word[:-2]
+            if word.endswith("ly"):
+                return word[:-2]
+            if word.endswith("tion"):
+                return word[:-4]
+            if word.endswith("ness"):
+                return word[:-4]
+            if word.endswith("ment"):
+                return word[:-4]
+            if word.endswith("able"):
+                return word[:-4]
+            if word.endswith("ible"):
+                return word[:-4]
+            if word.endswith("ful"):
+                return word[:-3]
+            if word.endswith("less"):
+                return word[:-4]
+            if word.endswith("er"):
+                return word[:-2]
+            if word.endswith("est"):
+                return word[:-3]
+            if word.endswith("ity"):
+                return word[:-3]
+            if word.endswith("ous"):
+                return word[:-3]
+            if word.endswith("ive"):
+                return word[:-3]
+            if word.endswith("es"):
+                return word[:-2]
+            if word.endswith("s") and not word.endswith("ss"):
+                return word[:-1]
+        return word
+    
+    def _stem_tokens(self, tokens):
+        stemmed = []
+        for token in tokens:
+            stemmed.append(self._stem_word(token))
+        return stemmed
+    
+    def _index_document(self, doc):
+        title_tokens = self._tokenize(doc.title)
+        content_tokens = self._tokenize(doc.content)
+        
+        all_tokens = []
+        for t in title_tokens:
+            all_tokens.append(t)
+        for t in content_tokens:
+            all_tokens.append(t)
+        
+        filtered_tokens = self._remove_stopwords(all_tokens)
+        stemmed_tokens = self._stem_tokens(filtered_tokens)
+        
+        doc.word_count = len(stemmed_tokens)
+        doc.indexed_at = time.time()
+        
+        for position in range(len(stemmed_tokens)):
+            token = stemmed_tokens[position]
+            if token not in self.index:
+                self.index[token] = []
+            
+            entry = {"doc_id": doc.doc_id, "position": position}
+            self.index[token].append(entry)
+    
+    def search(self, query):
+        self.search_history = self.search_history + query + "\n"
+        
+        query_tokens = self._tokenize(query)
+        filtered_query = self._remove_stopwords(query_tokens)
+        stemmed_query = self._stem_tokens(filtered_query)
+        
+        if len(stemmed_query) == 0:
+            return []
+        
+        results = []
+        
+        for doc in self.documents:
+            score = self._calculate_score(doc, stemmed_query)
+            if score > 0:
+                results.append({"document": doc, "score": score})
+        
+        sorted_results = self._sort_by_score(results)
+        
+        return sorted_results
+    
+    def _calculate_score(self, doc, query_tokens):
+        score = 0
+        
+        doc_title_tokens = self._tokenize(doc.title)
+        doc_title_stemmed = self._stem_tokens(doc_title_tokens)
+        
+        doc_content_tokens = self._tokenize(doc.content)
+        doc_content_stemmed = self._stem_tokens(doc_content_tokens)
+        
+        for query_token in query_tokens:
+            title_count = 0
+            for title_token in doc_title_stemmed:
+                if title_token == query_token:
+                    title_count = title_count + 1
+            score = score + title_count * 3
+            
+            content_count = 0
+            for content_token in doc_content_stemmed:
+                if content_token == query_token:
+                    content_count = content_count + 1
+            score = score + content_count
+            
+            for tag in doc.tags:
+                tag_lower = ""
+                for c in tag:
+                    tag_lower = tag_lower + c.lower()
+                if tag_lower == query_token:
+                    score = score + 5
+        
+        if doc.word_count > 0:
+            tf = score / doc.word_count
+            score = tf * 100
+        
+        return score
+    
+    def _sort_by_score(self, results):
+        n = len(results)
+        for i in range(n):
+            for j in range(0, n - i - 1):
+                if results[j]["score"] < results[j + 1]["score"]:
+                    temp = results[j]
+                    results[j] = results[j + 1]
+                    results[j + 1] = temp
+        return results
+    
+    def search_phrase(self, phrase):
+        self.search_history = self.search_history + "PHRASE: " + phrase + "\n"
+        
+        results = []
+        phrase_lower = ""
+        for c in phrase:
+            phrase_lower = phrase_lower + c.lower()
+        
+        for doc in self.documents:
+            content_lower = ""
+            for c in doc.content:
+                content_lower = content_lower + c.lower()
+            
+            title_lower = ""
+            for c in doc.title:
+                title_lower = title_lower + c.lower()
+            
+            count = 0
+            pos = 0
+            while pos <= len(content_lower) - len(phrase_lower):
+                match = True
+                for i in range(len(phrase_lower)):
+                    if content_lower[pos + i] != phrase_lower[i]:
+                        match = False
+                        break
+                if match:
+                    count = count + 1
+                    pos = pos + len(phrase_lower)
+                else:
+                    pos = pos + 1
+            
+            title_count = 0
+            pos = 0
+            while pos <= len(title_lower) - len(phrase_lower):
+                match = True
+                for i in range(len(phrase_lower)):
+                    if title_lower[pos + i] != phrase_lower[i]:
+                        match = False
+                        break
+                if match:
+                    title_count = title_count + 1
+                    pos = pos + len(phrase_lower)
+                else:
+                    pos = pos + 1
+            
+            if count > 0 or title_count > 0:
+                score = count + title_count * 3
+                results.append({"document": doc, "score": score, "matches": count + title_count})
+        
+        return self._sort_by_score(results)
+    
+    def search_with_filters(self, query, filters):
+        all_results = self.search(query)
+        
+        filtered_results = []
+        for result in all_results:
+            doc = result["document"]
+            passes_filters = True
+            
+            if "tags" in filters:
+                required_tags = filters["tags"]
+                for required_tag in required_tags:
+                    tag_found = False
+                    for doc_tag in doc.tags:
+                        if doc_tag.lower() == required_tag.lower():
+                            tag_found = True
+                            break
+                    if not tag_found:
+                        passes_filters = False
+                        break
+            
+            if "min_word_count" in filters:
+                if doc.word_count < filters["min_word_count"]:
+                    passes_filters = False
+            
+            if "max_word_count" in filters:
+                if doc.word_count > filters["max_word_count"]:
+                    passes_filters = False
+            
+            if "title_contains" in filters:
+                title_lower = ""
+                for c in doc.title:
+                    title_lower = title_lower + c.lower()
+                search_term = ""
+                for c in filters["title_contains"]:
+                    search_term = search_term + c.lower()
+                
+                found = False
+                for i in range(len(title_lower) - len(search_term) + 1):
+                    match = True
+                    for j in range(len(search_term)):
+                        if title_lower[i + j] != search_term[j]:
+                            match = False
+                            break
+                    if match:
+                        found = True
+                        break
+                
+                if not found:
+                    passes_filters = False
+            
+            if passes_filters:
+                filtered_results.append(result)
+        
+        return filtered_results
+    
+    def get_suggestions(self, partial_query):
+        suggestions = []
+        partial_lower = ""
+        for c in partial_query:
+            partial_lower = partial_lower + c.lower()
+        
+        for term in self.index.keys():
+            if len(term) >= len(partial_lower):
+                matches = True
+                for i in range(len(partial_lower)):
+                    if term[i] != partial_lower[i]:
+                        matches = False
+                        break
+                if matches:
+                    doc_count = len(self.index[term])
+                    suggestions.append({"term": term, "doc_count": doc_count})
+        
+        n = len(suggestions)
+        for i in range(n):
+            for j in range(0, n - i - 1):
+                if suggestions[j]["doc_count"] < suggestions[j + 1]["doc_count"]:
+                    temp = suggestions[j]
+                    suggestions[j] = suggestions[j + 1]
+                    suggestions[j + 1] = temp
+        
+        top_suggestions = []
+        for i in range(min(10, len(suggestions))):
+            top_suggestions.append(suggestions[i])
+        
+        return top_suggestions
+    
+    def find_similar_documents(self, doc_id):
+        target_doc = None
+        for doc in self.documents:
+            if doc.doc_id == doc_id:
+                target_doc = doc
+                break
+        
+        if target_doc is None:
+            return []
+        
+        target_tokens = self._tokenize(target_doc.content)
+        target_filtered = self._remove_stopwords(target_tokens)
+        target_stemmed = self._stem_tokens(target_filtered)
+        
+        target_freq = {}
+        for token in target_stemmed:
+            if token in target_freq:
+                target_freq[token] = target_freq[token] + 1
+            else:
+                target_freq[token] = 1
+        
+        similarities = []
+        
+        for doc in self.documents:
+            if doc.doc_id == doc_id:
+                continue
+            
+            doc_tokens = self._tokenize(doc.content)
+            doc_filtered = self._remove_stopwords(doc_tokens)
+            doc_stemmed = self._stem_tokens(doc_filtered)
+            
+            doc_freq = {}
+            for token in doc_stemmed:
+                if token in doc_freq:
+                    doc_freq[token] = doc_freq[token] + 1
+                else:
+                    doc_freq[token] = 1
+            
+            dot_product = 0
+            for term in target_freq:
+                if term in doc_freq:
+                    dot_product = dot_product + target_freq[term] * doc_freq[term]
+            
+            target_magnitude = 0
+            for term in target_freq:
+                target_magnitude = target_magnitude + target_freq[term] * target_freq[term]
+            target_magnitude = math.sqrt(target_magnitude)
+            
+            doc_magnitude = 0
+            for term in doc_freq:
+                doc_magnitude = doc_magnitude + doc_freq[term] * doc_freq[term]
+            doc_magnitude = math.sqrt(doc_magnitude)
+            
+            if target_magnitude > 0 and doc_magnitude > 0:
+                similarity = dot_product / (target_magnitude * doc_magnitude)
+            else:
+                similarity = 0
+            
+            if similarity > 0:
+                similarities.append({"document": doc, "similarity": similarity})
+        
+        n = len(similarities)
+        for i in range(n):
+            for j in range(0, n - i - 1):
+                if similarities[j]["similarity"] < similarities[j + 1]["similarity"]:
+                    temp = similarities[j]
+                    similarities[j] = similarities[j + 1]
+                    similarities[j + 1] = temp
+        
+        return similarities[:10]
+    
+    def calculate_tfidf(self, term, doc_id):
+        target_doc = None
+        for doc in self.documents:
+            if doc.doc_id == doc_id:
+                target_doc = doc
+                break
+        
+        if target_doc is None:
+            return 0
+        
+        doc_tokens = self._tokenize(target_doc.content)
+        doc_filtered = self._remove_stopwords(doc_tokens)
+        doc_stemmed = self._stem_tokens(doc_filtered)
+        
+        term_stemmed = self._stem_word(term.lower())
+        
+        term_count = 0
+        for token in doc_stemmed:
+            if token == term_stemmed:
+                term_count = term_count + 1
+        
+        if len(doc_stemmed) > 0:
+            tf = term_count / len(doc_stemmed)
+        else:
+            tf = 0
+        
+        docs_with_term = 0
+        for doc in self.documents:
+            doc_tokens = self._tokenize(doc.content)
+            doc_stemmed = self._stem_tokens(doc_tokens)
+            for token in doc_stemmed:
+                if token == term_stemmed:
+                    docs_with_term = docs_with_term + 1
+                    break
+        
+        if docs_with_term > 0:
+            idf = math.log(len(self.documents) / docs_with_term)
+        else:
+            idf = 0
+        
+        return tf * idf
+    
+    def get_document_stats(self, doc_id):
+        target_doc = None
+        for doc in self.documents:
+            if doc.doc_id == doc_id:
+                target_doc = doc
+                break
+        
+        if target_doc is None:
+            return None
+        
+        tokens = self._tokenize(target_doc.content)
+        filtered = self._remove_stopwords(tokens)
+        stemmed = self._stem_tokens(filtered)
+        
+        word_freq = {}
+        for token in stemmed:
+            if token in word_freq:
+                word_freq[token] = word_freq[token] + 1
+            else:
+                word_freq[token] = 1
+        
+        freq_list = []
+        for word, count in word_freq.items():
+            freq_list.append({"word": word, "count": count})
+        
+        n = len(freq_list)
+        for i in range(n):
+            for j in range(0, n - i - 1):
+                if freq_list[j]["count"] < freq_list[j + 1]["count"]:
+                    temp = freq_list[j]
+                    freq_list[j] = freq_list[j + 1]
+                    freq_list[j + 1] = temp
+        
+        unique_words = len(word_freq)
+        total_words = len(stemmed)
+        
+        top_words = []
+        for i in range(min(20, len(freq_list))):
+            top_words.append(freq_list[i])
+        
+        avg_word_length = 0
+        for token in tokens:
+            avg_word_length = avg_word_length + len(token)
+        if len(tokens) > 0:
+            avg_word_length = avg_word_length / len(tokens)
+        
+        return {
+            "doc_id": doc_id,
+            "total_words": total_words,
+            "unique_words": unique_words,
+            "top_words": top_words,
+            "avg_word_length": avg_word_length
+        }
+    
+    def rebuild_index(self):
+        self.index = {}
+        for doc in self.documents:
+            self._index_document(doc)
+    
+    def get_index_stats(self):
+        total_terms = len(self.index)
+        total_postings = 0
+        
+        for term in self.index:
+            total_postings = total_postings + len(self.index[term])
+        
+        if total_terms > 0:
+            avg_postings = total_postings / total_terms
+        else:
+            avg_postings = 0
+        
+        return {
+            "total_documents": len(self.documents),
+            "total_terms": total_terms,
+            "total_postings": total_postings,
+            "avg_postings_per_term": avg_postings
+        }
+    
+    def export_search_history(self):
+        return self.search_history
+
+
+def generate_sample_documents():
+    documents = [
+        Document(1, "Introduction to Python Programming",
+                 "Python is a versatile programming language that is widely used for web development, data analysis, artificial intelligence, and scientific computing. Python's simple syntax makes it easy to learn for beginners while still being powerful enough for experts. The language supports multiple programming paradigms including procedural, object-oriented, and functional programming.",
+                 ["python", "programming", "beginner"]),
+        Document(2, "Advanced Python Techniques",
+                 "This guide covers advanced Python concepts including decorators, generators, context managers, and metaclasses. Understanding these features will help you write more efficient and Pythonic code. We also explore async programming and concurrency patterns.",
+                 ["python", "advanced", "programming"]),
+        Document(3, "Data Science with Python",
+                 "Python has become the leading language for data science due to its rich ecosystem of libraries. NumPy provides efficient numerical computing, Pandas offers powerful data manipulation, and Matplotlib enables data visualization. Machine learning is made accessible through scikit-learn and TensorFlow.",
+                 ["python", "data science", "machine learning"]),
+        Document(4, "Web Development Fundamentals",
+                 "Web development involves creating websites and web applications. HTML provides the structure, CSS handles styling, and JavaScript adds interactivity. Modern frameworks like React, Vue, and Angular have transformed how we build user interfaces.",
+                 ["web", "html", "javascript"]),
+        Document(5, "JavaScript Modern Features",
+                 "ES6 and later versions of JavaScript introduced many new features including arrow functions, template literals, destructuring, and modules. These features make JavaScript more expressive and easier to work with. The language continues to evolve with new proposals.",
+                 ["javascript", "es6", "programming"]),
+        Document(6, "Database Design Principles",
+                 "Good database design is crucial for application performance. Normalization helps eliminate data redundancy while denormalization can improve query performance. Understanding indexes, relationships, and query optimization is essential for any developer.",
+                 ["database", "sql", "design"]),
+        Document(7, "Machine Learning Basics",
+                 "Machine learning is a subset of artificial intelligence that enables systems to learn from data. Supervised learning uses labeled data, unsupervised learning finds patterns in unlabeled data, and reinforcement learning learns through interaction. Neural networks have revolutionized the field.",
+                 ["machine learning", "ai", "data science"]),
+        Document(8, "Cloud Computing Overview",
+                 "Cloud computing provides on-demand access to computing resources. Infrastructure as a Service offers virtual machines, Platform as a Service provides development environments, and Software as a Service delivers applications over the internet. Major providers include AWS, Azure, and Google Cloud.",
+                 ["cloud", "aws", "infrastructure"]),
+        Document(9, "DevOps Best Practices",
+                 "DevOps combines development and operations to improve collaboration and productivity. Continuous integration ensures code is regularly tested, continuous deployment automates releases, and infrastructure as code manages environments. Containers and Kubernetes have become essential tools.",
+                 ["devops", "ci/cd", "containers"]),
+        Document(10, "Cybersecurity Fundamentals",
+                  "Cybersecurity protects systems and data from digital attacks. Understanding common vulnerabilities, encryption methods, and authentication mechanisms is crucial. Regular security audits, penetration testing, and employee training help maintain a strong security posture.",
+                  ["security", "encryption", "network"]),
+    ]
+    return documents
+
+
+def main():
+    engine = UnoptimizedSearchEngine()
+    
+    print("Loading documents...")
+    documents = generate_sample_documents()
+    for doc in documents:
+        engine.add_document(doc)
+    
+    print(f"Indexed {len(documents)} documents")
+    print()
+    
+    print("=" * 60)
+    print("SEARCH ENGINE BENCHMARK")
+    print("=" * 60)
+    
+    print("\n1. Basic Search Test")
+    start = time.time()
+    results = engine.search("python programming")
+    end = time.time()
+    print(f"   Search for 'python programming': {len(results)} results in {end - start:.4f}s")
+    for r in results[:3]:
+        print(f"   - {r['document'].title} (score: {r['score']:.2f})")
+    
+    print("\n2. Phrase Search Test")
+    start = time.time()
+    results = engine.search_phrase("machine learning")
+    end = time.time()
+    print(f"   Phrase search 'machine learning': {len(results)} results in {end - start:.4f}s")
+    
+    print("\n3. Filtered Search Test")
+    start = time.time()
+    results = engine.search_with_filters("programming", {"tags": ["python"]})
+    end = time.time()
+    print(f"   Filtered search: {len(results)} results in {end - start:.4f}s")
+    
+    print("\n4. Suggestions Test")
+    start = time.time()
+    suggestions = engine.get_suggestions("pro")
+    end = time.time()
+    print(f"   Suggestions for 'pro': {len(suggestions)} terms in {end - start:.4f}s")
+    
+    print("\n5. Similar Documents Test")
+    start = time.time()
+    similar = engine.find_similar_documents(1)
+    end = time.time()
+    print(f"   Similar to doc 1: {len(similar)} documents in {end - start:.4f}s")
+    
+    print("\n6. TF-IDF Calculation Test")
+    start = time.time()
+    tfidf = engine.calculate_tfidf("python", 1)
+    end = time.time()
+    print(f"   TF-IDF of 'python' in doc 1: {tfidf:.4f} in {end - start:.4f}s")
+    
+    print("\n7. Document Stats Test")
+    start = time.time()
+    stats = engine.get_document_stats(1)
+    end = time.time()
+    print(f"   Stats for doc 1: {stats['unique_words']} unique words in {end - start:.4f}s")
+    
+    print("\n8. Index Stats")
+    index_stats = engine.get_index_stats()
+    print(f"   Total terms: {index_stats['total_terms']}")
+    print(f"   Total postings: {index_stats['total_postings']}")
+    
+    print("\n" + "=" * 60)
+    print("BENCHMARK COMPLETE")
+    print("=" * 60)
+
+
+if __name__ == "__main__":
+    main()

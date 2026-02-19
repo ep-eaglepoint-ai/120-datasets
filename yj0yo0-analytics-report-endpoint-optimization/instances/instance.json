@@ -1,0 +1,11 @@
+{
+            "instance_id": "YJ0YO0",
+            "problem_statement": "The existing user analytics API experiences significant performance degradation due to inefficient data processing, redundant computations, unnecessary delays, and poor algorithmic complexity, which lead to excessive response times and reduced scalability under load. These issues make the API unsuitable for production environments where fast response, efficient resource usage, and the ability to handle concurrent requests are critical, thereby necessitating optimization to ensure reliability, responsiveness, and maintainability.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/yj0yo0-analytics-report-endpoint-optimization",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

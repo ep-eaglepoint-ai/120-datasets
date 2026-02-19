@@ -1,0 +1,7 @@
+services:
+  app:
+    build: .
+    environment:
+      PYTHONPATH: /app/repository_after
+    volumes:
+      - .:/app

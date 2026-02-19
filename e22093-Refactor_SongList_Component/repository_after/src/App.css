@@ -1,0 +1,29 @@
+.song-list-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.song-list-heading {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.song-item {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 10px;
+  background-color: #f9f9f9;
+  list-style: none;
+}
+
+.song-title {
+  color: #2c3e50;
+  margin: 0 0 10px 0;
+}
+
+.song-info {
+  margin: 5px 0;
+  color: #666;
+}

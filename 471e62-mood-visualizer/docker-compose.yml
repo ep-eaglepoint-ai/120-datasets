@@ -1,0 +1,20 @@
+services:
+  tests-before:
+    build: .
+    volumes:
+      - .:/app
+    command: sh -c "echo 'repository_before has no tests (code generation task - expected to fail)' && exit 1"
+
+  tests-after:
+    build: .
+    volumes:
+      - .:/app
+    working_dir: /app/repository_after
+    command: sh -c "mkdir -p src/__tests__ src/components/__tests__ src/lib/__tests__ src/utils/__tests__ && cp /app/tests/integration/*.test.tsx src/__tests__/ && cp /app/tests/components/*.test.tsx src/components/__tests__/ && cp /app/tests/lib/*.test.ts src/lib/__tests__/ && cp /app/tests/utils/*.test.ts src/utils/__tests__/ && npm install && npm test"
+
+  evaluation:
+    build: .
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: sh -c "cd repository_after && mkdir -p src/__tests__ src/components/__tests__ src/lib/__tests__ src/utils/__tests__ && cp /app/tests/integration/*.test.tsx src/__tests__/ && cp /app/tests/components/*.test.tsx src/components/__tests__/ && cp /app/tests/lib/*.test.ts src/lib/__tests__/ && cp /app/tests/utils/*.test.ts src/utils/__tests__/ || true; cd /app && python3 evaluation/evaluation.py"

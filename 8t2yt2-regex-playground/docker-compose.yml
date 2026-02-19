@@ -1,0 +1,8 @@
+services:
+  app:
+    build: .
+    environment:
+      - NODE_ENV=test
+    command: ["sh", "-c", "npm test && npx ts-node evaluation/evaluation.ts"]
+    volumes:
+      - ./evaluation:/app/evaluation

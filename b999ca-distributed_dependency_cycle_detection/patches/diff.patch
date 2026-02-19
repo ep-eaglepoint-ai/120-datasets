@@ -1,0 +1,267 @@
+--- repository_before/cycle_detection.py	2026-01-19 14:20:41.172479210 +0300
++++ repository_after/cycle_detection.py	2026-01-19 15:26:36.623599344 +0300
+@@ -90,8 +90,8 @@
+     """Directed graph of service dependencies"""
+     nodes: Dict[str, ServiceNode]
+     edges: List[DependencyEdge]
+-    adjacency_list: Dict[str, List[str]] 
+-    reverse_adjacency: Dict[str, List[str]] 
++    adjacency_list: Dict[str, List[str]] = field(default_factory=dict)
++    reverse_adjacency: Dict[str, List[str]] = field(default_factory=dict) 
+     
+     def __post_init__(self):
+         """Build adjacency lists from edges"""
+@@ -224,13 +224,16 @@
+         max_cycle_length: Optional[int] = None
+     ) -> CycleDetectionResult:
+         """
+-        NAIVE SINGLE-SOURCE DFS - Detects cycles in CONNECTED graphs only.
++        FIXED MULTI-COMPONENT DFS - Detects cycles in ALL graph components.
+         
+-        CRITICAL BUG: Assumes graph is connected. Only explores reachable nodes
+-        from first node, missing entire disconnected components.
++        SOLUTION: Iterates through all nodes and restarts DFS for each unvisited
++        component, ensuring complete graph coverage.
+         
+-        WARNING: Silently fails on disconnected graphs - reports "no cycles"
+-        even when isolated components contain cycles.
++        Complexity: O(V + E) time, O(V + E) space
++        - Each node visited exactly once: O(V)
++        - Each edge traversed exactly once: O(E)
++        - Global visited set prevents revisiting: O(V) space
++        - Per-component recursion stack: O(V) space worst case
+         
+         Args:
+             graph: Service dependency graph to analyze
+@@ -263,103 +266,141 @@
+             raise ValueError("Graph integrity check failed")
+         
+         cycles_found: List[CycleInfo] = []
+-        visited: Set[str] = set()
+-        recursion_stack: Set[str] = set()
+         
+-        def dfs_detect_cycle(node_id: str, depth: int) -> None:
++        # CRITICAL FIX: Global visited state to prevent revisiting nodes
++        global_visited: Set[str] = set()
++        disconnected_components: List[Set[str]] = []
++        
++        def dfs_detect_cycle(start_node_id: str, component_id: int) -> Set[str]:
+             """
+-            DFS cycle detection - ONLY explores reachable nodes.
++            DFS cycle detection for a single component.
+             
+-            BUG: Does not restart DFS for disconnected components.
++            FIXED: Uses per-component recursion stack while maintaining
++            global visited state to ensure O(V + E) complexity.
+             """
+-            self._analysis_stats['nodes_visited'] += 1
+-            self._analysis_stats['max_dfs_depth'] = max(
+-                self._analysis_stats['max_dfs_depth'],
+-                depth
+-            )
+-            
+-            visited.add(node_id)
+-            recursion_stack.add(node_id)
++            component_nodes: Set[str] = set()
++            recursion_stack: List[str] = []  # Changed from Set to List to maintain order
+             
+-            self._log_traversal(
+-                "VISIT",
+-                node_id,
+-                {'depth': depth, 'stack_size': len(recursion_stack)}
+-            )
+-            
+-            if include_self_loops and graph.has_self_loop(node_id):
+-                self._analysis_stats['self_loops_found'] += 1
+-                cycle_info = CycleInfo(
+-                    cycle_path=[node_id, node_id],
+-                    cycle_length=1,
+-                    component_id=0, 
+-                    total_criticality=graph.nodes[node_id].criticality_score,
+-                    max_latency_ms=0.0,
+-                    involves_critical_service=self._has_critical_service([node_id], graph),
+-                    detection_timestamp=time.time()
++            def dfs_recursive(node_id: str, depth: int) -> None:
++                """Recursive DFS with cycle detection"""
++                self._analysis_stats['nodes_visited'] += 1
++                self._analysis_stats['max_dfs_depth'] = max(
++                    self._analysis_stats['max_dfs_depth'],
++                    depth
+                 )
+-                cycles_found.append(cycle_info)
+-                self._analysis_stats['cycles_detected'] += 1
+-            
+-            neighbors = graph.get_neighbors(node_id)
+-            for neighbor_id in neighbors:
+-                self._analysis_stats['edges_traversed'] += 1
+                 
+-                if neighbor_id not in visited:
+-                    self._log_traversal(
+-                        "EXPLORE",
+-                        neighbor_id,
+-                        {'from': node_id, 'edge_type': 'tree'}
+-                    )
+-                    dfs_detect_cycle(neighbor_id, depth + 1)
+-                    
+-                elif neighbor_id in recursion_stack:
+-                    self._log_traversal(
+-                        "CYCLE_DETECTED",
+-                        neighbor_id,
+-                        {'from': node_id, 'edge_type': 'back'}
+-                    )
+-                    
+-                    cycle_path = [neighbor_id]
+-                    temp_stack = list(recursion_stack)
+-                    
+-                    start_idx = temp_stack.index(neighbor_id)
+-                    cycle_path = temp_stack[start_idx:] + [neighbor_id]
++                global_visited.add(node_id)
++                component_nodes.add(node_id)
++                recursion_stack.append(node_id)  # Changed from add to append
++                
++                self._log_traversal(
++                    "VISIT",
++                    node_id,
++                    {'depth': depth, 'component': component_id, 'stack_size': len(recursion_stack)}
++                )
++                
++                # Explore neighbors
++                neighbors = graph.get_neighbors(node_id)
++                for neighbor_id in neighbors:
++                    self._analysis_stats['edges_traversed'] += 1
+                     
+-                    if max_cycle_length is None or len(cycle_path) - 1 <= max_cycle_length:
+-                        cycle_info = CycleInfo(
+-                            cycle_path=cycle_path,
+-                            cycle_length=len(cycle_path) - 1,
+-                            component_id=0,  
+-                            total_criticality=self._calculate_cycle_criticality(cycle_path, graph),
+-                            max_latency_ms=self._calculate_max_cycle_latency(cycle_path, graph),
+-                            involves_critical_service=self._has_critical_service(cycle_path, graph),
+-                            detection_timestamp=time.time()
++                    if neighbor_id not in global_visited:
++                        # Tree edge - continue DFS
++                        self._log_traversal(
++                            "EXPLORE",
++                            neighbor_id,
++                            {'from': node_id, 'edge_type': 'tree', 'component': component_id}
+                         )
+-                        cycles_found.append(cycle_info)
+-                        self._analysis_stats['cycles_detected'] += 1
++                        dfs_recursive(neighbor_id, depth + 1)
++                        
++                    elif neighbor_id in recursion_stack:  # Changed from set membership to list membership
++                        # Back edge - cycle detected!
++                        self._log_traversal(
++                            "CYCLE_DETECTED",
++                            neighbor_id,
++                            {'from': node_id, 'edge_type': 'back', 'component': component_id}
++                        )
++                        
++                        # Reconstruct cycle path
++                        start_idx = recursion_stack.index(neighbor_id)  # No need to convert to list
++                        cycle_path = recursion_stack[start_idx:] + [neighbor_id]
++                        
++                        if max_cycle_length is None or len(cycle_path) - 1 <= max_cycle_length:
++                            cycle_info = CycleInfo(
++                                cycle_path=cycle_path,
++                                cycle_length=len(cycle_path) - 1,
++                                component_id=component_id,
++                                total_criticality=self._calculate_cycle_criticality(cycle_path, graph),
++                                max_latency_ms=self._calculate_max_cycle_latency(cycle_path, graph),
++                                involves_critical_service=self._has_critical_service(cycle_path, graph),
++                                detection_timestamp=time.time()
++                            )
++                            cycles_found.append(cycle_info)
++                            self._analysis_stats['cycles_detected'] += 1
++                    
++                    # Note: Forward and cross edges are ignored (no action needed)
++                
++                recursion_stack.remove(node_id)  # Remove from list (maintains order for other elements)
++                self._log_traversal(
++                    "BACKTRACK",
++                    node_id,
++                    {'depth': depth, 'component': component_id}
++                )
+             
+-            recursion_stack.remove(node_id)
+-            self._log_traversal(
+-                "BACKTRACK",
+-                node_id,
+-                {'depth': depth}
+-            )
+-
+-        if graph.nodes:
+-            first_node = next(iter(graph.nodes.keys()))
+-            self._log_traversal(
+-                "START_DFS",
+-                first_node,
+-                {'total_nodes': len(graph.nodes)}
+-            )
+-            dfs_detect_cycle(first_node, 0)
+-            self._analysis_stats['components_discovered'] = 1  # BUG: Assumes 1 component
++            # Start DFS from the component's starting node
++            if start_node_id not in global_visited:
++                dfs_recursive(start_node_id, 0)
++            
++            return component_nodes
++        
++        # CRITICAL FIX: Iterate through ALL nodes to find ALL components
++        component_id = 0
++        
++        self._log_traversal(
++            "START_MULTI_COMPONENT_ANALYSIS",
++            "ALL_NODES",
++            {'total_nodes': len(graph.nodes), 'total_edges': len(graph.edges)}
++        )
++        
++        for node_id in graph.nodes:
++            if node_id not in global_visited:
++                # Found a new disconnected component
++                self._log_traversal(
++                    "START_COMPONENT",
++                    node_id,
++                    {'component_id': component_id}
++                )
++                
++                component_nodes = dfs_detect_cycle(node_id, component_id)
++                disconnected_components.append(component_nodes)
++                
++                self._analysis_stats['components_discovered'] += 1
++                component_id += 1
++                
++                self._log_traversal(
++                    "FINISH_COMPONENT",
++                    node_id,
++                    {
++                        'component_id': component_id - 1,
++                        'component_size': len(component_nodes),
++                        'nodes_in_component': list(component_nodes)
++                    }
++                )
+         
+         end_time = time.time()
+         
+         has_critical = any(c.involves_critical_service for c in cycles_found)
+-        disconnected_components = [set(visited)] if visited else []
++        
++        self._log_traversal(
++            "ANALYSIS_COMPLETE",
++            "ALL_COMPONENTS",
++            {
++                'total_components': self._analysis_stats['components_discovered'],
++                'total_cycles': len(cycles_found),
++                'total_nodes_visited': self._analysis_stats['nodes_visited'],
++                'total_edges_traversed': self._analysis_stats['edges_traversed']
++            }
++        )
+         
+         return CycleDetectionResult(
+             cycles_found=cycles_found,
+@@ -370,4 +411,4 @@
+             analysis_time_ms=(end_time - start_time) * 1000,
+             has_critical_cycles=has_critical,
+             disconnected_components=disconnected_components
+-        )
++        )
+\ No newline at end of file

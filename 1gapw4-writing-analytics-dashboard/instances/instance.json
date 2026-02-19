@@ -1,0 +1,11 @@
+{
+            "instance_id": "1GAPW4",
+            "problem_statement": "Build an offline-first writing analytics web application using Next.js and TailwindCSS that processes text locally to compute metrics for sentiment, readability, vocabulary richness, and stylistic trends without external APIs. Use client-side NLP libraries and IndexedDB for persistence, with Zustand state management and memoized computations for performance on large writing archives. The tool must provide interactive dashboards, longitudinal analysis, and exportable reports while ensuring reproducible, interpretable results from diverse text.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/1gapw4-writing-analytics-dashboard",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

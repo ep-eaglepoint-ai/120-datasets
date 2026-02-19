@@ -1,0 +1,19 @@
+services:
+  tests-before:
+    build: .
+    volumes:
+      - .:/app
+    command: sh -c "echo 'repository_before is a basic implementation (expected to have issues)' && exit 1"
+
+  tests-after:
+    build: .
+    volumes:
+      - .:/app
+    working_dir: /app/repository_after
+    command: python run_tests.py
+
+  evaluation:
+    build: .
+    volumes:
+      - .:/app
+    command: python evaluation/evaluation.py

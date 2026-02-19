@@ -1,0 +1,24 @@
+{
+  "name": "dom-extractor",
+  "version": "1.0.0",
+  "description": "DOM Mapping and Extracting - Complete webpage DOM structure extraction system",
+  "main": "domExtractor.js",
+  "scripts": {
+    "test": "jest --ci",
+    "evaluate": "node ../evaluation/evaluation.js"
+  },
+  "keywords": [
+    "dom",
+    "extractor",
+    "jsdom",
+    "web-scraping",
+    "xpath"
+  ],
+  "dependencies": {
+    "jsdom": "^23.0.1",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

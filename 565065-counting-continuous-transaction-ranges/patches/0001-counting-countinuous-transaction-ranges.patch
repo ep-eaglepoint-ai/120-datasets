@@ -1,0 +1,89 @@
+diff --git a/repository_before/.pytest_cache/v/cache/lastfailed b/repository_after/.pytest_cache/v/cache/lastfailed
+index ab5d850..9e26dfe 100644
+--- a/repository_before/.pytest_cache/v/cache/lastfailed
++++ b/repository_after/.pytest_cache/v/cache/lastfailed
+@@ -1,23 +1 @@
+-{
+-  "tests/test_count_transaction_ranges.py::TestCountTransactionRangesMultiple::test_three_transactions_various_ranges": true,
+-  "tests/test_count_transaction_ranges.py::TestCountTransactionRangesPerformance::test_performance_100000_transactions_sla": true,
+-  "tests/test_count_transaction_ranges.py::TestCountTransactionRangesMultiple::test_all_same_amounts": true,
+-  "tests/test_count_transaction_ranges.py::TestCountTransactionRangesPositiveAmounts::test_positive_amounts_small_dataset": true,
+-  "tests/test_count_transaction_ranges.py::TestCountTransactionRangesPositiveAmounts::test_positive_amounts_increasing": true,
+-  "tests/test_count_transaction_ranges.py::TestCountTransactionRangesNegativeAmounts::test_negative_amounts_only": true,
+-  "tests/test_count_transaction_ranges.py::TestCountTransactionRangesNegativeAmounts::test_negative_amounts_decreasing": true,
+-  "tests/test_count_transaction_ranges.py::TestCountTransactionRangesMixedAmounts::test_mixed_amounts_simple": true,
+-  "tests/test_count_transaction_ranges.py::TestCountTransactionRangesMixedAmounts::test_mixed_amounts_zero_sum_ranges": true,
+-  "tests/test_count_transaction_ranges.py::TestCountTransactionRangesMixedAmounts::test_mixed_alternating_amounts": true,
+-  "tests/test_count_transaction_ranges.py::TestCountTransactionRangesExactMatch::test_exact_match_sum_of_two": true,
+-  "tests/test_count_transaction_ranges.py::TestCountTransactionRangesExactMatch::test_exact_match_multiple_occurrences": true,
+-  "tests/test_count_transaction_ranges.py::TestCountTransactionRangesEdgeCases::test_large_bounds_all_included": true,
+-  "tests/test_count_transaction_ranges.py::TestCountTransactionRangesEdgeCases::test_negative_bounds": true,
+-  "tests/test_count_transaction_ranges.py::TestCountTransactionRangesEdgeCases::test_zero_amount_transactions": true,
+-  "tests/test_count_transaction_ranges.py::TestCountTransactionRangesPerformance::test_performance_1000_transactions": true,
+-  "tests/test_count_transaction_ranges.py::TestCountTransactionRangesPerformance::test_performance_10000_transactions": true,
+-  "tests/test_count_transaction_ranges.py::TestCountTransactionRangesPerformance::test_performance_positive_only_100000": true,
+-  "tests/test_count_transaction_ranges.py::TestCountTransactionRangesPerformance::test_performance_scaling_verification": true,
+-  "tests/test_count_transaction_ranges.py::TestCountTransactionRangesCorrectness::test_correctness_random_small": true,
+-  "tests/test_count_transaction_ranges.py::TestCountTransactionRangesCorrectness::test_correctness_specific_case": true
+-}
+\ No newline at end of file
++{}
+\ No newline at end of file
+diff --git a/repository_before/analytics.py b/repository_after/analytics.py
+index 3feed6e..8e22701 100644
+--- a/repository_before/analytics.py
++++ b/repository_after/analytics.py
+@@ -1,6 +1,7 @@
+ from typing import List, Dict
+ from dataclasses import dataclass
+ from copy import deepcopy
++from bisect import bisect_left, bisect_right, insort
+ 
+ @dataclass
+ class Transaction:
+@@ -71,25 +72,34 @@ class TransactionAnalytics:
+         return deepcopy(result)
+     
+     def count_transaction_ranges(self, lower_bound: float, upper_bound: float) -> int:
++        # Using prefix sums and binary search to count the number of continuous subarrays
+         count = 0
+-        n = len(self.transactions)
+-        for i in range(n):
+-            for j in range(i, n):
+-                for k in range(i, j + 1):  
+-                    total = 0
+-                    for m in range(i, j + 1):
+-                        total += self.transactions[m].amount
+-                    if lower_bound <= total <= upper_bound:
+-                        count += 1
++        prefix_sum = 0
++
++        # Maintain a sorted list of prefix sums
++        prefix_sums = [0]
++        for transaction in self.transactions:
++            prefix_sum += transaction.amount
++
++            # We need to find the number of prefix sums that satisfy:
++            # prefix_sum - upper_bound <= previous_prefix_sum <= prefix_sum - lower_bound
++            left = prefix_sum - upper_bound
++            right = prefix_sum - lower_bound
++
++            # Use binary search to find the count of valid previous prefix sums
++            count += bisect_right(prefix_sums, right) - bisect_left(prefix_sums, left)
++
++            # Insert the current prefix sum into the sorted list
++            insort(prefix_sums, prefix_sum)
+         return count
+-    
++
+     def find_profitable_windows(self, min_profit: float) -> List[Dict]:
+         windows = []
+         n = len(self.transactions)
+         for i in range(n):
+             for j in range(i, n):
+                 total = 0
+-                for k in range(i, j + 1): 
++                for k in range(i, j + 1):
+                     total += self.transactions[k].amount
+                 if total >= min_profit:
+                     windows.append({

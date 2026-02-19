@@ -1,0 +1,12 @@
+{
+            "instance_id": "OVTVZW",
+            "problem_statement": "In high-concurrency Single Page Applications, an expired access token often triggers a cascade of simultaneous HTTP 401 errors across multiple components. A naive implementation immediately triggers a token refresh for every failed request, leading to a "Thundering Herd" scenario where the server is bombarded with redundant refresh calls. This creates race conditions where valid tokens are overwritten or invalidated before they can be used. The engineering challenge is to implement a client-side concurrency lock or singleton promise that ensures only one refresh operation executes at a time, while effectively queuing and subsequently resolving all pending requests once valid credentials are re-established.
+",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/ovtvzw-jwt-refresh-token-rotation-with-request-deduplication",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

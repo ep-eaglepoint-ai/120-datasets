@@ -1,0 +1,8 @@
+{
+  "instance_id": "00e94b",
+  "problem_statement": "The existing PostgreSQL trigger function performs important side-effect updates but relies entirely on implicit database behavior when unexpected runtime failures occur, making error causes opaque and harder to diagnose during operations or audits. It is therefore reasonable to request a careful review that adds explicit, standards-compliant error handling to the function, using well-defined PostgreSQL SQLSTATE codes, so that genuine database-level failures (such as permission issues or missing schema objects) can be surfaced clearly and consistently. At the same time, the request appropriately constrains the solution to preserve all existing business logic and no-op semantics, ensuring that the enhancement improves observability and correctness without introducing new behavior, assumptions, or domain-level failures.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/00e94b-Database_Level_Error_Handling_Without_Behavioral_Change",
+  "environment_setup": "Dockerfile"
+}

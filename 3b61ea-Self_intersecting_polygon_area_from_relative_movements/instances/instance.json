@@ -1,0 +1,8 @@
+{
+  "instance_id": "3b61ea",
+  "problem_statement": "Design a generic Python script that computes the total enclosed area of a polygon traced by relative directional movements starting from the origin. The script must translate a sequence of (direction, distance) commands into Cartesian vertices, then accurately calculate the polygon’s area using a robust implementation of the Shoelace Formula. Unlike simple polygons, the movement path may self-intersect, so the solution must correctly determine the absolute total area formed by all enclosed loops rather than relying on a signed net area, while remaining modular, reusable, and free of external numerical libraries",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/3b61ea-Self_intersecting_polygon_area_from_relative_movements",
+  "environment_setup": "Dockerfile"
+}

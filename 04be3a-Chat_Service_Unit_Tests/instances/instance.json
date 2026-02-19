@@ -1,0 +1,9 @@
+{
+  "instance_id": "04be3a",
+  "problem_statement": "Write comprehensive unit tests for ChatService including proper Prisma mocking, test isolation, error handling tests (404, 409, 500), and edge cases for pagination and empty inputs.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/04be3a-chat-service-unit-tests/04be3a-Chat_Service_Unit_Tests",
+  "environment_setup": "Dockerfile"
+}
+

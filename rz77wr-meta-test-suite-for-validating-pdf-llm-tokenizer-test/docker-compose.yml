@@ -1,0 +1,42 @@
+services:
+  app:
+    build: .
+    environment:
+      - PYTHONPATH=/app/repository_after:/app
+    volumes:
+      - .:/app
+
+  # 1. Runs the meta-tests (from repository_after) against the OLD repository_before code
+  # We use /tmp to ensure the test file is isolated and doesn't shadow the repository_before modules
+  meta-test-before:
+    build: .
+    volumes:
+      - .:/app
+    # working dir is irrelevant if files are in /tmp, but setting it to before is safe
+    working_dir: /app/repository_before
+    environment:
+      - PYTHONPATH=/app/repository_before
+    command: >
+      sh -c "cp /app/repository_after/meta_test_pdf_llm_tokenizer.py /tmp/meta_test.py &&
+             cp /app/repository_before/test_pdf_llm_tokenizer.py /tmp/test_pdf_llm_tokenizer.py &&
+             pytest /tmp/meta_test.py"
+
+  # 2. Runs the validation suite against the meta-test file itself
+  verify-meta:
+    build: .
+    volumes:
+      - .:/app
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app/repository_after
+    command: pytest tests/test_meta_validation.py
+
+  # 3. Runs the evaluation script
+  evaluate:
+    build: .
+    volumes:
+      - .:/app
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app/repository_after
+    command: python evaluation/evaluation.py

@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "mocha": "^11.7.5",
+    "mongoose": "^9.1.4",
+    "uuid": "^13.0.0"
+  }
+}

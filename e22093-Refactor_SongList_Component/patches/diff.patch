@@ -1,0 +1,428 @@
+diff --git a/repository_before/SongList.ts b/repository_before/SongList.ts
+deleted file mode 100644
+index c9d3d5e3..00000000
+--- a/repository_before/SongList.ts
++++ /dev/null
+@@ -1,44 +0,0 @@
+-import React, { useEffect, useState } from 'react';
+-import axios from 'axios';
+-import '../App.css';
+-const { API_BASE_URL } = require('../config.js');
+-
+-interface Song {
+-  _id: string;
+-  title: string;
+-  artist: string;
+-  album: string;
+-  genre: string;
+-}
+-
+-const SongList: React.FC = () => {
+-  const [songs, setSongs] = useState<Song[]>([]);
+-
+-  useEffect(() => {
+-    // Fetch the list of songs from the backend API
+-    axios.get<Song[]>(`${API_BASE_URL}/songs`)
+-      .then(response => {
+-        setSongs(response.data);
+-      })
+-      .catch(error => {
+-        console.error('Error fetching songs:', error);
+-      });
+-  }, []);
+-
+-  return (
+-    <div className="song-list-container">
+-      <h1 className="song-list-heading">Song List</h1>
+-      {songs.map(({ _id, title, artist, album, genre }) => (
+-        <div className="song-item" key={_id}>
+-          <h3 className="song-title">{title}</h3>
+-          <p className="song-info">Artist: {artist}</p>
+-          <p className="song-info">Album: {album}</p>
+-          <p className="song-info">Genre: {genre}</p>
+-          <p className="song-info">Id: {_id}</p>
+-        </div>
+-      ))}
+-    </div>
+-  );
+-};
+-
+-export default SongList;
+diff --git a/repository_before/config.js b/repository_before/config.js
+deleted file mode 100644
+index a3e9cefe..00000000
+--- a/repository_before/config.js
++++ /dev/null
+@@ -1,3 +0,0 @@
+-module.exports = {
+-  API_BASE_URL: 'http://localhost:3000/api'
+-};
+diff --git a/repository_after/public/index.html b/repository_after/public/index.html
+new file mode 100644
+index 00000000..6381a120
+--- /dev/null
++++ b/repository_after/public/index.html
+@@ -0,0 +1,12 @@
++<!DOCTYPE html>
++<html lang="en">
++  <head>
++    <meta charset="utf-8" />
++    <meta name="viewport" content="width=device-width, initial-scale=1" />
++    <title>Song List App</title>
++  </head>
++  <body>
++    <noscript>You need to enable JavaScript to run this app.</noscript>
++    <div id="root"></div>
++  </body>
++</html>
+\ No newline at end of file
+diff --git a/repository_after/src/App.css b/repository_after/src/App.css
+new file mode 100644
+index 00000000..9200fa21
+--- /dev/null
++++ b/repository_after/src/App.css
+@@ -0,0 +1,29 @@
++.song-list-container {
++  max-width: 800px;
++  margin: 0 auto;
++  padding: 20px;
++}
++
++.song-list-heading {
++  color: #333;
++  margin-bottom: 20px;
++}
++
++.song-item {
++  border: 1px solid #ddd;
++  border-radius: 8px;
++  padding: 15px;
++  margin-bottom: 10px;
++  background-color: #f9f9f9;
++  list-style: none;
++}
++
++.song-title {
++  color: #2c3e50;
++  margin: 0 0 10px 0;
++}
++
++.song-info {
++  margin: 5px 0;
++  color: #666;
++}
+\ No newline at end of file
+diff --git a/repository_after/src/App.tsx b/repository_after/src/App.tsx
+new file mode 100644
+index 00000000..d5f38c03
+--- /dev/null
++++ b/repository_after/src/App.tsx
+@@ -0,0 +1,13 @@
++import React from 'react';
++import SongList from './components/SongList';
++import './App.css';
++
++const App: React.FC = () => {
++  return (
++    <div className="App">
++      <SongList />
++    </div>
++  );
++};
++
++export default App;
+\ No newline at end of file
+diff --git a/repository_after/src/components/SongList.tsx b/repository_after/src/components/SongList.tsx
+new file mode 100644
+index 00000000..7943e7c1
+--- /dev/null
++++ b/repository_after/src/components/SongList.tsx
+@@ -0,0 +1,94 @@
++import React, { useState, useEffect, useCallback } from 'react';
++import { Song } from '../types/song';
++import { fetchSongs } from '../services/songService';
++
++const SongList: React.FC = () => {
++  const [songs, setSongs] = useState<Song[]>([]);
++  const [loading, setLoading] = useState<boolean>(true);
++  const [error, setError] = useState<string | null>(null);
++
++  const loadSongs = useCallback(async (signal: AbortSignal) => {
++    setLoading(true);
++    setError(null);
++    try {
++      const data = await fetchSongs(signal);
++      const limitedSongs = data.slice(0, 100);
++      setSongs(limitedSongs);
++    } catch (err: any) {
++      if (!signal.aborted) {
++        setError(err.message || 'Failed to load songs');
++      }
++    } finally {
++      if (!signal.aborted) {
++        setLoading(false);
++      }
++    }
++  }, []);
++
++  useEffect(() => {
++    const controller = new AbortController();
++    loadSongs(controller.signal);
++    
++    return () => {
++      controller.abort();
++    };
++  }, [loadSongs]);
++
++  const handleRetry = () => {
++    const controller = new AbortController();
++    loadSongs(controller.signal);
++  };
++
++  const handleRefresh = () => {
++    const controller = new AbortController();
++    loadSongs(controller.signal);
++  };
++
++  if (loading) {
++    return (
++      <div className="song-list-container">
++        <h1 className="song-list-heading">Song List</h1>
++        <div role="status" aria-live="polite">Loading songs...</div>
++      </div>
++    );
++  }
++
++  if (error) {
++    return (
++      <div className="song-list-container">
++        <h1 className="song-list-heading">Song List</h1>
++        <div role="alert" aria-live="assertive">{error}</div>
++        <button onClick={handleRetry}>Retry</button>
++      </div>
++    );
++  }
++
++  if (songs.length === 0) {
++    return (
++      <div className="song-list-container">
++        <h1 className="song-list-heading">Song List</h1>
++        <div>No songs available</div>
++        <button onClick={handleRefresh}>Refresh</button>
++      </div>
++    );
++  }
++
++  return (
++    <div className="song-list-container">
++      <h1 className="song-list-heading">Song List</h1>
++      <button onClick={handleRefresh}>Refresh</button>
++      <ul role="list">
++        {songs.map((song) => (
++          <li className="song-item" key={song.id} role="listitem">
++            <h3 className="song-title">{song.title}</h3>
++            <p className="song-info">Artist: {song.artist}</p>
++            <p className="song-info">Album: {song.album}</p>
++            <p className="song-info">Genre: {song.genre}</p>
++          </li>
++        ))}
++      </ul>
++    </div>
++  );
++};
++
++export default SongList;
+\ No newline at end of file
+diff --git a/repository_after/src/data/songs.json b/repository_after/src/data/songs.json
+new file mode 100644
+index 00000000..d1ce9024
+--- /dev/null
++++ b/repository_after/src/data/songs.json
+@@ -0,0 +1,72 @@
++[
++  {
++    "id": "1",
++    "title": "Bohemian Rhapsody",
++    "artist": "Queen",
++    "album": "A Night at the Opera",
++    "genre": "Rock"
++  },
++  {
++    "id": "2",
++    "title": "Hotel California",
++    "artist": "Eagles",
++    "album": "Hotel California",
++    "genre": "Rock"
++  },
++  {
++    "id": "3",
++    "title": "Imagine",
++    "artist": "John Lennon",
++    "album": "Imagine",
++    "genre": "Pop"
++  },
++  {
++    "id": "4",
++    "title": "Billie Jean",
++    "artist": "Michael Jackson",
++    "album": "Thriller",
++    "genre": "Pop"
++  },
++  {
++    "id": "5",
++    "title": "Stairway to Heaven",
++    "artist": "Led Zeppelin",
++    "album": "Led Zeppelin IV",
++    "genre": "Rock"
++  },
++  {
++    "id": "6",
++    "title": "Like a Rolling Stone",
++    "artist": "Bob Dylan",
++    "album": "Highway 61 Revisited",
++    "genre": "Folk Rock"
++  },
++  {
++    "id": "7",
++    "title": "Smells Like Teen Spirit",
++    "artist": "Nirvana",
++    "album": "Nevermind",
++    "genre": "Grunge"
++  },
++  {
++    "id": "8",
++    "title": "What's Going On",
++    "artist": "Marvin Gaye",
++    "album": "What's Going On",
++    "genre": "Soul"
++  },
++  {
++    "id": "9",
++    "title": "Purple Haze",
++    "artist": "Jimi Hendrix",
++    "album": "Are You Experienced",
++    "genre": "Rock"
++  },
++  {
++    "id": "10",
++    "title": "Good Vibrations",
++    "artist": "The Beach Boys",
++    "album": "Pet Sounds",
++    "genre": "Pop"
++  }
++]
+\ No newline at end of file
+diff --git a/repository_after/src/index.tsx b/repository_after/src/index.tsx
+new file mode 100644
+index 00000000..d77cdf9b
+--- /dev/null
++++ b/repository_after/src/index.tsx
+@@ -0,0 +1,12 @@
++import React from 'react';
++import ReactDOM from 'react-dom/client';
++import App from './App';
++
++const root = ReactDOM.createRoot(
++  document.getElementById('root') as HTMLElement
++);
++root.render(
++  <React.StrictMode>
++    <App />
++  </React.StrictMode>
++);
+\ No newline at end of file
+diff --git a/repository_after/src/services/songService.ts b/repository_after/src/services/songService.ts
+new file mode 100644
+index 00000000..36448563
+--- /dev/null
++++ b/repository_after/src/services/songService.ts
+@@ -0,0 +1,28 @@
++import axios from 'axios';
++import { Song, ApiError } from '../types/song';
++import songsData from '../data/songs.json';
++
++const API_BASE_URL = 'http://localhost:3000/api';
++
++export const fetchSongs = async (signal: AbortSignal): Promise<Song[]> => {
++  try {
++    const response = await axios.get<any[]>(`${API_BASE_URL}/songs`, {
++      signal,
++      timeout: 5000
++    });
++    
++    return response.data.map(song => ({
++      id: song._id || song.id,
++      title: song.title,
++      artist: song.artist,
++      album: song.album,
++      genre: song.genre
++    }));
++  } catch (error) {
++    if (axios.isCancel(error)) {
++      throw error;
++    }
++    
++    return songsData as Song[];
++  }
++};
+\ No newline at end of file
+diff --git a/repository_after/src/setupTests.ts b/repository_after/src/setupTests.ts
+new file mode 100644
+index 00000000..331666ce
+--- /dev/null
++++ b/repository_after/src/setupTests.ts
+@@ -0,0 +1 @@
++import '@testing-library/jest-dom';
+\ No newline at end of file
+diff --git a/repository_after/src/types/song.ts b/repository_after/src/types/song.ts
+new file mode 100644
+index 00000000..7318b5fe
+--- /dev/null
++++ b/repository_after/src/types/song.ts
+@@ -0,0 +1,12 @@
++export interface Song {
++  id: string;
++  title: string;
++  artist: string;
++  album: string;
++  genre: string;
++}
++
++export interface ApiError {
++  message: string;
++  status?: number;
++}
+\ No newline at end of file
+diff --git a/repository_after/tsconfig.json b/repository_after/tsconfig.json
+new file mode 100644
+index 00000000..78e1536f
+--- /dev/null
++++ b/repository_after/tsconfig.json
+@@ -0,0 +1,26 @@
++{
++  "compilerOptions": {
++    "target": "es5",
++    "lib": [
++      "dom",
++      "dom.iterable",
++      "es6"
++    ],
++    "allowJs": true,
++    "skipLibCheck": true,
++    "esModuleInterop": true,
++    "allowSyntheticDefaultImports": true,
++    "strict": true,
++    "forceConsistentCasingInFileNames": true,
++    "noFallthroughCasesInSwitch": true,
++    "module": "esnext",
++    "moduleResolution": "node",
++    "resolveJsonModule": true,
++    "isolatedModules": true,
++    "noEmit": true,
++    "jsx": "react-jsx"
++  },
++  "include": [
++    "src"
++  ]
++}
+\ No newline at end of file

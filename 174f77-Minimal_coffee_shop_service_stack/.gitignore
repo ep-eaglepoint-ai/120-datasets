@@ -1,0 +1,8 @@
+.env
+evaluation/reports/
+evaluation/reports/*
+
+# Environment variables
+.env
+.env.*
+!.env.example

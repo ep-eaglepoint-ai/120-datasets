@@ -1,0 +1,11 @@
+{
+            "instance_id": "RZ77WR",
+            "problem_statement": "The existing pytest test suite validates a Python-based PDF-to-LLM tokenizer, but there is no automated mechanism to verify that these tests are sufficiently rigorous, complete, and capable of detecting meaningful regressions. A meta-test suite is required to ensure the tests themselves provide strong guarantees of correctness, determinism, and production readiness.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/rz77wr-meta-test-suite-for-validating-pdf-llm-tokenizer-test",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

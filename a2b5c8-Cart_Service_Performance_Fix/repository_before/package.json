@@ -1,0 +1,13 @@
+{
+  "name": "cart-service-performance",
+  "version": "1.0.0",
+  "description": "Cart service with performance issues",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "mongoose": "^8.0.0"
+  }
+}
+

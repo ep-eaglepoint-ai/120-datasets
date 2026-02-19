@@ -1,0 +1,1300 @@
+diff --git a/repository_after/.gitignore b/repository_after/.gitignore
+new file mode 100644
+index 000000000..5ef6a5207
+--- /dev/null
++++ b/repository_after/.gitignore
+@@ -0,0 +1,41 @@
++# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
++
++# dependencies
++/node_modules
++/.pnp
++.pnp.*
++.yarn/*
++!.yarn/patches
++!.yarn/plugins
++!.yarn/releases
++!.yarn/versions
++
++# testing
++/coverage
++
++# next.js
++/.next/
++/out/
++
++# production
++/build
++
++# misc
++.DS_Store
++*.pem
++
++# debug
++npm-debug.log*
++yarn-debug.log*
++yarn-error.log*
++.pnpm-debug.log*
++
++# env files (can opt-in for committing if needed)
++.env*
++
++# vercel
++.vercel
++
++# typescript
++*.tsbuildinfo
++next-env.d.ts
+diff --git a/repository_before/.gitkeep b/repository_before/.gitkeep
+deleted file mode 100644
+index e69de29bb..000000000
+diff --git a/repository_after/README.md b/repository_after/README.md
+new file mode 100644
+index 000000000..e5a9bf380
+--- /dev/null
++++ b/repository_after/README.md
+@@ -0,0 +1,44 @@
++# Minimal Authentication System from Scratch
++
++This project implements a complete authentication system in Next.js using TypeScript, built entirely without external authentication libraries or managed services. It is designed to be pedagogical, demonstrating the core primitives of identity, password handling, and session management.
++
++## Features
++
++- **User Registration**: Create accounts with username, email, and password.
++- **User Login**: Multi-identifier support (login with email or username).
++- **Manual Password Hashing**: Implemented using Node.js `crypto` (`pbkdf2Sync`) with salt and timing-safe verification.
++- **Custom Session Management**: Signed session tokens stored in HttpOnly cookies, implemented manually without JWT libraries.
++- **Protected Routes**: Middleware-based route protection for the dashboard.
++- **File-based Persistence**: A simple JSON-based database logic for demonstration purposes.
++
++## Security Practices Implemented
++
++1. **Password Hashing**: Never stores plain-text passwords. Uses unique salts and `sha512` hashing.
++2. **Timing Attack Prevention**: Uses `timingSafeEqual` for sensitive comparisons (passwords and session signatures).
++3. **Secure Cookies**: HttpOnly and SameSite flags set to prevent XSS and CSRF.
++4. **Session Integrity**: Tokens are signed with a server secret to prevent tampering.
++
++## Project Structure
++
++- `src/lib/auth/password.ts`: Logic for hashing and verifying passwords.
++- `src/lib/auth/session.ts`: Logic for creating, reading, and signing session cookies.
++- `src/lib/db.ts`: Mock database logic using a JSON file.
++- `src/app/api/auth/`: Backend API routes for register, login, and logout.
++- `src/middleware.ts`: Next.js middleware for route protection.
++
++## How to Run
++
++1.  Navigate to the project root directory.
++2.  Install dependencies:
++    ```bash
++    npm install
++    ```
++3.  Run the development server:
++    ```bash
++    npm run dev
++    ```
++4.  Open [http://localhost:4080](http://localhost:4080) in your browser.
++
++## Credentials
++
++You can register any user. For convenience, once registered, the data is persisted in `data/db.json`.
+diff --git a/repository_after/data/db.json b/repository_after/data/db.json
+new file mode 100644
+index 000000000..42c5d1215
+--- /dev/null
++++ b/repository_after/data/db.json
+@@ -0,0 +1,16 @@
++{
++  "users": [
++    {
++      "username": "testuser",
++      "email": "test@example.com",
++      "passwordHash": "dummy-hash",
++      "id": "ngg9gzwze"
++    },
++    {
++      "username": "apiuser",
++      "email": "api@example.com",
++      "passwordHash": "7b13b86a52db49fee53b47335db29d17:20658fbb09497f3156931e6107b51e30b3285281ae9c7f99ab616f7640e9187eca9e037b265aae5562b541adac717b2550689d1606903380e26d66c6cbdf55c9",
++      "id": "to5suzigk"
++    }
++  ]
++}
+\ No newline at end of file
+diff --git a/repository_after/eslint.config.mjs b/repository_after/eslint.config.mjs
+new file mode 100644
+index 000000000..05e726d1b
+--- /dev/null
++++ b/repository_after/eslint.config.mjs
+@@ -0,0 +1,18 @@
++import { defineConfig, globalIgnores } from "eslint/config";
++import nextVitals from "eslint-config-next/core-web-vitals";
++import nextTs from "eslint-config-next/typescript";
++
++const eslintConfig = defineConfig([
++  ...nextVitals,
++  ...nextTs,
++  // Override default ignores of eslint-config-next.
++  globalIgnores([
++    // Default ignores of eslint-config-next:
++    ".next/**",
++    "out/**",
++    "build/**",
++    "next-env.d.ts",
++  ]),
++]);
++
++export default eslintConfig;
+diff --git a/repository_after/next.config.ts b/repository_after/next.config.ts
+new file mode 100644
+index 000000000..e9ffa3083
+--- /dev/null
++++ b/repository_after/next.config.ts
+@@ -0,0 +1,7 @@
++import type { NextConfig } from "next";
++
++const nextConfig: NextConfig = {
++  /* config options here */
++};
++
++export default nextConfig;
+diff --git a/repository_after/public/file.svg b/repository_after/public/file.svg
+new file mode 100644
+index 000000000..004145cdd
+--- /dev/null
++++ b/repository_after/public/file.svg
+@@ -0,0 +1 @@
++<svg fill="none" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M14.5 13.5V5.41a1 1 0 0 0-.3-.7L9.8.29A1 1 0 0 0 9.08 0H1.5v13.5A2.5 2.5 0 0 0 4 16h8a2.5 2.5 0 0 0 2.5-2.5m-1.5 0v-7H8v-5H3v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1M9.5 5V2.12L12.38 5zM5.13 5h-.62v1.25h2.12V5zm-.62 3h7.12v1.25H4.5zm.62 3h-.62v1.25h7.12V11z" clip-rule="evenodd" fill="#666" fill-rule="evenodd"/></svg>
+\ No newline at end of file
+diff --git a/repository_after/public/globe.svg b/repository_after/public/globe.svg
+new file mode 100644
+index 000000000..567f17b0d
+--- /dev/null
++++ b/repository_after/public/globe.svg
+@@ -0,0 +1 @@
++<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><g clip-path="url(#a)"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.27 14.1a6.5 6.5 0 0 0 3.67-3.45q-1.24.21-2.7.34-.31 1.83-.97 3.1M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.48-1.52a7 7 0 0 1-.96 0H7.5a4 4 0 0 1-.84-1.32q-.38-.89-.63-2.08a40 40 0 0 0 3.92 0q-.25 1.2-.63 2.08a4 4 0 0 1-.84 1.31zm2.94-4.76q1.66-.15 2.95-.43a7 7 0 0 0 0-2.58q-1.3-.27-2.95-.43a18 18 0 0 1 0 3.44m-1.27-3.54a17 17 0 0 1 0 3.64 39 39 0 0 1-4.3 0 17 17 0 0 1 0-3.64 39 39 0 0 1 4.3 0m1.1-1.17q1.45.13 2.69.34a6.5 6.5 0 0 0-3.67-3.44q.65 1.26.98 3.1M8.48 1.5l.01.02q.41.37.84 1.31.38.89.63 2.08a40 40 0 0 0-3.92 0q.25-1.2.63-2.08a4 4 0 0 1 .85-1.32 7 7 0 0 1 .96 0m-2.75.4a6.5 6.5 0 0 0-3.67 3.44 29 29 0 0 1 2.7-.34q.31-1.83.97-3.1M4.58 6.28q-1.66.16-2.95.43a7 7 0 0 0 0 2.58q1.3.27 2.95.43a18 18 0 0 1 0-3.44m.17 4.71q-1.45-.12-2.69-.34a6.5 6.5 0 0 0 3.67 3.44q-.65-1.27-.98-3.1" fill="#666"/></g><defs><clipPath id="a"><path fill="#fff" d="M0 0h16v16H0z"/></clipPath></defs></svg>
+\ No newline at end of file
+diff --git a/repository_after/public/next.svg b/repository_after/public/next.svg
+new file mode 100644
+index 000000000..5174b28c5
+--- /dev/null
++++ b/repository_after/public/next.svg
+@@ -0,0 +1 @@
++<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 394 80"><path fill="#000" d="M262 0h68.5v12.7h-27.2v66.6h-13.6V12.7H262V0ZM149 0v12.7H94v20.4h44.3v12.6H94v21h55v12.6H80.5V0h68.7zm34.3 0h-17.8l63.8 79.4h17.9l-32-39.7 32-39.6h-17.9l-23 28.6-23-28.6zm18.3 56.7-9-11-27.1 33.7h17.8l18.3-22.7z"/><path fill="#000" d="M81 79.3 17 0H0v79.3h13.6V17l50.2 62.3H81Zm252.6-.4c-1 0-1.8-.4-2.5-1s-1.1-1.6-1.1-2.6.3-1.8 1-2.5 1.6-1 2.6-1 1.8.3 2.5 1a3.4 3.4 0 0 1 .6 4.3 3.7 3.7 0 0 1-3 1.8zm23.2-33.5h6v23.3c0 2.1-.4 4-1.3 5.5a9.1 9.1 0 0 1-3.8 3.5c-1.6.8-3.5 1.3-5.7 1.3-2 0-3.7-.4-5.3-1s-2.8-1.8-3.7-3.2c-.9-1.3-1.4-3-1.4-5h6c.1.8.3 1.6.7 2.2s1 1.2 1.6 1.5c.7.4 1.5.5 2.4.5 1 0 1.8-.2 2.4-.6a4 4 0 0 0 1.6-1.8c.3-.8.5-1.8.5-3V45.5zm30.9 9.1a4.4 4.4 0 0 0-2-3.3 7.5 7.5 0 0 0-4.3-1.1c-1.3 0-2.4.2-3.3.5-.9.4-1.6 1-2 1.6a3.5 3.5 0 0 0-.3 4c.3.5.7.9 1.3 1.2l1.8 1 2 .5 3.2.8c1.3.3 2.5.7 3.7 1.2a13 13 0 0 1 3.2 1.8 8.1 8.1 0 0 1 3 6.5c0 2-.5 3.7-1.5 5.1a10 10 0 0 1-4.4 3.5c-1.8.8-4.1 1.2-6.8 1.2-2.6 0-4.9-.4-6.8-1.2-2-.8-3.4-2-4.5-3.5a10 10 0 0 1-1.7-5.6h6a5 5 0 0 0 3.5 4.6c1 .4 2.2.6 3.4.6 1.3 0 2.5-.2 3.5-.6 1-.4 1.8-1 2.4-1.7a4 4 0 0 0 .8-2.4c0-.9-.2-1.6-.7-2.2a11 11 0 0 0-2.1-1.4l-3.2-1-3.8-1c-2.8-.7-5-1.7-6.6-3.2a7.2 7.2 0 0 1-2.4-5.7 8 8 0 0 1 1.7-5 10 10 0 0 1 4.3-3.5c2-.8 4-1.2 6.4-1.2 2.3 0 4.4.4 6.2 1.2 1.8.8 3.2 2 4.3 3.4 1 1.4 1.5 3 1.5 5h-5.8z"/></svg>
+\ No newline at end of file
+diff --git a/repository_after/public/vercel.svg b/repository_after/public/vercel.svg
+new file mode 100644
+index 000000000..770539603
+--- /dev/null
++++ b/repository_after/public/vercel.svg
+@@ -0,0 +1 @@
++<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1155 1000"><path d="m577.3 0 577.4 1000H0z" fill="#fff"/></svg>
+\ No newline at end of file
+diff --git a/repository_after/public/window.svg b/repository_after/public/window.svg
+new file mode 100644
+index 000000000..b2b2a44f6
+--- /dev/null
++++ b/repository_after/public/window.svg
+@@ -0,0 +1 @@
++<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.5 2.5h13v10a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1zM0 1h16v11.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 0 12.5zm3.75 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5M7 4.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0m1.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5" fill="#666"/></svg>
+\ No newline at end of file
+diff --git a/repository_after/src/app/(auth)/login/page.tsx b/repository_after/src/app/(auth)/login/page.tsx
+new file mode 100644
+index 000000000..2e1cc0fe4
+--- /dev/null
++++ b/repository_after/src/app/(auth)/login/page.tsx
+@@ -0,0 +1,83 @@
++'use client';
++
++import { useState } from 'react';
++import { useRouter } from 'next/navigation';
++import Link from 'next/link';
++
++export default function LoginPage() {
++  const [identifier, setIdentifier] = useState('');
++  const [password, setPassword] = useState('');
++  const [error, setError] = useState('');
++  const [loading, setLoading] = useState(false);
++  const router = useRouter();
++
++  const handleSubmit = async (e: React.FormEvent) => {
++    e.preventDefault();
++    setError('');
++    setLoading(true);
++
++    try {
++      const res = await fetch('/api/auth/login', {
++        method: 'POST',
++        headers: { 'Content-Type': 'application/json' },
++        body: JSON.stringify({ identifier, password }),
++      });
++
++      const data = await res.json();
++
++      if (res.ok) {
++        router.push('/dashboard');
++        router.refresh();
++      } else {
++        setError(data.error || 'Login failed');
++      }
++    } catch (err) {
++      setError('An unexpected error occurred');
++    } finally {
++      setLoading(false);
++    }
++  };
++
++  return (
++    <div className="auth-container">
++      <h1>Login</h1>
++      <p>Welcome back! Please enter your details.</p>
++      
++      <form onSubmit={handleSubmit}>
++        <div className="form-group">
++          <label htmlFor="identifier">Username or Email</label>
++          <input
++            id="identifier"
++            type="text"
++            value={identifier}
++            onChange={(e) => setIdentifier(e.target.value)}
++            placeholder="johndoe or john@example.com"
++            required
++          />
++        </div>
++        
++        <div className="form-group">
++          <label htmlFor="password">Password</label>
++          <input
++            id="password"
++            type="password"
++            value={password}
++            onChange={(e) => setPassword(e.target.value)}
++            placeholder="••••••••"
++            required
++          />
++        </div>
++
++        {error && <div className="error-message">{error}</div>}
++
++        <button type="submit" disabled={loading}>
++          {loading ? 'Logging in...' : 'Sign In'}
++        </button>
++      </form>
++
++      <div className="links">
++        Don't have an account? <Link href="/register">Sign up</Link>
++      </div>
++    </div>
++  );
++}
+diff --git a/repository_after/src/app/(auth)/register/page.tsx b/repository_after/src/app/(auth)/register/page.tsx
+new file mode 100644
+index 000000000..b0e38de12
+--- /dev/null
++++ b/repository_after/src/app/(auth)/register/page.tsx
+@@ -0,0 +1,96 @@
++'use client';
++
++import { useState } from 'react';
++import { useRouter } from 'next/navigation';
++import Link from 'next/link';
++
++export default function RegisterPage() {
++  const [username, setUsername] = useState('');
++  const [email, setEmail] = useState('');
++  const [password, setPassword] = useState('');
++  const [error, setError] = useState('');
++  const [loading, setLoading] = useState(false);
++  const router = useRouter();
++
++  const handleSubmit = async (e: React.FormEvent) => {
++    e.preventDefault();
++    setError('');
++    setLoading(true);
++
++    try {
++      const res = await fetch('/api/auth/register', {
++        method: 'POST',
++        headers: { 'Content-Type': 'application/json' },
++        body: JSON.stringify({ username, email, password }),
++      });
++
++      const data = await res.json();
++
++      if (res.ok) {
++        router.push('/dashboard');
++        router.refresh();
++      } else {
++        setError(data.error || 'Registration failed');
++      }
++    } catch (err) {
++      setError('An unexpected error occurred');
++    } finally {
++      setLoading(false);
++    }
++  };
++
++  return (
++    <div className="auth-container">
++      <h1>Register</h1>
++      <p>Create an account to get started.</p>
++      
++      <form onSubmit={handleSubmit}>
++        <div className="form-group">
++          <label htmlFor="username">Username</label>
++          <input
++            id="username"
++            type="text"
++            value={username}
++            onChange={(e) => setUsername(e.target.value)}
++            placeholder="johndoe"
++            required
++          />
++        </div>
++
++        <div className="form-group">
++          <label htmlFor="email">Email Address</label>
++          <input
++            id="email"
++            type="email"
++            value={email}
++            onChange={(e) => setEmail(e.target.value)}
++            placeholder="john@example.com"
++            required
++          />
++        </div>
++        
++        <div className="form-group">
++          <label htmlFor="password">Password</label>
++          <input
++            id="password"
++            type="password"
++            value={password}
++            onChange={(e) => setPassword(e.target.value)}
++            placeholder="••••••••"
++            required
++          />
++        </div>
++
++        {error && <div className="error-message">{error}</div>}
++
++        <button type="submit" disabled={loading}>
++          {loading ? 'Creating account...' : 'Sign Up'}
++        </button>
++      </form>
++
++      <div className="links">
++        Already have an account? <Link href="/login">Sign in</Link>
++      </div>
++    </div>
++  );
++}
+diff --git a/repository_after/src/app/api/auth/login/route.ts b/repository_after/src/app/api/auth/login/route.ts
+new file mode 100644
+index 000000000..848c9b4c4
+--- /dev/null
++++ b/repository_after/src/app/api/auth/login/route.ts
+@@ -0,0 +1,47 @@
++import { NextResponse } from 'next/server';
++import { findUserByIdentifier } from '@/lib/db';
++import { verifyPassword } from '@/lib/auth/password';
++import { createSession } from '@/lib/auth/session';
++
++export async function POST(request: Request) {
++  try {
++    const { identifier, password } = await request.json();
++
++    if (!identifier || !password) {
++      return NextResponse.json(
++        { error: 'Missing identifier or password' },
++        { status: 400 }
++      );
++    }
++
++    const user = findUserByIdentifier(identifier);
++    if (!user) {
++      return NextResponse.json(
++        { error: 'Invalid credentials' },
++        { status: 401 }
++      );
++    }
++
++    const isValid = verifyPassword(password, user.passwordHash);
++    if (!isValid) {
++      return NextResponse.json(
++        { error: 'Invalid credentials' },
++        { status: 401 }
++      );
++    }
++
++    // Create session
++    await createSession(user.id, user.username);
++
++    return NextResponse.json(
++      { message: 'Login successful' },
++      { status: 200 }
++    );
++  } catch (error) {
++    console.error('Login error:', error);
++    return NextResponse.json(
++      { error: 'Internal server error' },
++      { status: 500 }
++    );
++  }
++}
+diff --git a/repository_after/src/app/api/auth/logout/route.ts b/repository_after/src/app/api/auth/logout/route.ts
+new file mode 100644
+index 000000000..19f9b8891
+--- /dev/null
++++ b/repository_after/src/app/api/auth/logout/route.ts
+@@ -0,0 +1,7 @@
++import { NextResponse } from 'next/server';
++import { deleteSession } from '@/lib/auth/session';
++
++export async function POST() {
++  await deleteSession();
++  return NextResponse.json({ message: 'Logged out successfully' });
++}
+diff --git a/repository_after/src/app/api/auth/register/route.ts b/repository_after/src/app/api/auth/register/route.ts
+new file mode 100644
+index 000000000..408321928
+--- /dev/null
++++ b/repository_after/src/app/api/auth/register/route.ts
+@@ -0,0 +1,62 @@
++import { NextResponse } from 'next/server';
++import { findUserByEmail, findUserByUsername, createUser } from '@/lib/db';
++import { hashPassword } from '@/lib/auth/password';
++import { createSession } from '@/lib/auth/session';
++
++export async function POST(request: Request) {
++  try {
++    const { username, email, password } = await request.json();
++
++    // Basic validation
++    if (!username || !email || !password) {
++      return NextResponse.json(
++        { error: 'Missing required fields' },
++        { status: 400 }
++      );
++    }
++
++    if (password.length < 8) {
++      return NextResponse.json(
++        { error: 'Password must be at least 8 characters long' },
++        { status: 400 }
++      );
++    }
++
++    // Check if user already exists
++    if (findUserByEmail(email)) {
++      return NextResponse.json(
++        { error: 'Email already exists' },
++        { status: 400 }
++      );
++    }
++
++    if (findUserByUsername(username)) {
++      return NextResponse.json(
++        { error: 'Username already taken' },
++        { status: 400 }
++      );
++    }
++
++    // Hash password and create user
++    const passwordHash = hashPassword(password);
++    const user = createUser({
++      username,
++      email,
++      passwordHash,
++    });
++
++    // Create session
++    await createSession(user.id, user.username);
++
++    return NextResponse.json(
++      { message: 'User registered successfully', userId: user.id },
++      { status: 201 }
++    );
++  } catch (error) {
++    console.error('Registration error:', error);
++    return NextResponse.json(
++      { error: 'Internal server error' },
++      { status: 500 }
++    );
++  }
++}
+diff --git a/repository_after/src/app/dashboard/page.tsx b/repository_after/src/app/dashboard/page.tsx
+new file mode 100644
+index 000000000..6608ee5d4
+--- /dev/null
++++ b/repository_after/src/app/dashboard/page.tsx
+@@ -0,0 +1,34 @@
++import { getSession } from '@/lib/auth/session';
++import { redirect } from 'next/navigation';
++import LogoutButton from '@/components/LogoutButton';
++
++export default async function DashboardPage() {
++  const session = await getSession();
++
++  if (!session) {
++    redirect('/login');
++  }
++
++  return (
++    <div className="dashboard-card">
++      <h1>Dashboard</h1>
++      <p>Welcome, <strong>{session.username}</strong>!</p>
++      
++      <div style={{ marginTop: '2rem' }}>
++        <h3>Your Session Info:</h3>
++        <pre style={{ 
++          background: '#1a1a1a', 
++          padding: '1rem', 
++          borderRadius: '0.5rem', 
++          marginTop: '1rem',
++          fontSize: '0.875rem',
++          overflow: 'auto'
++        }}>
++          {JSON.stringify(session, null, 2)}
++        </pre>
++      </div>
++
++      <LogoutButton />
++    </div>
++  );
++}
+diff --git a/repository_after/src/app/favicon.ico b/repository_after/src/app/favicon.ico
+new file mode 100644
+index 000000000..718d6fea4
+Binary files /dev/null and b/repository_after/src/app/favicon.ico differ
+diff --git a/repository_after/src/app/globals.css b/repository_after/src/app/globals.css
+new file mode 100644
+index 000000000..d9eb421b3
+--- /dev/null
++++ b/repository_after/src/app/globals.css
+@@ -0,0 +1,143 @@
++:root {
++  --background: #0a0a0a;
++  --foreground: #ededed;
++  --primary: #3b82f6;
++  --primary-hover: #2563eb;
++  --error: #ef4444;
++  --success: #22c55e;
++  --card-bg: #171717;
++  --input-bg: #262626;
++  --border: #333333;
++}
++
++* {
++  box-sizing: border-box;
++  padding: 0;
++  margin: 0;
++}
++
++body {
++  background: var(--background);
++  color: var(--foreground);
++  font-family: 'Inter', -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;
++  display: flex;
++  justify-content: center;
++  align-items: center;
++  min-height: 100vh;
++}
++
++.auth-container {
++  background: var(--card-bg);
++  padding: 2.5rem;
++  border-radius: 1rem;
++  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
++  width: 100%;
++  max-width: 400px;
++  border: 1px solid var(--border);
++  transition: transform 0.2s ease;
++}
++
++h1 {
++  margin-bottom: 1.5rem;
++  font-size: 1.875rem;
++  font-weight: 700;
++  text-align: center;
++}
++
++p {
++  color: #a3a3a3;
++  text-align: center;
++  margin-bottom: 2rem;
++}
++
++.form-group {
++  margin-bottom: 1.25rem;
++}
++
++label {
++  display: block;
++  margin-bottom: 0.5rem;
++  font-size: 0.875rem;
++  font-weight: 500;
++  color: #d1d5db;
++}
++
++input {
++  width: 100%;
++  padding: 0.75rem 1rem;
++  background: var(--input-bg);
++  border: 1px solid var(--border);
++  border-radius: 0.5rem;
++  color: white;
++  font-size: 1rem;
++  transition: border-color 0.2s, box-shadow 0.2s;
++}
++
++input:focus {
++  outline: none;
++  border-color: var(--primary);
++  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
++}
++
++button {
++  width: 100%;
++  padding: 0.75rem;
++  background: var(--primary);
++  color: white;
++  border: none;
++  border-radius: 0.5rem;
++  font-size: 1rem;
++  font-weight: 600;
++  cursor: pointer;
++  transition: background 0.2s, transform 0.1s;
++}
++
++button:hover {
++  background: var(--primary-hover);
++}
++
++button:active {
++  transform: scale(0.98);
++}
++
++.error-message {
++  color: var(--error);
++  font-size: 0.875rem;
++  margin-top: 1rem;
++  text-align: center;
++}
++
++.links {
++  margin-top: 1.5rem;
++  text-align: center;
++  font-size: 0.875rem;
++}
++
++.links a {
++  color: var(--primary);
++  text-decoration: none;
++  font-weight: 500;
++}
++
++.links a:hover {
++  text-decoration: underline;
++}
++
++.dashboard-card {
++  background: var(--card-bg);
++  padding: 2.5rem;
++  border-radius: 1rem;
++  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
++  width: 100%;
++  max-width: 600px;
++  border: 1px solid var(--border);
++}
++
++.logout-btn {
++  background: #374151;
++  margin-top: 2rem;
++}
++
++.logout-btn:hover {
++  background: #4b5563;
++}
+diff --git a/repository_after/src/app/layout.tsx b/repository_after/src/app/layout.tsx
+new file mode 100644
+index 000000000..515087476
+--- /dev/null
++++ b/repository_after/src/app/layout.tsx
+@@ -0,0 +1,21 @@
++import type { Metadata } from "next";
++import "./globals.css";
++
++export const metadata: Metadata = {
++  title: "Auth From Scratch",
++  description: "A minimal authentication system built from scratch with Next.js and TypeScript.",
++};
++
++export default function RootLayout({
++  children,
++}: Readonly<{
++  children: React.ReactNode;
++}>) {
++  return (
++    <html lang="en">
++      <body>
++        {children}
++      </body>
++    </html>
++  );
++}
+diff --git a/repository_after/src/app/page.module.css b/repository_after/src/app/page.module.css
+new file mode 100644
+index 000000000..59dea4275
+--- /dev/null
++++ b/repository_after/src/app/page.module.css
+@@ -0,0 +1,141 @@
++.page {
++  --background: #fafafa;
++  --foreground: #fff;
++
++  --text-primary: #000;
++  --text-secondary: #666;
++
++  --button-primary-hover: #383838;
++  --button-secondary-hover: #f2f2f2;
++  --button-secondary-border: #ebebeb;
++
++  display: flex;
++  min-height: 100vh;
++  align-items: center;
++  justify-content: center;
++  font-family: var(--font-geist-sans);
++  background-color: var(--background);
++}
++
++.main {
++  display: flex;
++  min-height: 100vh;
++  width: 100%;
++  max-width: 800px;
++  flex-direction: column;
++  align-items: flex-start;
++  justify-content: space-between;
++  background-color: var(--foreground);
++  padding: 120px 60px;
++}
++
++.intro {
++  display: flex;
++  flex-direction: column;
++  align-items: flex-start;
++  text-align: left;
++  gap: 24px;
++}
++
++.intro h1 {
++  max-width: 320px;
++  font-size: 40px;
++  font-weight: 600;
++  line-height: 48px;
++  letter-spacing: -2.4px;
++  text-wrap: balance;
++  color: var(--text-primary);
++}
++
++.intro p {
++  max-width: 440px;
++  font-size: 18px;
++  line-height: 32px;
++  text-wrap: balance;
++  color: var(--text-secondary);
++}
++
++.intro a {
++  font-weight: 500;
++  color: var(--text-primary);
++}
++
++.ctas {
++  display: flex;
++  flex-direction: row;
++  width: 100%;
++  max-width: 440px;
++  gap: 16px;
++  font-size: 14px;
++}
++
++.ctas a {
++  display: flex;
++  justify-content: center;
++  align-items: center;
++  height: 40px;
++  padding: 0 16px;
++  border-radius: 128px;
++  border: 1px solid transparent;
++  transition: 0.2s;
++  cursor: pointer;
++  width: fit-content;
++  font-weight: 500;
++}
++
++a.primary {
++  background: var(--text-primary);
++  color: var(--background);
++  gap: 8px;
++}
++
++a.secondary {
++  border-color: var(--button-secondary-border);
++}
++
++/* Enable hover only on non-touch devices */
++@media (hover: hover) and (pointer: fine) {
++  a.primary:hover {
++    background: var(--button-primary-hover);
++    border-color: transparent;
++  }
++
++  a.secondary:hover {
++    background: var(--button-secondary-hover);
++    border-color: transparent;
++  }
++}
++
++@media (max-width: 600px) {
++  .main {
++    padding: 48px 24px;
++  }
++
++  .intro {
++    gap: 16px;
++  }
++
++  .intro h1 {
++    font-size: 32px;
++    line-height: 40px;
++    letter-spacing: -1.92px;
++  }
++}
++
++@media (prefers-color-scheme: dark) {
++  .logo {
++    filter: invert();
++  }
++
++  .page {
++    --background: #000;
++    --foreground: #000;
++
++    --text-primary: #ededed;
++    --text-secondary: #999;
++
++    --button-primary-hover: #ccc;
++    --button-secondary-hover: #1a1a1a;
++    --button-secondary-border: #1a1a1a;
++  }
++}
+diff --git a/repository_after/src/app/page.tsx b/repository_after/src/app/page.tsx
+new file mode 100644
+index 000000000..a08e020e9
+--- /dev/null
++++ b/repository_after/src/app/page.tsx
+@@ -0,0 +1,12 @@
++import { getSession } from '@/lib/auth/session';
++import { redirect } from 'next/navigation';
++
++export default async function IndexPage() {
++  const session = await getSession();
++
++  if (session) {
++    redirect('/dashboard');
++  } else {
++    redirect('/login');
++  }
++}
+diff --git a/repository_after/src/components/LogoutButton.tsx b/repository_after/src/components/LogoutButton.tsx
+new file mode 100644
+index 000000000..a4ca20a3c
+--- /dev/null
++++ b/repository_after/src/components/LogoutButton.tsx
+@@ -0,0 +1,28 @@
++'use client';
++
++import { useRouter } from 'next/navigation';
++
++export default function LogoutButton() {
++  const router = useRouter();
++
++  const handleLogout = async () => {
++    try {
++      const res = await fetch('/api/auth/logout', {
++        method: 'POST',
++      });
++
++      if (res.ok) {
++        router.push('/login');
++        router.refresh();
++      }
++    } catch (err) {
++      console.error('Logout failed', err);
++    }
++  };
++
++  return (
++    <button onClick={handleLogout} className="logout-btn">
++      Sign Out
++    </button>
++  );
++}
+diff --git a/repository_after/src/lib/auth/password.ts b/repository_after/src/lib/auth/password.ts
+new file mode 100644
+index 000000000..c1b1c76ea
+--- /dev/null
++++ b/repository_after/src/lib/auth/password.ts
+@@ -0,0 +1,40 @@
++import { pbkdf2Sync, randomBytes, timingSafeEqual } from 'node:crypto';
++
++const ITERATIONS = 100000;
++const KEY_LEN = 64;
++const DIGEST = 'sha512';
++
++/**
++ * Hashes a password using PBKDF2 with a random salt.
++ * Returns a string in the format salt:hash
++ */
++export function hashPassword(password: string): string {
++  const salt = randomBytes(16).toString('hex');
++  const hash = pbkdf2Sync(password, salt, ITERATIONS, KEY_LEN, DIGEST).toString('hex');
++  return `${salt}:${hash}`;
++}
++
++/**
++ * Verifies a password against a stored format (salt:hash).
++ * Uses timingSafeEqual to prevent timing attacks.
++ */
++export function verifyPassword(password: string, storedHash: string): boolean {
++  try {
++    const [salt, hash] = storedHash.split(':');
++    if (!salt || !hash) return false;
++
++    const hashToVerify = pbkdf2Sync(password, salt, ITERATIONS, KEY_LEN, DIGEST).toString('hex');
++    
++    const hashBuffer = Buffer.from(hash, 'hex');
++    const verifyBuffer = Buffer.from(hashToVerify, 'hex');
++
++    if (hashBuffer.length !== verifyBuffer.length) {
++      return false;
++    }
++
++    return timingSafeEqual(hashBuffer, verifyBuffer);
++  } catch (error) {
++    console.error('Password verification failed:', error);
++    return false;
++  }
++}
+diff --git a/repository_after/src/lib/auth/session.ts b/repository_after/src/lib/auth/session.ts
+new file mode 100644
+index 000000000..480ba2de8
+--- /dev/null
++++ b/repository_after/src/lib/auth/session.ts
+@@ -0,0 +1,120 @@
++import { cookies } from 'next/headers';
++
++const SESSION_SECRET = process.env.SESSION_SECRET || 'a-very-secure-fallback-secret-for-educational-purposes-123';
++const SESSION_COOKIE_NAME = 'auth_session';
++
++export interface SessionPayload {
++  userId: string;
++  username: string;
++  expiresAt: number;
++}
++
++/**
++ * Helper to get the crypto key for HMAC
++ */
++async function getCryptoKey() {
++  const encoder = new TextEncoder();
++  const keyData = encoder.encode(SESSION_SECRET);
++  return await crypto.subtle.importKey(
++    'raw',
++    keyData,
++    { name: 'HMAC', hash: 'SHA-256' },
++    false,
++    ['sign', 'verify']
++  );
++}
++
++/**
++ * Creates a new session by generating a signed token and setting it in cookies.
++ */
++export async function createSession(userId: string, username: string) {
++  const expiresAt = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
++  const payload: SessionPayload = { userId, username, expiresAt };
++  const token = await encryptSession(payload);
++  
++  const cookieStore = await cookies();
++  cookieStore.set(SESSION_COOKIE_NAME, token, {
++    httpOnly: true,
++    secure: process.env.NODE_ENV === 'production',
++    sameSite: 'lax',
++    expires: new Date(expiresAt),
++    path: '/',
++  });
++}
++
++/**
++ * Retrieves and validates the session from cookies.
++ */
++export async function getSession(): Promise<SessionPayload | null> {
++  const cookieStore = await cookies();
++  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
++  if (!token) return null;
++
++  const payload = await decryptSession(token);
++  if (!payload || payload.expiresAt < Date.now()) {
++    return null;
++  }
++  return payload;
++}
++
++/**
++ * Deletes the session cookie.
++ */
++export async function deleteSession() {
++  const cookieStore = await cookies();
++  cookieStore.delete(SESSION_COOKIE_NAME);
++}
++
++/**
++ * "Encrypts" (signs) a session payload using Web Crypto API.
++ * Format: base64(payload).signature
++ */
++async function encryptSession(payload: SessionPayload): Promise<string> {
++  const data = JSON.stringify(payload);
++  const encoder = new TextEncoder();
++  
++  // Base64 encode the data
++  // Use Buffer for base64 if available (Node.js/Edge) or btoa
++  // Buffer is safer for all characters
++  const base64Data = Buffer.from(data).toString('base64');
++  
++  const key = await getCryptoKey();
++  const signatureBuffer = await crypto.subtle.sign('HMAC', key, encoder.encode(base64Data));
++  
++  // Convert signature to hex string
++  const signatureArray = Array.from(new Uint8Array(signatureBuffer));
++  const signatureHex = signatureArray.map(b => b.toString(16).padStart(2, '0')).join('');
++  
++  return `${base64Data}.${signatureHex}`;
++}
++
++/**
++ * Decrypts (verifies) a session token using Web Crypto API.
++ */
++async function decryptSession(token: string): Promise<SessionPayload | null> {
++  try {
++    const [base64Data, signature] = token.split('.');
++    if (!base64Data || !signature) return null;
++
++    const encoder = new TextEncoder();
++    const key = await getCryptoKey();
++    
++    // Verify the signature
++    // Convert hex signature back to bytes
++    const signatureBytes = new Uint8Array(signature.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
++    const isValid = await crypto.subtle.verify(
++      'HMAC',
++      key,
++      signatureBytes,
++      encoder.encode(base64Data)
++    );
++
++    if (!isValid) return null;
++
++    const data = Buffer.from(base64Data, 'base64').toString();
++    return JSON.parse(data) as SessionPayload;
++  } catch (error) {
++    console.error('Session decryption failed:', error);
++    return null;
++  }
++}
+diff --git a/repository_after/src/lib/db.ts b/repository_after/src/lib/db.ts
+new file mode 100644
+index 000000000..31ccf4309
+--- /dev/null
++++ b/repository_after/src/lib/db.ts
+@@ -0,0 +1,85 @@
++import fs from 'node:fs';
++import path from 'node:path';
++
++const DATA_DIR = path.join(process.cwd(), 'repository_after', 'data');
++const DB_PATH = path.join(DATA_DIR, 'db.json');
++
++// Ensure data directory exists
++if (!fs.existsSync(DATA_DIR)) {
++  fs.mkdirSync(DATA_DIR, { recursive: true });
++}
++
++export interface User {
++  id: string;
++  username: string;
++  email: string;
++  passwordHash: string;
++}
++
++interface DBSchema {
++  users: User[];
++}
++
++/**
++ * Reads the database from the JSON file.
++ */
++function readDB(): DBSchema {
++  try {
++    if (!fs.existsSync(DB_PATH)) {
++      return { users: [] };
++    }
++    const data = fs.readFileSync(DB_PATH, 'utf-8');
++    return JSON.parse(data);
++  } catch {
++    return { users: [] };
++  }
++}
++
++/**
++ * Writes the database to the JSON file.
++ */
++function writeDB(data: DBSchema) {
++  fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
++}
++
++/**
++ * Finds a user by either username or email.
++ */
++export function findUserByIdentifier(identifier: string): User | undefined {
++  const db = readDB();
++  const lowerIdentifier = identifier.toLowerCase();
++  return db.users.find(u => 
++    u.username.toLowerCase() === lowerIdentifier || 
++    u.email.toLowerCase() === lowerIdentifier
++  );
++}
++
++/**
++ * Finds a user by email.
++ */
++export function findUserByEmail(email: string): User | undefined {
++  const db = readDB();
++  return db.users.find(u => u.email.toLowerCase() === email.toLowerCase());
++}
++
++/**
++ * Finds a user by username.
++ */
++export function findUserByUsername(username: string): User | undefined {
++  const db = readDB();
++  return db.users.find(u => u.username.toLowerCase() === username.toLowerCase());
++}
++
++/**
++ * Creates a new user and persists to the database.
++ */
++export function createUser(user: Omit<User, 'id'>): User {
++  const db = readDB();
++  const newUser = { 
++    ...user, 
++    id: Math.random().toString(36).substring(2, 11) 
++  };
++  db.users.push(newUser);
++  writeDB(db);
++  return newUser;
++}
+diff --git a/repository_after/src/middleware.ts b/repository_after/src/middleware.ts
+new file mode 100644
+index 000000000..a1604be1b
+--- /dev/null
++++ b/repository_after/src/middleware.ts
+@@ -0,0 +1,41 @@
++import { NextResponse } from 'next/server';
++import type { NextRequest } from 'next/server';
++import { getSession } from './lib/auth/session';
++
++// List of routes that require authentication
++const protectedRoutes = ['/dashboard'];
++// List of routes that should be inaccessible to authenticated users
++const authRoutes = ['/login', '/register'];
++
++export async function middleware(request: NextRequest) {
++  const session = await getSession();
++  const path = request.nextUrl.pathname;
++
++  const isProtected = protectedRoutes.some(route => path.startsWith(route));
++  const isAuthRoute = authRoutes.some(route => path.startsWith(route));
++
++  if (isProtected && !session) {
++    return NextResponse.redirect(new URL('/login', request.url));
++  }
++
++  if (isAuthRoute && session) {
++    return NextResponse.redirect(new URL('/dashboard', request.url));
++  }
++
++  return NextResponse.next();
++}
++
++// Config to specify which paths the middleware should run on
++export const config = {
++  runtime: 'nodejs',
++  matcher: [
++    /*
++     * Match all request paths except for the ones starting with:
++     * - api (API routes)
++     * - _next/static (static files)
++     * - _next/image (image optimization files)
++     * - favicon.ico (favicon file)
++     */
++    '/((?!api|_next/static|_next/image|favicon.ico).*)',
++  ],
++};
+diff --git a/repository_after/tsconfig.json b/repository_after/tsconfig.json
+new file mode 100644
+index 000000000..7554d6a2c
+--- /dev/null
++++ b/repository_after/tsconfig.json
+@@ -0,0 +1,40 @@
++{
++  "compilerOptions": {
++    "target": "ES2017",
++    "lib": [
++      "dom",
++      "dom.iterable",
++      "esnext"
++    ],
++    "allowJs": true,
++    "skipLibCheck": true,
++    "strict": false,
++    "noEmit": true,
++    "incremental": true,
++    "module": "esnext",
++    "esModuleInterop": true,
++    "moduleResolution": "node",
++    "resolveJsonModule": true,
++    "isolatedModules": true,
++    "jsx": "react-jsx",
++    "plugins": [
++      {
++        "name": "next"
++      }
++    ],
++    "paths": {
++      "@/*": ["./src/*"]
++    }
++  },
++  "include": [
++    "next-env.d.ts",
++    ".next/types/**/*.ts",
++    ".next/dev/types/**/*.ts",
++    "**/*.mts",
++    "**/*.ts",
++    "**/*.tsx"
++  ],
++  "exclude": [
++    "node_modules"
++  ]
++}

@@ -1,0 +1,305 @@
+diff --git a/repository_after/processContentStream.js b/repository_after/processContentStream.js
+new file mode 100644
+index 0000000..9d38f72
+--- /dev/null
++++ b/repository_after/processContentStream.js
+@@ -0,0 +1,244 @@
++/**
++ * Optimized processContentStream using Aho-Corasick algorithm for efficient multi-pattern matching.
++ *
++ * This implementation transforms the O(N * M) naive nested loop approach into an O(N * S) solution
++ * where N is event count, M is rule count, and S is average event body length. The Aho-Corasick
++ * automaton enables O(1) character transitions regardless of ruleset size, making it scale to
++ * 50,000+ rules with negligible per-event processing time.
++ *
++ * Complexity Analysis:
++ * - Pre-processing: O(M * L) where M is rule count, L is average token length
++ * - Runtime per batch: O(N * S) where N is event count, S is average body length
++ * - Result sorting: O(K log K) where K is number of flagged events
++ *
++ * Performance Optimizations:
++ * 1. Aho-Corasick trie structure for constant-time character transitions
++ * 2. Inline character normalization to eliminate regex and temporary string allocations
++ * 3. Pre-computed numeric timestamps to avoid Date object creation in hot path
++ * 4. Reused Set data structures to minimize garbage collection pressure
++ * 5. Shallow object cloning to avoid deep serialization overhead
++ * 6. Pre-computed region Sets for O(1) membership testing
++ * 7. Output links for efficient overlapping pattern detection
++ *
++ * Requirements Compliance:
++ * - REQ-01 (Decoupled Complexity): Scales linearly with events, constant per-rule overhead
++ * - REQ-02 (Correctness & Overlaps): Aho-Corasick detects all overlapping token matches
++ * - REQ-03 (Zero-Allocation Hot Path): No Date, RegExp, or serialization in event loop
++ * - REQ-04 (Performance SLA): Processes 10,000 events vs 50,000 rules in <250ms
++ * - REQ-05 (Standard Library Only): Pure ES2022+ JavaScript, no external dependencies
++ */
++
++/**
++ * Preprocesses blocklist rules into an optimized Aho-Corasick automaton.
++ *
++ * This function builds a finite state automaton that enables efficient multi-pattern matching.
++ * The automaton is constructed once when rules change and can be reused across multiple event
++ * batches, amortizing the preprocessing cost. The automaton structure allows O(1) character
++ * transitions during matching, making it independent of the total number of rules.
++ *
++ * @param {Array} blocklistRules - Array of rule objects with token, category, riskLevel, etc.
++ * @returns {Object} - Preprocessed automaton containing root node and build timestamp
++ */
++function preprocessRules(blocklistRules) {
++  const currentTimestamp = Date.now();
++
++  // Initialize root node of the Aho-Corasick trie
++  // Using Object.create(null) creates a dictionary without prototype chain for faster lookups
++  const root = {
++    next: Object.create(null), // Character transitions from this node
++    fail: null, // Failure link for backtracking on mismatch
++    output: null, // Rules that match at this node
++    outputLink: null, // Link to nodes with output for overlapping matches
++  };
++
++  // Phase 1: Build the trie structure by inserting all active, non-expired rules
++  for (let ruleIndex = 0; ruleIndex < blocklistRules.length; ruleIndex++) {
++    const rule = blocklistRules[ruleIndex];
++    if (!rule || !rule.isActive) continue;
++
++    // Convert expiry to numeric timestamp to avoid Date object allocation in hot path
++    // This enables simple numeric comparison during event processing
++    const expiryTimestamp =
++      typeof rule.expiresAt === "number"
++        ? rule.expiresAt
++        : new Date(rule.expiresAt).getTime();
++
++    // Filter expired rules during preprocessing to reduce automaton size
++    if (expiryTimestamp < currentTimestamp) continue;
++
++    const normalizedToken = (rule.token || "").toLowerCase();
++    if (!normalizedToken) continue;
++
++    // Pre-compute region Set for O(1) membership testing during matching
++    // Array.includes() is O(n), Set.has() is O(1) - critical for performance
++    const regionSet = new Set(rule.targetRegions);
++
++    // Traverse or create path in trie for this token
++    let currentNode = root;
++    for (let charIndex = 0; charIndex < normalizedToken.length; charIndex++) {
++      const character = normalizedToken[charIndex];
++      if (!currentNode.next[character]) {
++        currentNode.next[character] = {
++          next: Object.create(null),
++          fail: null,
++          output: null,
++          outputLink: null,
++        };
++      }
++      currentNode = currentNode.next[character];
++    }
++
++    if (!currentNode.output) currentNode.output = [];
++    currentNode.output.push({
++      expiryTimestamp,
++      regionSet,
++      riskLevel: rule.riskLevel,
++      category: rule.category,
++    });
++  }
++
++  
++  const nodeQueue = [];
++  for (const character in root.next) {
++    const firstLevelChild = root.next[character];
++    firstLevelChild.fail = root;
++    nodeQueue.push(firstLevelChild);
++  }
++
++  let queueHead = 0;
++  while (queueHead < nodeQueue.length) {
++    const currentNode = nodeQueue[queueHead++];
++    for (const character in currentNode.next) {
++      const childNode = currentNode.next[character];
++      let failureNode = currentNode.fail;
++
++      while (failureNode !== null && !failureNode.next[character]) {
++        failureNode = failureNode.fail;
++      }
++      childNode.fail = failureNode ? failureNode.next[character] : root;
++
++
++      childNode.outputLink =
++        childNode.fail.output || childNode.fail.outputLink
++          ? childNode.fail
++          : null;
++      nodeQueue.push(childNode);
++    }
++  }
++
++  return { root, buildTime: currentTimestamp };
++}
++
++
++function shallowClone(event) {
++  const clone = {};
++  for (const key in event) {
++    if (Object.prototype.hasOwnProperty.call(event, key)) {
++      clone[key] = event[key];
++    }
++  }
++  return clone;
++}
++
++function processContentStream(streamBatch, blocklistRulesOrAutomaton) {
++  if (!streamBatch || streamBatch.length === 0) return [];
++
++  let automatonRoot, automatonBuildTime;
++  if (
++    blocklistRulesOrAutomaton &&
++    blocklistRulesOrAutomaton.root
++  ) {
++    automatonRoot = blocklistRulesOrAutomaton.root;
++    automatonBuildTime = blocklistRulesOrAutomaton.buildTime;
++  } else {
++    const automaton = preprocessRules(blocklistRulesOrAutomaton);
++    automatonRoot = automaton.root;
++    automatonBuildTime = automaton.buildTime;
++  }
++
++  const currentTimestamp = Date.now();
++  const flaggedEvents = [];
++  const matchedCategoriesSet = new Set();
++
++  const eventCount = streamBatch.length;
++  for (let eventIndex = 0; eventIndex < eventCount; eventIndex++) {
++    const event = streamBatch[eventIndex];
++    const eventBody = event.body || "";
++    const eventRegion = event.region;
++
++    let automatonState = automatonRoot;
++    let isBlocked = false;
++    let maximumRiskLevel = 0;
++    matchedCategoriesSet.clear(); 
++
++    const bodyLength = eventBody.length;
++    for (let charIndex = 0; charIndex < bodyLength; charIndex++) {
++      let character = eventBody[charIndex];
++      const charCode = character.charCodeAt(0);
++
++     
++      if (charCode >= 65 && charCode <= 90) {
++        character = String.fromCharCode(charCode + 32);
++      } else if (
++        (charCode >= 97 && charCode <= 122) || 
++        (charCode >= 48 && charCode <= 57) || 
++        charCode === 95 ||
++        charCode === 32 || 
++        (charCode >= 9 && charCode <= 13) 
++      ) {
++      } else {
++        continue;
++      }
++
++     
++      while (
++        automatonState !== automatonRoot &&
++        !automatonState.next[character]
++      ) {
++        automatonState = automatonState.fail;
++      }
++      automatonState = automatonState.next[character] || automatonRoot;
++
++    
++      let outputNode = automatonState;
++      while (outputNode !== null) {
++        if (outputNode.output) {
++          for (
++            let ruleIndex = 0, ruleCount = outputNode.output.length;
++            ruleIndex < ruleCount;
++            ruleIndex++
++          ) {
++            const ruleMetadata = outputNode.output[ruleIndex];
++
++         
++            if (ruleMetadata.expiryTimestamp < currentTimestamp) continue;
++
++            if (ruleMetadata.regionSet.has(eventRegion)) {
++              isBlocked = true;
++              if (ruleMetadata.riskLevel > maximumRiskLevel) {
++                maximumRiskLevel = ruleMetadata.riskLevel;
++              }
++              matchedCategoriesSet.add(ruleMetadata.category);
++            }
++          }
++        }
++        outputNode = outputNode.outputLink;
++      }
++    }
++
++    if (isBlocked) {
++      flaggedEvents.push({
++        eventId: event.id,
++        timestamp: event.timestamp,
++        riskScore: maximumRiskLevel,
++        categories: Array.from(matchedCategoriesSet).join(","),
++        
++        originalData: shallowClone(event),
++      });
++    }
++  }
++
++  return flaggedEvents.sort((a, b) => b.riskScore - a.riskScore);
++}
++
++module.exports = { processContentStream, preprocessRules, shallowClone };
+diff --git a/repository_before/processContentStreamold.js b/repository_before/processContentStreamold.js
+deleted file mode 100644
+index 16300d1..0000000
+--- a/repository_before/processContentStreamold.js
++++ /dev/null
+@@ -1,48 +0,0 @@
+-function processContentStream(streamBatch, blocklistRules) {
+-  const processedEvents = [];
+-  const now = new Date(); 
+-
+-  for (let i = 0; i < streamBatch.length; i++) {
+-    const event = streamBatch[i];
+-    
+-    const rawBody = event.body || "";
+-    const normalized = rawBody.replace(/[^\w\s]/gi, '').toLowerCase();
+-    
+-    let highestRisk = 0;
+-    let matchedCategories = [];
+-    let shouldBlock = false;
+-
+-    for (let j = 0; j < blocklistRules.length; j++) {
+-      const rule = blocklistRules[j];
+-      
+-      if (!rule.isActive) continue;
+-      
+-      const ruleExpiry = new Date(rule.expiresAt); 
+-      if (ruleExpiry < now) continue;
+-
+-      if (normalized.includes(rule.token.toLowerCase())) {
+-         
+-         if (rule.targetRegions.includes(event.region)) {
+-             shouldBlock = true;
+-             highestRisk = Math.max(highestRisk, rule.riskLevel);
+-             
+-             if (!matchedCategories.includes(rule.category)) {
+-                 matchedCategories.push(rule.category);
+-             }
+-         }
+-      }
+-    }
+-
+-    if (shouldBlock) {
+-      processedEvents.push({
+-        eventId: event.id,
+-        timestamp: event.timestamp,
+-        riskScore: highestRisk,
+-        categories: matchedCategories.join(","),
+-        originalData: JSON.parse(JSON.stringify(event)) 
+-      });
+-    }
+-  }
+-
+-  return processedEvents.sort((a, b) => b.riskScore - a.riskScore);
+-}
+\ No newline at end of file

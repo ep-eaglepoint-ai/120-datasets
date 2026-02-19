@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply font-body bg-ivory text-charcoal antialiased;
+  }
+  
+  ::selection {
+    @apply bg-terracotta text-ivory;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-8 py-4 bg-charcoal text-ivory font-body text-sm tracking-widest uppercase 
+           transition-all duration-500 hover:bg-terracotta hover:scale-105;
+  }
+  
+  .btn-outline {
+    @apply px-8 py-4 border border-charcoal text-charcoal font-body text-sm tracking-widest uppercase 
+           transition-all duration-500 hover:bg-charcoal hover:text-ivory;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .animate-delay-100 {
+    animation-delay: 100ms;
+  }
+  
+  .animate-delay-200 {
+    animation-delay: 200ms;
+  }
+  
+  .animate-delay-300 {
+    animation-delay: 300ms;
+  }
+  
+  .animate-delay-400 {
+    animation-delay: 400ms;
+  }
+  
+  .animate-delay-500 {
+    animation-delay: 500ms;
+  }
+  
+  .animate-delay-600 {
+    animation-delay: 600ms;
+  }
+}
+

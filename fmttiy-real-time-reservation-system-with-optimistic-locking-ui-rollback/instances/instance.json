@@ -1,0 +1,12 @@
+{
+            "instance_id": "FMTTIY",
+            "problem_statement": "The fundamental engineering challenge in this task is the orchestration of state consistency across an asynchronous boundary under high contention without using blocking database locks. The model is forced to implement a system where the user interface intentionally "lies" to the user for the sake of performance (Optimistic UI) but must confess and correct that lie immediately upon a server rejection (Rollback), all while preventing database race conditions using Versioning (OCC). This creates a temporary "Split Brain" scenario where the frontend state and backend state diverge, and the model must write the precise logic to reconcile them without leaving the application in an inconsistent or "frozen" state when a version conflict inevitably occurs during a traffic spike.
+",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/fmttiy-real-time-reservation-system-with-optimistic-locking-ui-rollback",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

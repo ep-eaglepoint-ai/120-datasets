@@ -1,0 +1,12 @@
+{
+  "instance_id": "8d4f2c-Cart_Service_Bug_Fix",
+  "problem_statement": "Fix bugs in the CartService including mixed merchant validation, quantity validation, race conditions, discount logic, return values, and cart total calculations.",
+  "base_commit": "",
+  "test_patch": "",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002",
+  "environment_setup": {
+    "dockerfile": "Dockerfile",
+    "docker_compose": "docker-compose.yml"
+  }
+}
+

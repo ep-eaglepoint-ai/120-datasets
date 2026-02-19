@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+
+# Unnecessary but harmless ignores
+dist-temp/
+debug-output.log
+evaluation/**/*.json 

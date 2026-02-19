@@ -1,0 +1,11 @@
+{
+            "instance_id": "KYMFDD",
+            "problem_statement": "Writing unit tests for the FileStorage class is necessary to ensure that object persistence, serialization, and deserialization work reliably and consistently without risking data loss or corruption, especially since this class directly handles reading from and writing to disk. Because FileStorage manages shared internal state and file-based storage, untested changes could silently break saving, loading, or object reconstruction across application runs. Proper tests verify that data is correctly stored in JSON format, reloaded into valid objects, and safely handled when files are missing or contain invalid data, while also guaranteeing that changes to storage logic do not introduce regressions.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/kymfdd-filestorage-unit-tests",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

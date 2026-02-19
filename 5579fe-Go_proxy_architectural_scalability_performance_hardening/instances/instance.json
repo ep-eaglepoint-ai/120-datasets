@@ -1,0 +1,8 @@
+{
+  "instance_id": "5579fe",
+  "problem_statement": "Our legacy Go-based Document Load Balancer is currently suffering from a lack of 'Architectural Rigor' and 'Observability Depth.' While the core proxying logic exists, the codebase does not follow our new corporate 'Middleware-First' design standards. Specifically, the system lacks structured telemetry, lacks a centralized configuration singleton, and utilizes memory structures (like temporaryStorage and configurationMap) that are not yet fully integrated into our 'State-Sync' lifecycle. We need to refactor this into a production-ready, thread-safe, and highly abstracted solution without losing any of the existing business logic constants or data structures",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/5579fe-Go_proxy_architectural_scalability_performance_hardening",
+  "environment_setup": "Dockerfile"
+}

@@ -1,0 +1,12 @@
+{
+            "instance_id": "F3OFCA",
+            "problem_statement": "Refactor a synchronous, untyped EventEmitter into an asynchronous, schema-enforced Event Kernel. This involves moving from a 'fire-and-forget' model to a managed pipeline that supports payload validation, middleware-driven transformations, and fault-tolerance mechanisms like Dead Letter Queues and per-listener circuit breakers.
+",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/f3ofca-typed-event-emitter-refactor",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

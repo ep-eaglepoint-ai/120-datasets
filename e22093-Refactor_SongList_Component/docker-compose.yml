@@ -1,0 +1,27 @@
+services:
+  songlist-app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./evaluation:/workspace/evaluation
+
+  songlist-test-before:
+    build: .
+    command: sh -c "cd /workspace && npm run test-before"
+    volumes:
+      - ./evaluation:/workspace/evaluation
+
+  songlist-test-after:
+    build: .
+    command: sh -c "cd /workspace && npm run test-after"
+    volumes:
+      - ./evaluation:/workspace/evaluation
+
+  songlist-evaluate:
+    build: .
+    command: node evaluation/evaluation.js
+    volumes:
+      - ./evaluation:/workspace/evaluation

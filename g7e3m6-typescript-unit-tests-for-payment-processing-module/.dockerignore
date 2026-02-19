@@ -1,0 +1,7 @@
+node_modules
+repository_after/node_modules
+repository_before/node_modules
+.git
+.gitignore
+*.log
+evaluation/**/*.json

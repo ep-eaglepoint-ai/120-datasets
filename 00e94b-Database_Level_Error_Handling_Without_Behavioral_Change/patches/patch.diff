@@ -1,0 +1,85 @@
+--- repository_before/db-level-error-handling.sql	2026-01-14 14:25:59.753698849 +0300
++++ repository_after/db-level-error-handling.sql	2026-01-14 15:06:50.687522053 +0300
+@@ -1,24 +1,66 @@
+ -- Function to cancel unverified email tasks
+ CREATE OR REPLACE FUNCTION cancel_unverified_parent_emails()
+ RETURNS TRIGGER AS $$
++DECLARE
++  _parent_uuid uuid;
+ BEGIN
+- -- If confirmed_at is updated from NULL to a non-NULL value
+- IF OLD.confirmed_at IS NULL AND NEW.confirmed_at IS NOT NULL THEN
+-   -- Mark all pending tasks as completed
+-   UPDATE public.parent_scheduled_tasks
+-   SET completed_at = NOW(),
+-       is_cancelled = true
+-   WHERE parent_id IN (SELECT uuid FROM public.parents WHERE supabase_id = NEW.id)
+-     AND task_type IN (
+-       'send_unverified_email_3_days',
+-       'send_unverified_email_5_days',
+-       'send_unverified_email_10_days'
+-     )
+-     AND completed_at IS NULL;
+- END IF;
+- RETURN NEW;
++  -- 1. Validate Trigger Context
++  -- Ensure this function is only executed during an UPDATE operation.
++  IF TG_OP <> 'UPDATE' THEN
++    RAISE EXCEPTION 'Function cancel_unverified_parent_emails called with invalid operation: %', TG_OP
++    USING ERRCODE = '09000'; -- triggered_action_exception
++  END IF;
++
++  -- 2. Validate Input Integrity
++  -- Ensure the User ID is present before processing.
++  IF NEW.id IS NULL THEN
++    RAISE EXCEPTION 'Cannot process email verification: User ID is NULL'
++    USING ERRCODE = '23502'; -- not_null_violation
++  END IF;
++
++  -- Logic: If confirmed_at is updated from NULL to a non-NULL value
++  IF OLD.confirmed_at IS NULL AND NEW.confirmed_at IS NOT NULL THEN
++    
++    -- 3. Verify Logical Integrity (Relationship Check)
++    -- Resolve the Parent UUID. If we cannot find a parent for this auth user,
++    -- the application has a data consistency issue (Orphaned User).
++    SELECT uuid INTO _parent_uuid
++    FROM public.parents
++    WHERE supabase_id = NEW.id;
++
++    IF _parent_uuid IS NULL THEN
++       RAISE EXCEPTION 'Data Integrity Violation: No parent record found for confirmed User ID %', NEW.id
++       USING ERRCODE = '23000'; -- integrity_constraint_violation
++    END IF;
++
++    -- 4. Execute Business Logic
++    -- Mark all pending tasks as completed using the resolved ID
++    UPDATE public.parent_scheduled_tasks
++    SET completed_at = NOW(),
++        is_cancelled = true
++    WHERE parent_id = _parent_uuid
++      AND task_type IN (
++        'send_unverified_email_3_days',
++        'send_unverified_email_5_days',
++        'send_unverified_email_10_days'
++      )
++      AND completed_at IS NULL;
++  END IF;
++
++  RETURN NEW;
++
++EXCEPTION
++  WHEN OTHERS THEN
++    RAISE EXCEPTION 'Error in cancel_unverified_parent_emails: %', SQLERRM
++    USING ERRCODE = SQLSTATE;
+ END;
+-$$ LANGUAGE plpgsql SECURITY DEFINER;
++$$ LANGUAGE plpgsql 
++SECURITY DEFINER
++-- Secure the search path to prevent object hijacking
++SET search_path = public, auth, pg_temp;
++
++-- Trigger Definition
++DROP TRIGGER IF EXISTS cancel_unverified_emails_trigger ON auth.users;
+ 
+ CREATE TRIGGER cancel_unverified_emails_trigger
+ AFTER UPDATE ON auth.users

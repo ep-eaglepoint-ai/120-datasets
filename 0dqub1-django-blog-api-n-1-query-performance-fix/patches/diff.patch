@@ -1,0 +1,81 @@
+diff --git a/repository_after/__init__.py b/repository_after/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/repository_before/blog/views.py b/repository_after/blog/views.py
+index 16be555..d5ad352 100644
+--- a/repository_before/blog/views.py
++++ b/repository_after/blog/views.py
+@@ -1,28 +1,62 @@
+ from rest_framework import viewsets, filters
+ from rest_framework.pagination import PageNumberPagination
+-from django.db.models import Count
+-from .models import Post
++from django.db.models import Count, Prefetch
++from .models import Post, Comment
+ from .serializers import PostSerializer
+ 
+ class PostPagination(PageNumberPagination):
++    """
++    Pagination class for blog posts.
++    Allows page size customization up to 200 items.
++    """
+     page_size = 50
+     page_size_query_param = 'page_size'
+     max_page_size = 200
+ 
+ class PostViewSet(viewsets.ReadOnlyModelViewSet):
++    """
++    ReadOnly ViewSet for blog posts.
++    Optimized for performance by eliminating N+1 queries.
++    """
+     serializer_class = PostSerializer
+     pagination_class = PostPagination
+     filter_backends = [filters.SearchFilter]
+     search_fields = ['title', 'content']
+     
+     def get_queryset(self):
+-        queryset = Post.objects.all()
++        """
++        Returns an optimized queryset for the Post model.
+         
+-        queryset = queryset.annotate(
+-            comment_count=Count('comments'),
+-            tag_count=Count('tags')
++        Optimizations:
++        1. select_related for One-to-One and Many-to-One relationships (author, category).
++        2. prefetch_related for Many-to-Many (tags) and Reverse Foreign Key (comments).
++        3. Prefetch object used for comments to include comment authors in the same query.
++        4. annotate used for counts to avoid per-instance database aggregations.
++        """
++        # Baseline queryset with database-level aggregations
++        # Use distinct=True to avoid multiplication issues with multiple joins/prefethces
++        queryset = Post.objects.annotate(
++            comment_count=Count('comments', distinct=True),
++            tag_count=Count('tags', distinct=True)
+         )
+         
++        # Optimization: Eager loading strategy to eliminate N+1 queries
++        # select_related performs a JOIN in the SQL query
++        # prefetch_related performs a separate query and joins in memory
++        queryset = queryset.select_related(
++            'author',
++            'category'
++        ).prefetch_related(
++            'tags',
++            Prefetch(
++                'comments',
++                # select_related here ensures comment authors are fetched without extra queries
++                # The model ordering Meta handles the -created_at requirement
++                queryset=Comment.objects.select_related('author')
++            )
++        )
++        
++        # Preserve existing filtering functionality
+         author_id = self.request.query_params.get('author')
+         if author_id:
+             queryset = queryset.filter(author_id=author_id)
+@@ -32,4 +66,3 @@ class PostViewSet(viewsets.ReadOnlyModelViewSet):
+             queryset = queryset.filter(category__slug=category_slug)
+         
+         return queryset
+-

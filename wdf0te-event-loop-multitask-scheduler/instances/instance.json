@@ -1,0 +1,11 @@
+{
+            "instance_id": "WDF0TE",
+            "problem_statement": " This project requires the development of a cooperative multitasking scheduler in Python that simulates an operating system's task management to provide hands-on experience with core concurrency concepts. The scheduler must manage multiple tasks with different priorities using only Python generators or custom objects, allowing tasks to explicitly yield control, handle simulated delays, and share resources without employing threads, multiprocessing, or external async libraries. The system must ensure fair execution, prevent deadlocks and starvation, include logging for execution tracking, and maintain memory efficiency and clarity while demonstrating correct behavior through example tasks.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/wdf0te-event-loop-multitask-scheduler",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

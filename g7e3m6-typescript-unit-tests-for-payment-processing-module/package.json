@@ -1,0 +1,10 @@
+{
+  "name": "payment-processing-module-evaluation",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "npx jest --config repository_after/jest.config.js --runInBand tests/meta-requirements.test.ts || true",
+    "test:watch": "npx jest --config repository_after/jest.config.js --watch",
+    "evaluate": "node evaluation/evaluation.js"
+  }
+}

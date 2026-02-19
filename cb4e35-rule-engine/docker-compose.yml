@@ -1,0 +1,28 @@
+services:
+  app-before:
+    build: .
+    command: echo "No implementation in repository_before - skipping tests"
+    volumes:
+      - .:/app
+
+  app-after:
+    build: .
+    environment:
+      - MONGODB_URI=mongodb://localhost:27017/rule-engine
+      - NODE_ENV=test
+    working_dir: /app
+    command: npm test
+    volumes:
+      - .:/app
+      - /app/repository_after/node_modules
+
+  evaluation:
+    build: .
+    environment:
+      - MONGODB_URI=mongodb://localhost:27017/rule-engine
+      - NODE_ENV=test
+    working_dir: /app
+    command: npm run evaluate
+    volumes:
+      - .:/app
+      - /app/repository_after/node_modules

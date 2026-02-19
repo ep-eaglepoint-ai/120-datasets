@@ -1,0 +1,12 @@
+{
+  "name": "cart-service-metatests",
+  "version": "1.0.0",
+  "description": "Metatests for CartService unit tests",
+  "scripts": {
+    "test": "jest --testPathPattern=tests/",
+    "test:verbose": "jest --testPathPattern=tests/ --verbose"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}

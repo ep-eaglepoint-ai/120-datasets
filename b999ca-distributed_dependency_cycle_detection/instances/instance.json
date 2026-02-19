@@ -1,0 +1,77 @@
+{
+  "instance_id": "b999ca-distributed_dependency_cycle_detection",
+  "problem_statement": "The current cycle detection algorithm assumes a fully connected graph and silently fails on disconnected components. As the system scaled globally, this flaw caused circular dependencies in isolated regions to go undetected. These missed cycles led to cascading failures, SLA violations, and compliance risks. The cycle detection logic must be refactored to correctly analyze all graph components while preserving backward compatibility.",
+  "requirements": [
+    "1. Time Complexity: O(V + E)",
+    "2. Space Complexity: O(V + E)", 
+    "3. Must visit every node and edge exactly once",
+    "4. Must restart DFS for each unvisited component",
+    "5. Maintain global visited state with per-component recursion stacks",
+    "6. No approximations or probabilistic behavior"
+  ],
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/sample-dataset/tree/main/b999ca-distributed_dependency_cycle_detection",
+  "environment_setup": "Dockerfile",
+  "docker_commands": {
+    "build": "docker-compose build",
+    "test_before": "docker-compose run --rm test-before",
+    "test_after": "docker-compose run --rm test-after", 
+    "evaluation": "docker-compose run --rm evaluation"
+  },
+  "test_results": {
+    "before_implementation": {
+      "total_tests": 11,
+      "passed": 3,
+      "failed": 8,
+      "status": "EXPECTED_FAILURES",
+      "key_failures": [
+        "test_component_restart_behavior",
+        "test_disconnected_components_detection",
+        "test_global_visited_state",
+        "test_multiple_isolated_cycles",
+        "test_self_loops",
+        "test_space_complexity_requirement",
+        "test_time_complexity_requirement",
+        "test_visit_all_nodes_and_edges"
+      ]
+    },
+    "after_implementation": {
+      "total_tests": 11,
+      "passed": 11,
+      "failed": 0,
+      "status": "ALL_PASSING",
+      "success": true
+    }
+  },
+  "FAIL_TO_PASS": [
+    "tests/test_cycle_detection.py::TestCycleDetection::test_component_restart_behavior",
+    "tests/test_cycle_detection.py::TestCycleDetection::test_disconnected_components_detection",
+    "tests/test_cycle_detection.py::TestCycleDetection::test_global_visited_state",
+    "tests/test_cycle_detection.py::TestCycleDetection::test_multiple_isolated_cycles",
+    "tests/test_cycle_detection.py::TestCycleDetection::test_self_loops",
+    "tests/test_cycle_detection.py::TestCycleDetection::test_space_complexity_requirement",
+    "tests/test_cycle_detection.py::TestCycleDetection::test_time_complexity_requirement",
+    "tests/test_cycle_detection.py::TestCycleDetection::test_visit_all_nodes_and_edges"
+  ],
+  "PASS_TO_PASS": [
+    "tests/test_cycle_detection.py::TestCycleDetection::test_backward_compatibility",
+    "tests/test_cycle_detection.py::TestCycleDetection::test_no_probabilistic_behavior",
+    "tests/test_cycle_detection.py::TestCycleDetection::test_single_component_cycles"
+  ],
+  "implementation_status": {
+    "core_algorithm_fixed": true,
+    "multi_component_support": true,
+    "global_visited_state": true,
+    "component_restart_logic": true,
+    "complexity_maintained": true,
+    "backward_compatibility": true,
+    "all_tests_passing": true,
+    "all_requirements_validated": true,
+    "docker_verified": true,
+    "evaluation_success": true,
+    "cycle_reconstruction_fixed": true,
+    "recursion_stack_ordering_fixed": true
+  }
+}
+  

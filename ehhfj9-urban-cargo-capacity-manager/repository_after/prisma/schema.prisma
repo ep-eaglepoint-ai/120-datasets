@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum PackageStatus {
+  PENDING
+  ASSIGNED
+  DELIVERED
+}
+
+model Courier {
+  id          String   @id @default(cuid())
+  name        String
+  isActive    Boolean  @default(true)
+  lockVersion Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  packages    Package[]
+  assignments Assignment[]
+}
+
+model Package {
+  id          String        @id @default(cuid())
+  description String
+  weightKg    Float
+  status      PackageStatus @default(PENDING)
+  courierId   String?
+  courier     Courier?      @relation(fields: [courierId], references: [id])
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  assignment  Assignment?
+
+  @@index([courierId, status])
+}
+
+model Assignment {
+  id        String   @id @default(cuid())
+  courierId String
+  packageId String   @unique
+  createdAt DateTime @default(now())
+
+  courier   Courier  @relation(fields: [courierId], references: [id])
+  pkg       Package  @relation(fields: [packageId], references: [id])
+
+  @@index([courierId])
+}

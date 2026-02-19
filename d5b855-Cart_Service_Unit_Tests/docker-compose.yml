@@ -1,0 +1,21 @@
+services:
+  run_tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: sh -c "cd /app/repository_after && npm test"
+
+  run_metatest:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: sh -c "cd /app/tests && npx jest"
+
+  run_evaluation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: sh -c "cd /app/evaluation && node evaluation.js"
+    volumes:
+      - ./evaluation/reports:/app/evaluation/reports
+

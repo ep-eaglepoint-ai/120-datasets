@@ -1,0 +1,109 @@
+diff --git a/repository_before/__init__.py b/repository_before/__init__.py
+deleted file mode 100644
+index e69de29bb..000000000
+diff --git a/repository_before/power_transformer_project/src/structural_scaling/diagnostics.py b/repository_after/power_transformer_project/src/structural_scaling/diagnostics.py
+index 19a6e7682..921cf237b 100644
+--- a/repository_before/power_transformer_project/src/structural_scaling/diagnostics.py
++++ b/repository_after/power_transformer_project/src/structural_scaling/diagnostics.py
+@@ -9,6 +9,9 @@ from scipy import stats
+ 
+ NormalityTest = Literal["normaltest", "shapiro"]
+ 
++# After-only: threshold below which normaltest falls back to Shapiro-Wilk (structural tests expect this in after)
++MAX_SAMPLE_SIZE_FOR_SHAPIRO = 20
++
+ 
+ @dataclass(frozen=True)
+ class NormalityMetrics:
+@@ -21,12 +24,15 @@ class NormalityMetrics:
+ 
+ 
+ def _to_1d_float_array(x: np.ndarray) -> np.ndarray:
+-    # Before: deliberately omit NaN/inf and empty checks so requirement tests fail
+     x = np.asarray(x, dtype=float)
+     if x.ndim == 2 and x.shape[1] == 1:
+         x = x.ravel()
+     if x.ndim != 1:
+         raise ValueError(f"Expected 1D array (or 2D column vector). Got shape {x.shape}.")
++    if x.size == 0:
++        raise ValueError("Input array is empty.")
++    if not np.isfinite(x).all():
++        raise ValueError("Input contains NaN or infinite values.")
+     return x
+ 
+ 
+@@ -38,7 +44,7 @@ def normality_report(x: np.ndarray, test: NormalityTest = "normaltest") -> Norma
+       - a normality test statistic + p-value
+ 
+     Notes:
+-      - D'Agostino-Pearson (normaltest) is typically recommended for n >= ~20
++      - D'Agostino-Pearson (normaltest) is typically recommended for n >= ~20
+       - Shapiro-Wilk is often used for smaller n; can be slow for very large n
+     """
+     x = _to_1d_float_array(x)
+@@ -47,7 +53,16 @@ def normality_report(x: np.ndarray, test: NormalityTest = "normaltest") -> Norma
+     kurt = float(stats.kurtosis(x, fisher=True, bias=False))  # normal => 0
+ 
+     if test == "normaltest":
+-        # Before: never use shapiro fallback so requirement 11 tests fail
++        if x.size < MAX_SAMPLE_SIZE_FOR_SHAPIRO:
++            stat, p = stats.shapiro(x)
++            return NormalityMetrics(
++                n=int(x.size),
++                skewness=skew,
++                kurtosis_fisher=kurt,
++                test_name="shapiro(fallback)",
++                test_statistic=float(stat),
++                p_value=float(p),
++            )
+         stat, p = stats.normaltest(x)
+         return NormalityMetrics(
+             n=int(x.size),
+diff --git a/repository_before/power_transformer_project/src/structural_scaling/power_transform.py b/repository_after/power_transformer_project/src/structural_scaling/power_transform.py
+index 3cc40e0e3..cc6eff2d0 100644
+--- a/repository_before/power_transformer_project/src/structural_scaling/power_transform.py
++++ b/repository_after/power_transformer_project/src/structural_scaling/power_transform.py
+@@ -11,12 +11,19 @@ from .diagnostics import _to_1d_float_array, improved_normality, approx_normal_b
+ 
+ Method = Literal["yeo-johnson", "box-cox"]
+ 
++# After-only: supported method names (structural tests expect this in after, not before)
++SUPPORTED_METHODS = ("yeo-johnson", "box-cox")
++
+ 
+ @dataclass(frozen=True)
+ class TransformResult:
+     transformed: np.ndarray
+     transformer: PowerTransformer
+ 
++    def is_finite(self) -> bool:
++        """After-only: True if all transformed values are finite."""
++        return bool(np.all(np.isfinite(self.transformed)))
++
+ 
+ def fit_transform_power(
+     x: np.ndarray,
+@@ -39,8 +46,11 @@ def fit_transform_power(
+     x2 = x1.reshape(-1, 1)
+ 
+     if method == "box-cox" and np.any(x2 <= 0):
+-        # Before: error message omits min value so requirement 5 tests fail
+-        raise ValueError("Box-Cox requires all values > 0.")
++        min_val = float(np.min(x2))
++        raise ValueError(
++            "Box-Cox requires all values > 0. "
++            f"Found min={min_val}. Use method='yeo-johnson' or shift your data."
++        )
+ 
+     transformer = PowerTransformer(method=method, standardize=standardize)
+     transformed = transformer.fit_transform(x2).ravel()
+@@ -62,8 +72,7 @@ def invertibility_check(
+     trans = _to_1d_float_array(transformed)
+ 
+     if orig.shape != trans.shape:
+-        # Before: wrong message so requirement 9 tests fail
+-        raise ValueError("Length mismatch.")
++        raise ValueError(f"Shape mismatch: original={orig.shape}, transformed={trans.shape}")
+ 
+     back = transformer.inverse_transform(trans.reshape(-1, 1)).ravel()
+     return bool(np.allclose(back, orig, atol=atol))

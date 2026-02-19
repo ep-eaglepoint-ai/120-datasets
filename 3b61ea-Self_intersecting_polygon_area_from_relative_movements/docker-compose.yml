@@ -1,0 +1,15 @@
+services:
+  # Run tests only: docker-compose run test
+  test-after:
+    build: .
+    command: pytest tests -v --tb=short
+    volumes:
+      - .:/app
+
+  # Run full evaluation: docker-compose run evaluate
+  evaluation:
+    build: .
+    command: python evaluation/evaluation.py
+    volumes:
+      - .:/app
+      - ./evaluation/reports:/app/evaluation/reports

@@ -1,0 +1,11 @@
+{
+            "instance_id": "C2KZ6R",
+            "problem_statement": "Implement an iterative Breadth-First Search (BFS) maze solver that finds the shortest path between two coordinates in a 2D grid maze containing walkable cells (0) and walls (1). Your solution must use a queue for exploration, track parent nodes for path reconstruction, and handle mazes up to 50,000×50,000 cells efficiently without recursion. Return both the coordinate list of the shortest path and its length, or an empty path if no solution exists.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/c2kz6r-ratz-maze-algorithm",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

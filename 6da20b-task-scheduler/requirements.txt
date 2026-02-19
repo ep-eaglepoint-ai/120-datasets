@@ -1,0 +1,2 @@
+# Python dependencies for task scheduler project
+pytest>=7.0.0

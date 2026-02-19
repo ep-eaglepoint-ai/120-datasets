@@ -1,0 +1,11 @@
+{
+            "instance_id": "EL7X5F",
+            "problem_statement": "Build a Python 3.10+ feature store system that manages the complete ML feature lifecycle—from batch (PySpark) and real‑time (Kafka/Faust) computation to low‑latency serving via Redis—ensuring consistency between training and inference with point‑in‑time correct joins. Implement a PostgreSQL registry for feature definition and lineage, integrate Great Expectations for validation and MLflow for experiment tracking, and provide SDK support for pandas, PyTorch, and scikit‑learn. Package as a Python library with a REST API, offering unified feature definition, versioning, and serving for production ML workflows.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/el7x5f-ml-feature-store-system",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

@@ -1,0 +1,13 @@
+{
+            "instance_id": "F6X6UY",
+            "problem_statement": "**Problem Statement (3 Sentences):**
+
+Build a fully offline-first study planner web application using Next.js, MongoDB, Zod, and TailwindCSS that allows users to manage subjects, log sessions, track progress, and maintain study streaks using only locally persisted data without authentication or external APIs. The application must remain fully functional without internet connectivity, ensuring all data operations—including reading, writing, aggregation, and display—work reliably in offline conditions while handling edge cases and data corruption gracefully. The system must prioritize data integrity, deterministic state management, and smooth performance even under heavy usage or long-term data accumulation.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/f6x6uy-offline-first-study-planner",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

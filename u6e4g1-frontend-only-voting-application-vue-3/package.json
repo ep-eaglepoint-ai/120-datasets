@@ -1,0 +1,10 @@
+{
+  "name": "u6e4g1-evaluator",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "test": "node tests/voting_app_requirements.test.js",
+    "evaluate": "node evaluation/evaluation.js"
+  }
+}

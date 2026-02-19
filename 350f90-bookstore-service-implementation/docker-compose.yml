@@ -1,0 +1,36 @@
+services:
+  backend:
+    build:
+      context: ./repository_after/bookstore_backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/books" ]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+
+  tester:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - BASE_URL=http://backend:8080/books
+    command: sh -c "while ! curl -s http://backend:8080/books > /dev/null; do sleep 1; done; python tests/test_bookstore.py"
+
+  evaluator:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - BASE_URL=http://backend:8080/books
+    volumes:
+      - ./evaluation/reports:/app/evaluation/reports
+    command: sh -c "while ! curl -s http://backend:8080/books > /dev/null; do sleep 1; done; python evaluation/evaluation.py"

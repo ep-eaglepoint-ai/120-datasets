@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
+
+# Node
+node_modules/
+
+# OS
+.DS_Store
+
+# Go
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Logs & temp
+*.log
+temp_pytest_report.json
+
+# Editor
+.vscode/
+.idea/
+
+# Evaluation outputs
+evaluation/**/report.json
+evaluation/**/output.json

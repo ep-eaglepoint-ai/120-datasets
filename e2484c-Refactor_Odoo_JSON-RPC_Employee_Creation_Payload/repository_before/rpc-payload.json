@@ -1,0 +1,24 @@
+{
+  "id": "abc",
+  "params": {
+    "args": [
+      {
+        "mobile_phone": "4522245546",
+        "job_title": "Engineer",
+        "work_phone": "905",
+        "name": "Solomon",
+        "company_id": 3,
+        "work_email": "solomon@example.com"
+      },
+      "create",
+      "hr.employee",
+      "password",
+      2,
+      "rd-demo"
+    ],
+    "method": "execute",
+    "service": "object"
+  },
+  "method": "call",
+  "jsonrpc": "2.0"
+}

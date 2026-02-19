@@ -1,0 +1,11 @@
+{
+            "instance_id": "8E74OB",
+            "problem_statement": "The objective is to optimize a SQLAlchemy-based inventory service interacting with a large-scale PostgreSQL database. This refactoring task specifically targets database performance (eliminating full table scans via indexing) and memory management (implementing pagination) to resolve latency spikes and OOM errors in a production warehouse environment.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/8e74ob-nexus-warehouse-database-optimizer",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

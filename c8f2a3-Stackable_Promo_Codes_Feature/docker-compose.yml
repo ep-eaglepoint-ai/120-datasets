@@ -1,0 +1,63 @@
+services:
+  mongodb:
+    image: mongo:6.0
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  test-before:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      - REPO_PATH=/workspace/repository_before
+      - MONGODB_URI=mongodb://mongodb:27017
+      - MONGODB_DB=test_promocodes
+    volumes:
+      - .:/workspace
+      - /workspace/node_modules
+    working_dir: /workspace
+    command: sh -c "rm -rf node_modules 2>/dev/null || true && npm install && REPO_PATH=../repository_before npx jest --runInBand --forceExit"
+    
+  test-after:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      - REPO_PATH=/workspace/repository_after
+      - MONGODB_URI=mongodb://mongodb:27017
+      - MONGODB_DB=test_promocodes
+    volumes:
+      - .:/workspace
+      - /workspace/node_modules
+    working_dir: /workspace
+    command: sh -c "rm -rf node_modules 2>/dev/null || true && npm install && REPO_PATH=../repository_after npx jest --runInBand --forceExit"
+    
+  evaluation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017
+      - MONGODB_DB=test_promocodes
+    volumes:
+      - .:/workspace
+      - /workspace/node_modules
+      - /workspace/repository_before/node_modules
+      - /workspace/repository_after/node_modules
+    working_dir: /workspace
+    command: sh -c "rm -rf node_modules repository_before/node_modules repository_after/node_modules 2>/dev/null || true && npm install && node evaluation/evaluation.js"

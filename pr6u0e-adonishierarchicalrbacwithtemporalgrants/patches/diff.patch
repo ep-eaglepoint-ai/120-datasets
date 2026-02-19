@@ -1,0 +1,1105 @@
+diff --git a/repository_before/.gitkeep b/repository_before/.gitkeep
+deleted file mode 100644
+index e69de29b..00000000
+diff --git a/repository_after/app/controllers/rbac_controller.ts b/repository_after/app/controllers/rbac_controller.ts
+new file mode 100644
+index 00000000..53e50d6a
+--- /dev/null
++++ b/repository_after/app/controllers/rbac_controller.ts
+@@ -0,0 +1,117 @@
++// @ts-nocheck
++import type { HttpContext } from '@adonisjs/core/http'
++import { inject } from '@adonisjs/core'
++import PermissionResolverService from '#services/permission_resolver_service'
++import { DateTime } from 'luxon'
++
++@inject()
++export default class RbacController {
++  constructor(private permissionResolver: PermissionResolverService) {}
++
++  /**
++   * Get user permissions
++   */
++  async getUserPermissions({ auth, response, params }: HttpContext) {
++    const user = auth.user!
++    const tenantId = user.tenantId
++
++    try {
++      const permissions = await this.permissionResolver.resolveUserPermissions(
++        user.id,
++        tenantId
++      )
++
++      return response.json({
++        user_id: user.id,
++        tenant_id: tenantId,
++        permissions
++      })
++    } catch (error) {
++      return response.status(500).json({
++        error: 'Failed to resolve permissions',
++        details: error.message
++      })
++    }
++  }
++
++  /**
++   * Grant temporary role to user
++   */
++  async grantTemporaryRole({ auth, request, response }: HttpContext) {
++    const user = auth.user!
++    const { role_id, expires_in_seconds } = request.only(['role_id', 'expires_in_seconds'])
++
++    if (!role_id || !expires_in_seconds) {
++      return response.status(400).json({
++        error: 'role_id and expires_in_seconds are required'
++      })
++    }
++
++    try {
++      const expiresAt = DateTime.now().plus({ seconds: expires_in_seconds })
++      
++      await this.permissionResolver.grantTemporaryRole(
++        user.id,
++        role_id,
++        user.tenantId,
++        expiresAt
++      )
++
++      return response.json({
++        message: 'Temporary role granted successfully',
++        expires_at: expiresAt.toISO()
++      })
++    } catch (error) {
++      return response.status(500).json({
++        error: 'Failed to grant temporary role',
++        details: error.message
++      })
++    }
++  }
++
++  /**
++   * Check specific permission
++   */
++  async checkPermission({ auth, response, params }: HttpContext) {
++    const user = auth.user!
++    const { permission } = params
++
++    try {
++      const hasPermission = await this.permissionResolver.userHasPermission(
++        user.id,
++        user.tenantId,
++        permission
++      )
++
++      return response.json({
++        user_id: user.id,
++        permission,
++        has_permission: hasPermission
++      })
++    } catch (error) {
++      return response.status(500).json({
++        error: 'Failed to check permission',
++        details: error.message
++      })
++    }
++  }
++
++  /**
++   * Cleanup expired roles
++   */
++  async cleanupExpiredRoles({ response }: HttpContext) {
++    try {
++      const deletedCount = await this.permissionResolver.cleanupExpiredRoles()
++
++      return response.json({
++        message: 'Cleanup completed',
++        deleted_roles: deletedCount
++      })
++    } catch (error) {
++      return response.status(500).json({
++        error: 'Failed to cleanup expired roles',
++        details: error.message
++      })
++    }
++  }
++}
+\ No newline at end of file
+diff --git a/repository_after/app/middleware/rbac_middleware.ts b/repository_after/app/middleware/rbac_middleware.ts
+new file mode 100644
+index 00000000..75d3cc68
+--- /dev/null
++++ b/repository_after/app/middleware/rbac_middleware.ts
+@@ -0,0 +1,86 @@
++// @ts-nocheck
++import type { HttpContext } from '@adonisjs/core/http'
++import type { NextFn } from '@adonisjs/core/types/http'
++import PermissionResolverService from '#services/permission_resolver_service'
++
++export default class RbacMiddleware {
++  private permissionResolver = new PermissionResolverService()
++
++  async handle(ctx: HttpContext, next: NextFn) {
++    const { auth, request } = ctx
++
++    // Skip if user is not authenticated
++    if (!auth.user) {
++      return next()
++    }
++
++    const user = auth.user
++    const tenantId = this.extractTenantId(request)
++
++    if (!tenantId) {
++      ctx.response.status(400).json({ error: 'Tenant ID is required' })
++      return
++    }
++
++    // Ensure user belongs to the tenant
++    if (user.tenantId !== tenantId) {
++      ctx.response.status(403).json({ error: 'Access denied: Invalid tenant' })
++      return
++    }
++
++    try {
++      // Resolve user permissions and attach to context
++      const permissions = await this.permissionResolver.resolveUserPermissions(
++        user.id, 
++        tenantId
++      )
++
++      // Attach permissions to HTTP context for downstream use
++      ctx.permissions = permissions
++      ctx.tenantId = tenantId
++
++      // Add helper method to check permissions
++      ctx.hasPermission = (permission: string): boolean => {
++        return permissions.includes(permission)
++      }
++
++      return next()
++    } catch (error) {
++      ctx.response.status(500).json({
++        error: 'Failed to resolve user permissions',
++        details: error instanceof Error ? error.message : String(error),
++      })
++      return
++    }
++  }
++
++  /**
++   * Extract tenant ID from request headers or query parameters
++   */
++  private extractTenantId(request: any): number | null {
++    // Try header first
++    const headerTenantId = request.header('x-tenant-id')
++    if (headerTenantId) {
++      const parsed = parseInt(headerTenantId, 10)
++      return isNaN(parsed) ? null : parsed
++    }
++
++    // Try query parameter
++    const queryTenantId = request.qs().tenant_id
++    if (queryTenantId) {
++      const parsed = parseInt(queryTenantId, 10)
++      return isNaN(parsed) ? null : parsed
++    }
++
++    return null
++  }
++}
++
++// Extend HttpContext type to include our custom properties
++declare module '@adonisjs/core/http' {
++  interface HttpContext {
++    permissions?: string[]
++    tenantId?: number
++    hasPermission?: (permission: string) => boolean
++  }
++}
+\ No newline at end of file
+diff --git a/repository_after/app/models/permission.ts b/repository_after/app/models/permission.ts
+new file mode 100644
+index 00000000..e25a1dee
+--- /dev/null
++++ b/repository_after/app/models/permission.ts
+@@ -0,0 +1,41 @@
++// @ts-nocheck
++import { DateTime } from 'luxon'
++import { BaseModel, column, manyToMany } from '@adonisjs/lucid/orm'
++import type { ManyToMany } from '@adonisjs/lucid/types/relations'
++import Role from './role.js'
++
++export default class Permission extends BaseModel {
++  @column({ isPrimary: true })
++  declare id: number
++
++  @column()
++  declare name: string
++
++  @column()
++  declare description: string | null
++
++  @column()
++  declare tenantId: number
++
++  @column.dateTime({ autoCreate: true })
++  declare createdAt: DateTime
++
++  @column.dateTime({ autoCreate: true, autoUpdate: true })
++  declare updatedAt: DateTime
++
++  // Many-to-many relationship with roles
++  @manyToMany(() => Role, {
++    pivotTable: 'role_permissions',
++    pivotForeignKey: 'permission_id',
++    pivotRelatedForeignKey: 'role_id',
++    pivotColumns: ['tenant_id'],
++  })
++  declare roles: ManyToMany<typeof Role>
++
++  /**
++   * Scope to filter permissions by tenant
++   */
++  static byTenant(query: any, tenantId: number) {
++    return query.where('tenant_id', tenantId)
++  }
++}
+\ No newline at end of file
+diff --git a/repository_after/app/models/role.ts b/repository_after/app/models/role.ts
+new file mode 100644
+index 00000000..c01a3969
+--- /dev/null
++++ b/repository_after/app/models/role.ts
+@@ -0,0 +1,124 @@
++// @ts-nocheck
++import { DateTime } from 'luxon'
++import { BaseModel, column, manyToMany, hasMany, belongsTo } from '@adonisjs/lucid/orm'
++import type { ManyToMany, HasMany, BelongsTo } from '@adonisjs/lucid/types/relations'
++import Permission from './permission.js'
++import User from './user.js'
++
++export default class Role extends BaseModel {
++  @column({ isPrimary: true })
++  declare id: number
++
++  @column()
++  declare name: string
++
++  @column()
++  declare description: string | null
++
++  @column()
++  declare tenantId: number
++
++  @column.dateTime({ autoCreate: true })
++  declare createdAt: DateTime
++
++  @column.dateTime({ autoCreate: true, autoUpdate: true })
++  declare updatedAt: DateTime
++
++  // Many-to-many relationship with permissions
++  @manyToMany(() => Permission, {
++    pivotTable: 'role_permissions',
++    pivotForeignKey: 'role_id',
++    pivotRelatedForeignKey: 'permission_id',
++    pivotColumns: ['tenant_id'],
++  })
++  declare permissions: ManyToMany<typeof Permission>
++
++  // Many-to-many relationship with users
++  @manyToMany(() => User, {
++    pivotTable: 'user_roles',
++    pivotForeignKey: 'role_id',
++    pivotRelatedForeignKey: 'user_id',
++    pivotColumns: ['tenant_id', 'is_primary', 'expires_at'],
++  })
++  declare users: ManyToMany<typeof User>
++
++  // Self-referencing relationship for hierarchy - parent roles
++  @manyToMany(() => Role, {
++    pivotTable: 'role_hierarchy',
++    pivotForeignKey: 'child_role_id',
++    pivotRelatedForeignKey: 'parent_role_id',
++    pivotColumns: ['tenant_id'],
++  })
++  declare parentRoles: ManyToMany<typeof Role>
++
++  // Self-referencing relationship for hierarchy - child roles
++  @manyToMany(() => Role, {
++    pivotTable: 'role_hierarchy',
++    pivotForeignKey: 'parent_role_id',
++    pivotRelatedForeignKey: 'child_role_id',
++    pivotColumns: ['tenant_id'],
++  })
++  declare childRoles: ManyToMany<typeof Role>
++
++  /**
++   * Scope to filter roles by tenant
++   */
++  static byTenant(query: any, tenantId: number) {
++    return query.where('tenant_id', tenantId)
++  }
++
++  /**
++   * Get all ancestor roles recursively
++   */
++  async getAncestorRoles(): Promise<Role[]> {
++    const ancestors: Role[] = []
++    const visited = new Set<number>()
++    
++    const collectAncestors = async (role: Role) => {
++      if (visited.has(role.id)) return
++      visited.add(role.id)
++      
++      await role.load('parentRoles', (query) => {
++        query.where('tenant_id', role.tenantId)
++      })
++      
++      for (const parent of role.parentRoles) {
++        ancestors.push(parent)
++        await collectAncestors(parent)
++      }
++    }
++    
++    await collectAncestors(this)
++    return ancestors
++  }
++
++  /**
++   * Get all permissions including inherited from parent roles
++   */
++  async getAllPermissions(): Promise<string[]> {
++    const allPermissions = new Set<string>()
++    
++    // Get direct permissions
++    await this.load('permissions', (query) => {
++      query.where('tenant_id', this.tenantId)
++    })
++    
++    for (const permission of this.permissions) {
++      allPermissions.add(permission.name)
++    }
++    
++    // Get inherited permissions from ancestor roles
++    const ancestors = await this.getAncestorRoles()
++    for (const ancestor of ancestors) {
++      await ancestor.load('permissions', (query) => {
++        query.where('tenant_id', this.tenantId)
++      })
++      
++      for (const permission of ancestor.permissions) {
++        allPermissions.add(permission.name)
++      }
++    }
++    
++    return Array.from(allPermissions).sort()
++  }
++}
+\ No newline at end of file
+diff --git a/repository_after/app/models/user.ts b/repository_after/app/models/user.ts
+new file mode 100644
+index 00000000..a8c9adc7
+--- /dev/null
++++ b/repository_after/app/models/user.ts
+@@ -0,0 +1,81 @@
++// @ts-nocheck
++import { DateTime } from 'luxon'
++import { BaseModel, column, manyToMany } from '@adonisjs/lucid/orm'
++import type { ManyToMany } from '@adonisjs/lucid/types/relations'
++import Role from './role.js'
++
++export default class User extends BaseModel {
++  @column({ isPrimary: true })
++  declare id: number
++
++  @column()
++  declare email: string
++
++  @column({ serializeAs: null })
++  declare password: string
++
++  @column()
++  declare fullName: string
++
++  @column()
++  declare tenantId: number
++
++  @column.dateTime({ autoCreate: true })
++  declare createdAt: DateTime
++
++  @column.dateTime({ autoCreate: true, autoUpdate: true })
++  declare updatedAt: DateTime
++
++  // Many-to-many relationship with roles
++  @manyToMany(() => Role, {
++    pivotTable: 'user_roles',
++    pivotForeignKey: 'user_id',
++    pivotRelatedForeignKey: 'role_id',
++    pivotColumns: ['tenant_id', 'is_primary', 'expires_at'],
++  })
++  declare roles: ManyToMany<typeof Role>
++
++  /**
++   * Scope to filter users by tenant
++   */
++  static byTenant(query: any, tenantId: number) {
++    return query.where('tenant_id', tenantId)
++  }
++
++  /**
++   * Get active roles (non-expired temporal roles)
++   */
++  async getActiveRoles(): Promise<Role[]> {
++    const now = DateTime.now()
++    
++    await this.load('roles', (query) => {
++      query
++        .where('tenant_id', this.tenantId)
++        .where((subQuery) => {
++          subQuery
++            .whereNull('user_roles.expires_at')
++            .orWhere('user_roles.expires_at', '>', now.toSQL())
++        })
++    })
++    
++    return this.roles
++  }
++
++  /**
++   * Get primary role
++   */
++  async getPrimaryRole(): Promise<Role | null> {
++    await this.load('roles', (query) => {
++      query
++        .where('tenant_id', this.tenantId)
++        .where('user_roles.is_primary', true)
++        .where((subQuery) => {
++          subQuery
++            .whereNull('user_roles.expires_at')
++            .orWhere('user_roles.expires_at', '>', DateTime.now().toSQL())
++        })
++    })
++    
++    return this.roles[0] || null
++  }
++}
+\ No newline at end of file
+diff --git a/repository_after/app/policies/role_policy.ts b/repository_after/app/policies/role_policy.ts
+new file mode 100644
+index 00000000..660b20ca
+--- /dev/null
++++ b/repository_after/app/policies/role_policy.ts
+@@ -0,0 +1,118 @@
++// @ts-nocheck
++import User from '#models/user'
++import { BasePolicy } from '@adonisjs/bouncer'
++import type { AuthorizerResponse } from '@adonisjs/bouncer/types'
++import PermissionResolverService from '#services/permission_resolver_service'
++
++export default class RolePolicy extends BasePolicy {
++  private permissionResolver = new PermissionResolverService()
++
++  /**
++   * Check if user has a specific permission
++   */
++  async allows(user: User, permission: string, tenantId?: number): Promise<AuthorizerResponse> {
++    const effectiveTenantId = tenantId || user.tenantId
++    
++    const hasPermission = await this.permissionResolver.userHasPermission(
++      user.id,
++      effectiveTenantId,
++      permission
++    )
++
++    return hasPermission
++  }
++
++  /**
++   * Check if user can edit invoices
++   */
++  async canEditInvoice(user: User, tenantId?: number): Promise<AuthorizerResponse> {
++    return this.allows(user, 'can_edit_invoice', tenantId)
++  }
++
++  /**
++   * Snake_case alias for bouncer.with('RolePolicy').allows('can_edit_invoice')
++   */
++  async ['can_edit_invoice'](user: User, tenantId?: number): Promise<AuthorizerResponse> {
++    return this.canEditInvoice(user, tenantId)
++  }
++
++  /**
++   * Check if user can view reports
++   */
++  async canViewReports(user: User, tenantId?: number): Promise<AuthorizerResponse> {
++    return this.allows(user, 'can_view_reports', tenantId)
++  }
++
++  /**
++   * Snake_case alias for bouncer.with('RolePolicy').allows('can_view_reports')
++   */
++  async ['can_view_reports'](user: User, tenantId?: number): Promise<AuthorizerResponse> {
++    return this.canViewReports(user, tenantId)
++  }
++
++  /**
++   * Check if user can manage users
++   */
++  async canManageUsers(user: User, tenantId?: number): Promise<AuthorizerResponse> {
++    return this.allows(user, 'can_manage_users', tenantId)
++  }
++
++  /**
++   * Snake_case alias for bouncer.with('RolePolicy').allows('can_manage_users')
++   */
++  async ['can_manage_users'](user: User, tenantId?: number): Promise<AuthorizerResponse> {
++    return this.canManageUsers(user, tenantId)
++  }
++
++  /**
++   * Check if user can access admin panel
++   */
++  async canAccessAdmin(user: User, tenantId?: number): Promise<AuthorizerResponse> {
++    return this.allows(user, 'can_access_admin', tenantId)
++  }
++
++  /**
++   * Snake_case alias for bouncer.with('RolePolicy').allows('can_access_admin')
++   */
++  async ['can_access_admin'](user: User, tenantId?: number): Promise<AuthorizerResponse> {
++    return this.canAccessAdmin(user, tenantId)
++  }
++
++  /**
++   * Check multiple permissions at once
++   */
++  async hasAnyPermission(
++    user: User, 
++    permissions: string[], 
++    tenantId?: number
++  ): Promise<AuthorizerResponse> {
++    const effectiveTenantId = tenantId || user.tenantId
++    
++    const userPermissions = await this.permissionResolver.resolveUserPermissions(
++      user.id,
++      effectiveTenantId
++    )
++
++    const hasAny = permissions.some(permission => userPermissions.includes(permission))
++    return hasAny
++  }
++
++  /**
++   * Check if user has all specified permissions
++   */
++  async hasAllPermissions(
++    user: User, 
++    permissions: string[], 
++    tenantId?: number
++  ): Promise<AuthorizerResponse> {
++    const effectiveTenantId = tenantId || user.tenantId
++    
++    const userPermissions = await this.permissionResolver.resolveUserPermissions(
++      user.id,
++      effectiveTenantId
++    )
++
++    const hasAll = permissions.every(permission => userPermissions.includes(permission))
++    return hasAll
++  }
++}
+\ No newline at end of file
+diff --git a/repository_after/app/services/permission_resolver_service.ts b/repository_after/app/services/permission_resolver_service.ts
+new file mode 100644
+index 00000000..eb87a720
+--- /dev/null
++++ b/repository_after/app/services/permission_resolver_service.ts
+@@ -0,0 +1,199 @@
++// @ts-nocheck
++import { DateTime } from "luxon";
++import User from "#models/user";
++import Role from "#models/role";
++
++export default class PermissionResolverService {
++  async resolveUserPermissions(
++    userId: number,
++    tenantId: number,
++  ): Promise<string[]> {
++    const user = await User.query()
++      .where("id", userId)
++      .where("tenant_id", tenantId)
++      .first();
++
++    if (!user) {
++      return [];
++    }
++
++    const effectiveTenantId = tenantId ?? user.tenantId;
++    const activeRoles = await this.getActiveUserRoles(user, effectiveTenantId);
++    const allPermissions = new Set<string>();
++
++    for (const role of activeRoles) {
++      const rolePermissions = await this.resolveRolePermissions(role, effectiveTenantId);
++      rolePermissions.forEach((permission) => allPermissions.add(permission));
++    }
++
++    return Array.from(allPermissions).sort();
++  }
++
++  /**
++   * Get active roles for a user scoped to tenant.
++   * Includes the primary role (non-expired) and active temporary roles only.
++   */
++  private async getActiveUserRoles(user: User, tenantId: number): Promise<Role[]> {
++    const now = DateTime.now();
++    const roles = await user
++      .related("roles")
++      .query()
++      .where("tenant_id", tenantId)
++      .where((roleQuery) => {
++        // Primary role (non-expired) OR temporary role (expires_at in future)
++        roleQuery
++          .where((primaryQuery) => {
++            primaryQuery
++              .where("user_roles.is_primary", true)
++              .where((expQuery) => {
++                expQuery
++                  .whereNull("user_roles.expires_at")
++                  .orWhere("user_roles.expires_at", ">", now.toSQL());
++              });
++          })
++          .orWhere((tempQuery) => {
++            tempQuery
++              .where("user_roles.is_primary", false)
++              .whereNotNull("user_roles.expires_at")
++              .where("user_roles.expires_at", ">", now.toSQL());
++          });
++      });
++
++    return roles;
++  }
++
++  async resolveRolePermissions(
++    role: Role,
++    tenantId: number,
++  ): Promise<string[]> {
++    const allPermissions = new Set<string>();
++    const visitedRoles = new Set<number>();
++
++    await this.collectRolePermissions(
++      role,
++      tenantId,
++      allPermissions,
++      visitedRoles,
++    );
++
++    return Array.from(allPermissions).sort();
++  }
++
++  private async collectRolePermissions(
++    role: Role,
++    tenantId: number,
++    allPermissions: Set<string>,
++    visitedRoles: Set<number>,
++  ): Promise<void> {
++    if (visitedRoles.has(role.id)) {
++      return;
++    }
++    visitedRoles.add(role.id);
++
++    await role.load("permissions", (query) => {
++      query.where("tenant_id", tenantId);
++    });
++
++    for (const permission of role.permissions) {
++      allPermissions.add(permission.name);
++    }
++
++    await role.load("parentRoles", (query) => {
++      query.where("tenant_id", tenantId);
++    });
++
++    for (const parentRole of role.parentRoles) {
++      await this.collectRolePermissions(
++        parentRole,
++        tenantId,
++        allPermissions,
++        visitedRoles,
++      );
++    }
++  }
++
++  async userHasPermission(
++    userId: number,
++    tenantId: number,
++    permission: string,
++  ): Promise<boolean> {
++    const userPermissions = await this.resolveUserPermissions(userId, tenantId);
++    return userPermissions.includes(permission);
++  }
++
++  async grantTemporaryRole(
++    userId: number,
++    roleId: number,
++    tenantId: number,
++    expiresAt: DateTime,
++  ): Promise<void> {
++    const user = await User.query()
++      .where("id", userId)
++      .where("tenant_id", tenantId)
++      .first();
++
++    const role = await Role.query()
++      .where("id", roleId)
++      .where("tenant_id", tenantId)
++      .first();
++
++    if (!user || !role) {
++      throw new Error("User or role not found");
++    }
++
++    // Check if user already has this role
++    const existingRole = await user
++      .related("roles")
++      .query()
++      .where("role_id", roleId)
++      .first();
++
++    if (existingRole) {
++      // Update expiration if role already exists
++      await user
++        .related("roles")
++        .pivotQuery()
++        .where("role_id", roleId)
++        .update({ expires_at: expiresAt.toSQL() });
++    } else {
++      // Attach new temporary role
++      await user.related("roles").attach({
++        [roleId]: {
++          tenant_id: tenantId,
++          is_primary: false,
++          expires_at: expiresAt.toSQL(),
++        },
++      });
++    }
++  }
++
++  /**
++   * Cleanup expired temporal roles
++   */
++  async cleanupExpiredRoles(): Promise<number> {
++    const now = DateTime.now();
++
++    // Use raw query to delete expired role assignments
++    const db = (await import("@adonisjs/lucid/services/db")).default;
++
++    const result = await db.from("user_roles")
++      .where("expires_at", "<=", now.toSQL())
++      .whereNotNull("expires_at")
++      .delete();
++
++    return result;
++  }
++
++  /**
++   * Grant temporary role with duration
++   */
++  async grantTemporaryRoleWithDuration(
++    userId: number,
++    roleId: number,
++    tenantId: number,
++    durationInSeconds: number,
++  ): Promise<void> {
++    const expiresAt = DateTime.now().plus({ seconds: durationInSeconds });
++    await this.grantTemporaryRole(userId, roleId, tenantId, expiresAt);
++  }
++}
+diff --git a/repository_after/config/bouncer.ts b/repository_after/config/bouncer.ts
+new file mode 100644
+index 00000000..e9ccb921
+--- /dev/null
++++ b/repository_after/config/bouncer.ts
+@@ -0,0 +1,46 @@
++// @ts-nocheck
++import { defineConfig } from "@adonisjs/bouncer";
++
++const bouncerConfig = defineConfig({
++  /*
++  |--------------------------------------------------------------------------
++  | Default Authorizer
++  |--------------------------------------------------------------------------
++  |
++  | Define the default authorizer that will be used when no explicit
++  | authorizer is defined for a bouncer check.
++  |
++  */
++  default: "lucid",
++
++  /*
++  |--------------------------------------------------------------------------
++  | Authorizers
++  |--------------------------------------------------------------------------
++  |
++  | Define authorizers for performing authorization checks. The "lucid"
++  | authorizer uses the Lucid models for authorization.
++  |
++  */
++  authorizers: {
++    lucid: {
++      driver: "lucid",
++      identifierKey: "id",
++    },
++  },
++
++  /*
++  |--------------------------------------------------------------------------
++  | Policies
++  |--------------------------------------------------------------------------
++  |
++  | Define policies for authorization. Policies are classes that contain
++  | authorization logic for specific resources or actions.
++  |
++  */
++  policies: {
++    RolePolicy: () => import("#policies/role_policy"),
++  },
++});
++
++export default bouncerConfig;
+diff --git a/repository_after/config/database.ts b/repository_after/config/database.ts
+new file mode 100644
+index 00000000..923c86ee
+--- /dev/null
++++ b/repository_after/config/database.ts
+@@ -0,0 +1,21 @@
++// @ts-nocheck
++import { defineConfig } from '@adonisjs/lucid'
++
++const databaseConfig = defineConfig({
++  connection: 'sqlite',
++  connections: {
++    sqlite: {
++      client: 'sqlite3',
++      connection: {
++        filename: './database/database.sqlite',
++      },
++      useNullAsDefault: true,
++      migrations: {
++        naturalSort: true,
++        paths: ['./database/migrations'],
++      },
++    },
++  },
++})
++
++export default databaseConfig
+\ No newline at end of file
+diff --git a/repository_after/database/migrations/001_create_roles_table.ts b/repository_after/database/migrations/001_create_roles_table.ts
+new file mode 100644
+index 00000000..0e8bb669
+--- /dev/null
++++ b/repository_after/database/migrations/001_create_roles_table.ts
+@@ -0,0 +1,24 @@
++// @ts-nocheck
++import { BaseSchema } from '@adonisjs/lucid/schema'
++
++export default class extends BaseSchema {
++  protected tableName = 'roles'
++
++  async up() {
++    this.schema.createTable(this.tableName, (table) => {
++      table.increments('id')
++      table.string('name').notNullable()
++      table.text('description').nullable()
++      table.integer('tenant_id').unsigned().notNullable()
++      table.timestamps(true)
++
++      // Ensure role names are unique within a tenant
++      table.unique(['name', 'tenant_id'])
++      table.index(['tenant_id'])
++    })
++  }
++
++  async down() {
++    this.schema.dropTable(this.tableName)
++  }
++}
+\ No newline at end of file
+diff --git a/repository_after/database/migrations/002_create_permissions_table.ts b/repository_after/database/migrations/002_create_permissions_table.ts
+new file mode 100644
+index 00000000..87d6860f
+--- /dev/null
++++ b/repository_after/database/migrations/002_create_permissions_table.ts
+@@ -0,0 +1,24 @@
++// @ts-nocheck
++import { BaseSchema } from '@adonisjs/lucid/schema'
++
++export default class extends BaseSchema {
++  protected tableName = 'permissions'
++
++  async up() {
++    this.schema.createTable(this.tableName, (table) => {
++      table.increments('id')
++      table.string('name').notNullable()
++      table.text('description').nullable()
++      table.integer('tenant_id').unsigned().notNullable()
++      table.timestamps(true)
++
++      // Ensure permission names are unique within a tenant
++      table.unique(['name', 'tenant_id'])
++      table.index(['tenant_id'])
++    })
++  }
++
++  async down() {
++    this.schema.dropTable(this.tableName)
++  }
++}
+\ No newline at end of file
+diff --git a/repository_after/database/migrations/003_create_role_hierarchy_table.ts b/repository_after/database/migrations/003_create_role_hierarchy_table.ts
+new file mode 100644
+index 00000000..fda9ea05
+--- /dev/null
++++ b/repository_after/database/migrations/003_create_role_hierarchy_table.ts
+@@ -0,0 +1,30 @@
++// @ts-nocheck
++import { BaseSchema } from '@adonisjs/lucid/schema'
++
++export default class extends BaseSchema {
++  protected tableName = 'role_hierarchy'
++
++  async up() {
++    this.schema.createTable(this.tableName, (table) => {
++      table.increments('id')
++      table.integer('parent_role_id').unsigned().notNullable()
++      table.integer('child_role_id').unsigned().notNullable()
++      table.integer('tenant_id').unsigned().notNullable()
++      table.timestamps(true)
++
++      // Foreign key constraints
++      table.foreign('parent_role_id').references('id').inTable('roles').onDelete('CASCADE')
++      table.foreign('child_role_id').references('id').inTable('roles').onDelete('CASCADE')
++
++      // Prevent circular references and duplicate relationships
++      table.unique(['parent_role_id', 'child_role_id'])
++      table.index(['parent_role_id'])
++      table.index(['child_role_id'])
++      table.index(['tenant_id'])
++    })
++  }
++
++  async down() {
++    this.schema.dropTable(this.tableName)
++  }
++}
+\ No newline at end of file
+diff --git a/repository_after/database/migrations/004_create_role_permissions_table.ts b/repository_after/database/migrations/004_create_role_permissions_table.ts
+new file mode 100644
+index 00000000..ca93b79b
+--- /dev/null
++++ b/repository_after/database/migrations/004_create_role_permissions_table.ts
+@@ -0,0 +1,30 @@
++// @ts-nocheck
++import { BaseSchema } from '@adonisjs/lucid/schema'
++
++export default class extends BaseSchema {
++  protected tableName = 'role_permissions'
++
++  async up() {
++    this.schema.createTable(this.tableName, (table) => {
++      table.increments('id')
++      table.integer('role_id').unsigned().notNullable()
++      table.integer('permission_id').unsigned().notNullable()
++      table.integer('tenant_id').unsigned().notNullable()
++      table.timestamps(true)
++
++      // Foreign key constraints
++      table.foreign('role_id').references('id').inTable('roles').onDelete('CASCADE')
++      table.foreign('permission_id').references('id').inTable('permissions').onDelete('CASCADE')
++
++      // Prevent duplicate role-permission assignments
++      table.unique(['role_id', 'permission_id'])
++      table.index(['role_id'])
++      table.index(['permission_id'])
++      table.index(['tenant_id'])
++    })
++  }
++
++  async down() {
++    this.schema.dropTable(this.tableName)
++  }
++}
+\ No newline at end of file
+diff --git a/repository_after/database/migrations/005_create_users_table.ts b/repository_after/database/migrations/005_create_users_table.ts
+new file mode 100644
+index 00000000..eba1b9d2
+--- /dev/null
++++ b/repository_after/database/migrations/005_create_users_table.ts
+@@ -0,0 +1,24 @@
++// @ts-nocheck
++import { BaseSchema } from '@adonisjs/lucid/schema'
++
++export default class extends BaseSchema {
++  protected tableName = 'users'
++
++  async up() {
++    this.schema.createTable(this.tableName, (table) => {
++      table.increments('id')
++      table.string('email').notNullable().unique()
++      table.string('password').notNullable()
++      table.string('full_name').notNullable()
++      table.integer('tenant_id').unsigned().notNullable()
++      table.timestamps(true)
++
++      table.index(['tenant_id'])
++      table.index(['email'])
++    })
++  }
++
++  async down() {
++    this.schema.dropTable(this.tableName)
++  }
++}
+\ No newline at end of file
+diff --git a/repository_after/database/migrations/006_create_user_roles_table.ts b/repository_after/database/migrations/006_create_user_roles_table.ts
+new file mode 100644
+index 00000000..63274e9c
+--- /dev/null
++++ b/repository_after/database/migrations/006_create_user_roles_table.ts
+@@ -0,0 +1,34 @@
++// @ts-nocheck
++import { BaseSchema } from '@adonisjs/lucid/schema'
++
++export default class extends BaseSchema {
++  protected tableName = 'user_roles'
++
++  async up() {
++    this.schema.createTable(this.tableName, (table) => {
++      table.increments('id')
++      table.integer('user_id').unsigned().notNullable()
++      table.integer('role_id').unsigned().notNullable()
++      table.integer('tenant_id').unsigned().notNullable()
++      table.boolean('is_primary').defaultTo(false)
++      table.datetime('expires_at').nullable() // For temporal role escalation
++      table.timestamps(true)
++
++      // Foreign key constraints
++      table.foreign('user_id').references('id').inTable('users').onDelete('CASCADE')
++      table.foreign('role_id').references('id').inTable('roles').onDelete('CASCADE')
++
++      // Prevent duplicate user-role assignments
++      table.unique(['user_id', 'role_id'])
++      table.index(['user_id'])
++      table.index(['role_id'])
++      table.index(['tenant_id'])
++      table.index(['expires_at'])
++      table.index(['is_primary'])
++    })
++  }
++
++  async down() {
++    this.schema.dropTable(this.tableName)
++  }
++}
+\ No newline at end of file

@@ -1,0 +1,4233 @@
+diff --git a/repository_after/README.md b/repository_after/README.md
+new file mode 100644
+index 00000000..568af59a
+--- /dev/null
++++ b/repository_after/README.md
+@@ -0,0 +1,20 @@
++# Frontend-only Voting App (Vue 3)
++
++- Vue 3 + Composition API + `<script setup>`
++- Pinia state management with LocalStorage persistence
++- No backend, no external APIs
++
++## Dev
++
++```bash
++cd repository_after
++npm install
++npm run dev -- --host
++```
++
++## Build
++
++```bash
++npm run build
++npm run preview -- --host
++```
+diff --git a/repository_before/__init__.py b/repository_before/__init__.py
+deleted file mode 100644
+index e69de29b..00000000
+diff --git a/repository_after/index.html b/repository_after/index.html
+new file mode 100644
+index 00000000..1df1f71c
+--- /dev/null
++++ b/repository_after/index.html
+@@ -0,0 +1,12 @@
++<!DOCTYPE html>
++<html lang="en">
++  <head>
++    <meta charset="UTF-8" />
++    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
++    <title>Voting App</title>
++  </head>
++  <body>
++    <div id="app"></div>
++    <script type="module" src="/src/main.ts"></script>
++  </body>
++</html>
+diff --git a/repository_after/package-lock.json b/repository_after/package-lock.json
+new file mode 100644
+index 00000000..c5acc2d9
+--- /dev/null
++++ b/repository_after/package-lock.json
+@@ -0,0 +1,1463 @@
++{
++  "name": "frontend-only-voting-app",
++  "version": "0.1.0",
++  "lockfileVersion": 3,
++  "requires": true,
++  "packages": {
++    "": {
++      "name": "frontend-only-voting-app",
++      "version": "0.1.0",
++      "dependencies": {
++        "pinia": "2.1.7",
++        "vue": "3.4.15",
++        "vue-router": "4.3.0"
++      },
++      "devDependencies": {
++        "@vitejs/plugin-vue": "5.0.4",
++        "typescript": "5.3.3",
++        "vite": "5.0.12",
++        "vue-tsc": "1.8.27"
++      }
++    },
++    "node_modules/@babel/helper-string-parser": {
++      "version": "7.27.1",
++      "resolved": "https://registry.npmjs.org/@babel/helper-string-parser/-/helper-string-parser-7.27.1.tgz",
++      "integrity": "sha512-qMlSxKbpRlAridDExk92nSobyDdpPijUq2DW6oDnUqd0iOGxmQjyqhMIihI9+zv4LPyZdRje2cavWPbCbWm3eA==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=6.9.0"
++      }
++    },
++    "node_modules/@babel/helper-validator-identifier": {
++      "version": "7.28.5",
++      "resolved": "https://registry.npmjs.org/@babel/helper-validator-identifier/-/helper-validator-identifier-7.28.5.tgz",
++      "integrity": "sha512-qSs4ifwzKJSV39ucNjsvc6WVHs6b7S03sOh2OcHF9UHfVPqWWALUsNUVzhSBiItjRZoLHx7nIarVjqKVusUZ1Q==",
++      "license": "MIT",
++      "engines": {
++        "node": ">=6.9.0"
++      }
++    },
++    "node_modules/@babel/parser": {
++      "version": "7.28.6",
++      "resolved": "https://registry.npmjs.org/@babel/parser/-/parser-7.28.6.tgz",
++      "integrity": "sha512-TeR9zWR18BvbfPmGbLampPMW+uW1NZnJlRuuHso8i87QZNq2JRF9i6RgxRqtEq+wQGsS19NNTWr2duhnE49mfQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@babel/types": "^7.28.6"
++      },
++      "bin": {
++        "parser": "bin/babel-parser.js"
++      },
++      "engines": {
++        "node": ">=6.0.0"
++      }
++    },
++    "node_modules/@babel/types": {
++      "version": "7.28.6",
++      "resolved": "https://registry.npmjs.org/@babel/types/-/types-7.28.6.tgz",
++      "integrity": "sha512-0ZrskXVEHSWIqZM/sQZ4EV3jZJXRkio/WCxaqKZP1g//CEWEPSfeZFcms4XeKBCHU0ZKnIkdJeU/kF+eRp5lBg==",
++      "license": "MIT",
++      "dependencies": {
++        "@babel/helper-string-parser": "^7.27.1",
++        "@babel/helper-validator-identifier": "^7.28.5"
++      },
++      "engines": {
++        "node": ">=6.9.0"
++      }
++    },
++    "node_modules/@esbuild/aix-ppc64": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/aix-ppc64/-/aix-ppc64-0.19.12.tgz",
++      "integrity": "sha512-bmoCYyWdEL3wDQIVbcyzRyeKLgk2WtWLTWz1ZIAZF/EGbNOwSA6ew3PftJ1PqMiOOGu0OyFMzG53L0zqIpPeNA==",
++      "cpu": [
++        "ppc64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "aix"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/android-arm": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/android-arm/-/android-arm-0.19.12.tgz",
++      "integrity": "sha512-qg/Lj1mu3CdQlDEEiWrlC4eaPZ1KztwGJ9B6J+/6G+/4ewxJg7gqj8eVYWvao1bXrqGiW2rsBZFSX3q2lcW05w==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/android-arm64": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/android-arm64/-/android-arm64-0.19.12.tgz",
++      "integrity": "sha512-P0UVNGIienjZv3f5zq0DP3Nt2IE/3plFzuaS96vihvD0Hd6H/q4WXUGpCxD/E8YrSXfNyRPbpTq+T8ZQioSuPA==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/android-x64": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/android-x64/-/android-x64-0.19.12.tgz",
++      "integrity": "sha512-3k7ZoUW6Q6YqhdhIaq/WZ7HwBpnFBlW905Fa4s4qWJyiNOgT1dOqDiVAQFwBH7gBRZr17gLrlFCRzF6jFh7Kew==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/darwin-arm64": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/darwin-arm64/-/darwin-arm64-0.19.12.tgz",
++      "integrity": "sha512-B6IeSgZgtEzGC42jsI+YYu9Z3HKRxp8ZT3cqhvliEHovq8HSX2YX8lNocDn79gCKJXOSaEot9MVYky7AKjCs8g==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/darwin-x64": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/darwin-x64/-/darwin-x64-0.19.12.tgz",
++      "integrity": "sha512-hKoVkKzFiToTgn+41qGhsUJXFlIjxI/jSYeZf3ugemDYZldIXIxhvwN6erJGlX4t5h417iFuheZ7l+YVn05N3A==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/freebsd-arm64": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/freebsd-arm64/-/freebsd-arm64-0.19.12.tgz",
++      "integrity": "sha512-4aRvFIXmwAcDBw9AueDQ2YnGmz5L6obe5kmPT8Vd+/+x/JMVKCgdcRwH6APrbpNXsPz+K653Qg8HB/oXvXVukA==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "freebsd"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/freebsd-x64": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/freebsd-x64/-/freebsd-x64-0.19.12.tgz",
++      "integrity": "sha512-EYoXZ4d8xtBoVN7CEwWY2IN4ho76xjYXqSXMNccFSx2lgqOG/1TBPW0yPx1bJZk94qu3tX0fycJeeQsKovA8gg==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "freebsd"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/linux-arm": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-arm/-/linux-arm-0.19.12.tgz",
++      "integrity": "sha512-J5jPms//KhSNv+LO1S1TX1UWp1ucM6N6XuL6ITdKWElCu8wXP72l9MM0zDTzzeikVyqFE6U8YAV9/tFyj0ti+w==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/linux-arm64": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-arm64/-/linux-arm64-0.19.12.tgz",
++      "integrity": "sha512-EoTjyYyLuVPfdPLsGVVVC8a0p1BFFvtpQDB/YLEhaXyf/5bczaGeN15QkR+O4S5LeJ92Tqotve7i1jn35qwvdA==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/linux-ia32": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-ia32/-/linux-ia32-0.19.12.tgz",
++      "integrity": "sha512-Thsa42rrP1+UIGaWz47uydHSBOgTUnwBwNq59khgIwktK6x60Hivfbux9iNR0eHCHzOLjLMLfUMLCypBkZXMHA==",
++      "cpu": [
++        "ia32"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/linux-loong64": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-loong64/-/linux-loong64-0.19.12.tgz",
++      "integrity": "sha512-LiXdXA0s3IqRRjm6rV6XaWATScKAXjI4R4LoDlvO7+yQqFdlr1Bax62sRwkVvRIrwXxvtYEHHI4dm50jAXkuAA==",
++      "cpu": [
++        "loong64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/linux-mips64el": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-mips64el/-/linux-mips64el-0.19.12.tgz",
++      "integrity": "sha512-fEnAuj5VGTanfJ07ff0gOA6IPsvrVHLVb6Lyd1g2/ed67oU1eFzL0r9WL7ZzscD+/N6i3dWumGE1Un4f7Amf+w==",
++      "cpu": [
++        "mips64el"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/linux-ppc64": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-ppc64/-/linux-ppc64-0.19.12.tgz",
++      "integrity": "sha512-nYJA2/QPimDQOh1rKWedNOe3Gfc8PabU7HT3iXWtNUbRzXS9+vgB0Fjaqr//XNbd82mCxHzik2qotuI89cfixg==",
++      "cpu": [
++        "ppc64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/linux-riscv64": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-riscv64/-/linux-riscv64-0.19.12.tgz",
++      "integrity": "sha512-2MueBrlPQCw5dVJJpQdUYgeqIzDQgw3QtiAHUC4RBz9FXPrskyyU3VI1hw7C0BSKB9OduwSJ79FTCqtGMWqJHg==",
++      "cpu": [
++        "riscv64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/linux-s390x": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-s390x/-/linux-s390x-0.19.12.tgz",
++      "integrity": "sha512-+Pil1Nv3Umes4m3AZKqA2anfhJiVmNCYkPchwFJNEJN5QxmTs1uzyy4TvmDrCRNT2ApwSari7ZIgrPeUx4UZDg==",
++      "cpu": [
++        "s390x"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/linux-x64": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/linux-x64/-/linux-x64-0.19.12.tgz",
++      "integrity": "sha512-B71g1QpxfwBvNrfyJdVDexenDIt1CiDN1TIXLbhOw0KhJzE78KIFGX6OJ9MrtC0oOqMWf+0xop4qEU8JrJTwCg==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/netbsd-x64": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/netbsd-x64/-/netbsd-x64-0.19.12.tgz",
++      "integrity": "sha512-3ltjQ7n1owJgFbuC61Oj++XhtzmymoCihNFgT84UAmJnxJfm4sYCiSLTXZtE00VWYpPMYc+ZQmB6xbSdVh0JWA==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "netbsd"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/openbsd-x64": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/openbsd-x64/-/openbsd-x64-0.19.12.tgz",
++      "integrity": "sha512-RbrfTB9SWsr0kWmb9srfF+L933uMDdu9BIzdA7os2t0TXhCRjrQyCeOt6wVxr79CKD4c+p+YhCj31HBkYcXebw==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "openbsd"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/sunos-x64": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/sunos-x64/-/sunos-x64-0.19.12.tgz",
++      "integrity": "sha512-HKjJwRrW8uWtCQnQOz9qcU3mUZhTUQvi56Q8DPTLLB+DawoiQdjsYq+j+D3s9I8VFtDr+F9CjgXKKC4ss89IeA==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "sunos"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/win32-arm64": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/win32-arm64/-/win32-arm64-0.19.12.tgz",
++      "integrity": "sha512-URgtR1dJnmGvX864pn1B2YUYNzjmXkuJOIqG2HdU62MVS4EHpU2946OZoTMnRUHklGtJdJZ33QfzdjGACXhn1A==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/win32-ia32": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/win32-ia32/-/win32-ia32-0.19.12.tgz",
++      "integrity": "sha512-+ZOE6pUkMOJfmxmBZElNOx72NKpIa/HFOMGzu8fqzQJ5kgf6aTGrcJaFsNiVMH4JKpMipyK+7k0n2UXN7a8YKQ==",
++      "cpu": [
++        "ia32"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@esbuild/win32-x64": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/@esbuild/win32-x64/-/win32-x64-0.19.12.tgz",
++      "integrity": "sha512-T1QyPSDCyMXaO3pzBkF96E8xMkiRYbUEZADd29SyPGabqxMViNoii+NcK7eWJAEoU6RZyEm5lVSIjTmcdoB9HA==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ],
++      "engines": {
++        "node": ">=12"
++      }
++    },
++    "node_modules/@jridgewell/sourcemap-codec": {
++      "version": "1.5.5",
++      "resolved": "https://registry.npmjs.org/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.5.5.tgz",
++      "integrity": "sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==",
++      "license": "MIT"
++    },
++    "node_modules/@rollup/rollup-android-arm-eabi": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-android-arm-eabi/-/rollup-android-arm-eabi-4.57.0.tgz",
++      "integrity": "sha512-tPgXB6cDTndIe1ah7u6amCI1T0SsnlOuKgg10Xh3uizJk4e5M1JGaUMk7J4ciuAUcFpbOiNhm2XIjP9ON0dUqA==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ]
++    },
++    "node_modules/@rollup/rollup-android-arm64": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-android-arm64/-/rollup-android-arm64-4.57.0.tgz",
++      "integrity": "sha512-sa4LyseLLXr1onr97StkU1Nb7fWcg6niokTwEVNOO7awaKaoRObQ54+V/hrF/BP1noMEaaAW6Fg2d/CfLiq3Mg==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "android"
++      ]
++    },
++    "node_modules/@rollup/rollup-darwin-arm64": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-darwin-arm64/-/rollup-darwin-arm64-4.57.0.tgz",
++      "integrity": "sha512-/NNIj9A7yLjKdmkx5dC2XQ9DmjIECpGpwHoGmA5E1AhU0fuICSqSWScPhN1yLCkEdkCwJIDu2xIeLPs60MNIVg==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ]
++    },
++    "node_modules/@rollup/rollup-darwin-x64": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-darwin-x64/-/rollup-darwin-x64-4.57.0.tgz",
++      "integrity": "sha512-xoh8abqgPrPYPr7pTYipqnUi1V3em56JzE/HgDgitTqZBZ3yKCWI+7KUkceM6tNweyUKYru1UMi7FC060RyKwA==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ]
++    },
++    "node_modules/@rollup/rollup-freebsd-arm64": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-freebsd-arm64/-/rollup-freebsd-arm64-4.57.0.tgz",
++      "integrity": "sha512-PCkMh7fNahWSbA0OTUQ2OpYHpjZZr0hPr8lId8twD7a7SeWrvT3xJVyza+dQwXSSq4yEQTMoXgNOfMCsn8584g==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "freebsd"
++      ]
++    },
++    "node_modules/@rollup/rollup-freebsd-x64": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-freebsd-x64/-/rollup-freebsd-x64-4.57.0.tgz",
++      "integrity": "sha512-1j3stGx+qbhXql4OCDZhnK7b01s6rBKNybfsX+TNrEe9JNq4DLi1yGiR1xW+nL+FNVvI4D02PUnl6gJ/2y6WJA==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "freebsd"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-arm-gnueabihf": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-arm-gnueabihf/-/rollup-linux-arm-gnueabihf-4.57.0.tgz",
++      "integrity": "sha512-eyrr5W08Ms9uM0mLcKfM/Uzx7hjhz2bcjv8P2uynfj0yU8GGPdz8iYrBPhiLOZqahoAMB8ZiolRZPbbU2MAi6Q==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-arm-musleabihf": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-arm-musleabihf/-/rollup-linux-arm-musleabihf-4.57.0.tgz",
++      "integrity": "sha512-Xds90ITXJCNyX9pDhqf85MKWUI4lqjiPAipJ8OLp8xqI2Ehk+TCVhF9rvOoN8xTbcafow3QOThkNnrM33uCFQA==",
++      "cpu": [
++        "arm"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-arm64-gnu": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-arm64-gnu/-/rollup-linux-arm64-gnu-4.57.0.tgz",
++      "integrity": "sha512-Xws2KA4CLvZmXjy46SQaXSejuKPhwVdaNinldoYfqruZBaJHqVo6hnRa8SDo9z7PBW5x84SH64+izmldCgbezw==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-arm64-musl": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-arm64-musl/-/rollup-linux-arm64-musl-4.57.0.tgz",
++      "integrity": "sha512-hrKXKbX5FdaRJj7lTMusmvKbhMJSGWJ+w++4KmjiDhpTgNlhYobMvKfDoIWecy4O60K6yA4SnztGuNTQF+Lplw==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-loong64-gnu": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-loong64-gnu/-/rollup-linux-loong64-gnu-4.57.0.tgz",
++      "integrity": "sha512-6A+nccfSDGKsPm00d3xKcrsBcbqzCTAukjwWK6rbuAnB2bHaL3r9720HBVZ/no7+FhZLz/U3GwwZZEh6tOSI8Q==",
++      "cpu": [
++        "loong64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-loong64-musl": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-loong64-musl/-/rollup-linux-loong64-musl-4.57.0.tgz",
++      "integrity": "sha512-4P1VyYUe6XAJtQH1Hh99THxr0GKMMwIXsRNOceLrJnaHTDgk1FTcTimDgneRJPvB3LqDQxUmroBclQ1S0cIJwQ==",
++      "cpu": [
++        "loong64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-ppc64-gnu": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-ppc64-gnu/-/rollup-linux-ppc64-gnu-4.57.0.tgz",
++      "integrity": "sha512-8Vv6pLuIZCMcgXre6c3nOPhE0gjz1+nZP6T+hwWjr7sVH8k0jRkH+XnfjjOTglyMBdSKBPPz54/y1gToSKwrSQ==",
++      "cpu": [
++        "ppc64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-ppc64-musl": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-ppc64-musl/-/rollup-linux-ppc64-musl-4.57.0.tgz",
++      "integrity": "sha512-r1te1M0Sm2TBVD/RxBPC6RZVwNqUTwJTA7w+C/IW5v9Ssu6xmxWEi+iJQlpBhtUiT1raJ5b48pI8tBvEjEFnFA==",
++      "cpu": [
++        "ppc64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-riscv64-gnu": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-riscv64-gnu/-/rollup-linux-riscv64-gnu-4.57.0.tgz",
++      "integrity": "sha512-say0uMU/RaPm3CDQLxUUTF2oNWL8ysvHkAjcCzV2znxBr23kFfaxocS9qJm+NdkRhF8wtdEEAJuYcLPhSPbjuQ==",
++      "cpu": [
++        "riscv64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-riscv64-musl": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-riscv64-musl/-/rollup-linux-riscv64-musl-4.57.0.tgz",
++      "integrity": "sha512-/MU7/HizQGsnBREtRpcSbSV1zfkoxSTR7wLsRmBPQ8FwUj5sykrP1MyJTvsxP5KBq9SyE6kH8UQQQwa0ASeoQQ==",
++      "cpu": [
++        "riscv64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-s390x-gnu": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-s390x-gnu/-/rollup-linux-s390x-gnu-4.57.0.tgz",
++      "integrity": "sha512-Q9eh+gUGILIHEaJf66aF6a414jQbDnn29zeu0eX3dHMuysnhTvsUvZTCAyZ6tJhUjnvzBKE4FtuaYxutxRZpOg==",
++      "cpu": [
++        "s390x"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-x64-gnu": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-x64-gnu/-/rollup-linux-x64-gnu-4.57.0.tgz",
++      "integrity": "sha512-OR5p5yG5OKSxHReWmwvM0P+VTPMwoBS45PXTMYaskKQqybkS3Kmugq1W+YbNWArF8/s7jQScgzXUhArzEQ7x0A==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-linux-x64-musl": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-linux-x64-musl/-/rollup-linux-x64-musl-4.57.0.tgz",
++      "integrity": "sha512-XeatKzo4lHDsVEbm1XDHZlhYZZSQYym6dg2X/Ko0kSFgio+KXLsxwJQprnR48GvdIKDOpqWqssC3iBCjoMcMpw==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "linux"
++      ]
++    },
++    "node_modules/@rollup/rollup-openbsd-x64": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-openbsd-x64/-/rollup-openbsd-x64-4.57.0.tgz",
++      "integrity": "sha512-Lu71y78F5qOfYmubYLHPcJm74GZLU6UJ4THkf/a1K7Tz2ycwC2VUbsqbJAXaR6Bx70SRdlVrt2+n5l7F0agTUw==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "openbsd"
++      ]
++    },
++    "node_modules/@rollup/rollup-openharmony-arm64": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-openharmony-arm64/-/rollup-openharmony-arm64-4.57.0.tgz",
++      "integrity": "sha512-v5xwKDWcu7qhAEcsUubiav7r+48Uk/ENWdr82MBZZRIm7zThSxCIVDfb3ZeRRq9yqk+oIzMdDo6fCcA5DHfMyA==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "openharmony"
++      ]
++    },
++    "node_modules/@rollup/rollup-win32-arm64-msvc": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-win32-arm64-msvc/-/rollup-win32-arm64-msvc-4.57.0.tgz",
++      "integrity": "sha512-XnaaaSMGSI6Wk8F4KK3QP7GfuuhjGchElsVerCplUuxRIzdvZ7hRBpLR0omCmw+kI2RFJB80nenhOoGXlJ5TfQ==",
++      "cpu": [
++        "arm64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ]
++    },
++    "node_modules/@rollup/rollup-win32-ia32-msvc": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-win32-ia32-msvc/-/rollup-win32-ia32-msvc-4.57.0.tgz",
++      "integrity": "sha512-3K1lP+3BXY4t4VihLw5MEg6IZD3ojSYzqzBG571W3kNQe4G4CcFpSUQVgurYgib5d+YaCjeFow8QivWp8vuSvA==",
++      "cpu": [
++        "ia32"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ]
++    },
++    "node_modules/@rollup/rollup-win32-x64-gnu": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-win32-x64-gnu/-/rollup-win32-x64-gnu-4.57.0.tgz",
++      "integrity": "sha512-MDk610P/vJGc5L5ImE4k5s+GZT3en0KoK1MKPXCRgzmksAMk79j4h3k1IerxTNqwDLxsGxStEZVBqG0gIqZqoA==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ]
++    },
++    "node_modules/@rollup/rollup-win32-x64-msvc": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/@rollup/rollup-win32-x64-msvc/-/rollup-win32-x64-msvc-4.57.0.tgz",
++      "integrity": "sha512-Zv7v6q6aV+VslnpwzqKAmrk5JdVkLUzok2208ZXGipjb+msxBr/fJPZyeEXiFgH7k62Ak0SLIfxQRZQvTuf7rQ==",
++      "cpu": [
++        "x64"
++      ],
++      "dev": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "win32"
++      ]
++    },
++    "node_modules/@types/estree": {
++      "version": "1.0.8",
++      "resolved": "https://registry.npmjs.org/@types/estree/-/estree-1.0.8.tgz",
++      "integrity": "sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==",
++      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/@vitejs/plugin-vue": {
++      "version": "5.0.4",
++      "resolved": "https://registry.npmjs.org/@vitejs/plugin-vue/-/plugin-vue-5.0.4.tgz",
++      "integrity": "sha512-WS3hevEszI6CEVEx28F8RjTX97k3KsrcY6kvTg7+Whm5y3oYvcqzVeGCU3hxSAn4uY2CLCkeokkGKpoctccilQ==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": "^18.0.0 || >=20.0.0"
++      },
++      "peerDependencies": {
++        "vite": "^5.0.0",
++        "vue": "^3.2.25"
++      }
++    },
++    "node_modules/@volar/language-core": {
++      "version": "1.11.1",
++      "resolved": "https://registry.npmjs.org/@volar/language-core/-/language-core-1.11.1.tgz",
++      "integrity": "sha512-dOcNn3i9GgZAcJt43wuaEykSluAuOkQgzni1cuxLxTV0nJKanQztp7FxyswdRILaKH+P2XZMPRp2S4MV/pElCw==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@volar/source-map": "1.11.1"
++      }
++    },
++    "node_modules/@volar/source-map": {
++      "version": "1.11.1",
++      "resolved": "https://registry.npmjs.org/@volar/source-map/-/source-map-1.11.1.tgz",
++      "integrity": "sha512-hJnOnwZ4+WT5iupLRnuzbULZ42L7BWWPMmruzwtLhJfpDVoZLjNBxHDi2sY2bgZXCKlpU5XcsMFoYrsQmPhfZg==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "muggle-string": "^0.3.1"
++      }
++    },
++    "node_modules/@volar/typescript": {
++      "version": "1.11.1",
++      "resolved": "https://registry.npmjs.org/@volar/typescript/-/typescript-1.11.1.tgz",
++      "integrity": "sha512-iU+t2mas/4lYierSnoFOeRFQUhAEMgsFuQxoxvwn5EdQopw43j+J27a4lt9LMInx1gLJBC6qL14WYGlgymaSMQ==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@volar/language-core": "1.11.1",
++        "path-browserify": "^1.0.1"
++      }
++    },
++    "node_modules/@vue/compiler-core": {
++      "version": "3.4.15",
++      "resolved": "https://registry.npmjs.org/@vue/compiler-core/-/compiler-core-3.4.15.tgz",
++      "integrity": "sha512-XcJQVOaxTKCnth1vCxEChteGuwG6wqnUHxAm1DO3gCz0+uXKaJNx8/digSz4dLALCy8n2lKq24jSUs8segoqIw==",
++      "license": "MIT",
++      "dependencies": {
++        "@babel/parser": "^7.23.6",
++        "@vue/shared": "3.4.15",
++        "entities": "^4.5.0",
++        "estree-walker": "^2.0.2",
++        "source-map-js": "^1.0.2"
++      }
++    },
++    "node_modules/@vue/compiler-dom": {
++      "version": "3.4.15",
++      "resolved": "https://registry.npmjs.org/@vue/compiler-dom/-/compiler-dom-3.4.15.tgz",
++      "integrity": "sha512-wox0aasVV74zoXyblarOM3AZQz/Z+OunYcIHe1OsGclCHt8RsRm04DObjefaI82u6XDzv+qGWZ24tIsRAIi5MQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@vue/compiler-core": "3.4.15",
++        "@vue/shared": "3.4.15"
++      }
++    },
++    "node_modules/@vue/compiler-sfc": {
++      "version": "3.4.15",
++      "resolved": "https://registry.npmjs.org/@vue/compiler-sfc/-/compiler-sfc-3.4.15.tgz",
++      "integrity": "sha512-LCn5M6QpkpFsh3GQvs2mJUOAlBQcCco8D60Bcqmf3O3w5a+KWS5GvYbrrJBkgvL1BDnTp+e8q0lXCLgHhKguBA==",
++      "license": "MIT",
++      "dependencies": {
++        "@babel/parser": "^7.23.6",
++        "@vue/compiler-core": "3.4.15",
++        "@vue/compiler-dom": "3.4.15",
++        "@vue/compiler-ssr": "3.4.15",
++        "@vue/shared": "3.4.15",
++        "estree-walker": "^2.0.2",
++        "magic-string": "^0.30.5",
++        "postcss": "^8.4.33",
++        "source-map-js": "^1.0.2"
++      }
++    },
++    "node_modules/@vue/compiler-ssr": {
++      "version": "3.4.15",
++      "resolved": "https://registry.npmjs.org/@vue/compiler-ssr/-/compiler-ssr-3.4.15.tgz",
++      "integrity": "sha512-1jdeQyiGznr8gjFDadVmOJqZiLNSsMa5ZgqavkPZ8O2wjHv0tVuAEsw5hTdUoUW4232vpBbL/wJhzVW/JwY1Uw==",
++      "license": "MIT",
++      "dependencies": {
++        "@vue/compiler-dom": "3.4.15",
++        "@vue/shared": "3.4.15"
++      }
++    },
++    "node_modules/@vue/devtools-api": {
++      "version": "6.6.4",
++      "resolved": "https://registry.npmjs.org/@vue/devtools-api/-/devtools-api-6.6.4.tgz",
++      "integrity": "sha512-sGhTPMuXqZ1rVOk32RylztWkfXTRhuS7vgAKv0zjqk8gbsHkJ7xfFf+jbySxt7tWObEJwyKaHMikV/WGDiQm8g==",
++      "license": "MIT"
++    },
++    "node_modules/@vue/language-core": {
++      "version": "1.8.27",
++      "resolved": "https://registry.npmjs.org/@vue/language-core/-/language-core-1.8.27.tgz",
++      "integrity": "sha512-L8Kc27VdQserNaCUNiSFdDl9LWT24ly8Hpwf1ECy3aFb9m6bDhBGQYOujDm21N7EW3moKIOKEanQwe1q5BK+mA==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@volar/language-core": "~1.11.1",
++        "@volar/source-map": "~1.11.1",
++        "@vue/compiler-dom": "^3.3.0",
++        "@vue/shared": "^3.3.0",
++        "computeds": "^0.0.1",
++        "minimatch": "^9.0.3",
++        "muggle-string": "^0.3.1",
++        "path-browserify": "^1.0.1",
++        "vue-template-compiler": "^2.7.14"
++      },
++      "peerDependencies": {
++        "typescript": "*"
++      },
++      "peerDependenciesMeta": {
++        "typescript": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/@vue/reactivity": {
++      "version": "3.4.15",
++      "resolved": "https://registry.npmjs.org/@vue/reactivity/-/reactivity-3.4.15.tgz",
++      "integrity": "sha512-55yJh2bsff20K5O84MxSvXKPHHt17I2EomHznvFiJCAZpJTNW8IuLj1xZWMLELRhBK3kkFV/1ErZGHJfah7i7w==",
++      "license": "MIT",
++      "dependencies": {
++        "@vue/shared": "3.4.15"
++      }
++    },
++    "node_modules/@vue/runtime-core": {
++      "version": "3.4.15",
++      "resolved": "https://registry.npmjs.org/@vue/runtime-core/-/runtime-core-3.4.15.tgz",
++      "integrity": "sha512-6E3by5m6v1AkW0McCeAyhHTw+3y17YCOKG0U0HDKDscV4Hs0kgNT5G+GCHak16jKgcCDHpI9xe5NKb8sdLCLdw==",
++      "license": "MIT",
++      "dependencies": {
++        "@vue/reactivity": "3.4.15",
++        "@vue/shared": "3.4.15"
++      }
++    },
++    "node_modules/@vue/runtime-dom": {
++      "version": "3.4.15",
++      "resolved": "https://registry.npmjs.org/@vue/runtime-dom/-/runtime-dom-3.4.15.tgz",
++      "integrity": "sha512-EVW8D6vfFVq3V/yDKNPBFkZKGMFSvZrUQmx196o/v2tHKdwWdiZjYUBS+0Ez3+ohRyF8Njwy/6FH5gYJ75liUw==",
++      "license": "MIT",
++      "dependencies": {
++        "@vue/runtime-core": "3.4.15",
++        "@vue/shared": "3.4.15",
++        "csstype": "^3.1.3"
++      }
++    },
++    "node_modules/@vue/server-renderer": {
++      "version": "3.4.15",
++      "resolved": "https://registry.npmjs.org/@vue/server-renderer/-/server-renderer-3.4.15.tgz",
++      "integrity": "sha512-3HYzaidu9cHjrT+qGUuDhFYvF/j643bHC6uUN9BgM11DVy+pM6ATsG6uPBLnkwOgs7BpJABReLmpL3ZPAsUaqw==",
++      "license": "MIT",
++      "dependencies": {
++        "@vue/compiler-ssr": "3.4.15",
++        "@vue/shared": "3.4.15"
++      },
++      "peerDependencies": {
++        "vue": "3.4.15"
++      }
++    },
++    "node_modules/@vue/shared": {
++      "version": "3.4.15",
++      "resolved": "https://registry.npmjs.org/@vue/shared/-/shared-3.4.15.tgz",
++      "integrity": "sha512-KzfPTxVaWfB+eGcGdbSf4CWdaXcGDqckoeXUh7SB3fZdEtzPCK2Vq9B/lRRL3yutax/LWITz+SwvgyOxz5V75g==",
++      "license": "MIT"
++    },
++    "node_modules/balanced-match": {
++      "version": "1.0.2",
++      "resolved": "https://registry.npmjs.org/balanced-match/-/balanced-match-1.0.2.tgz",
++      "integrity": "sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==",
++      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/brace-expansion": {
++      "version": "2.0.2",
++      "resolved": "https://registry.npmjs.org/brace-expansion/-/brace-expansion-2.0.2.tgz",
++      "integrity": "sha512-Jt0vHyM+jmUBqojB7E1NIYadt0vI0Qxjxd2TErW94wDz+E2LAm5vKMXXwg6ZZBTHPuUlDgQHKXvjGBdfcF1ZDQ==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "balanced-match": "^1.0.0"
++      }
++    },
++    "node_modules/computeds": {
++      "version": "0.0.1",
++      "resolved": "https://registry.npmjs.org/computeds/-/computeds-0.0.1.tgz",
++      "integrity": "sha512-7CEBgcMjVmitjYo5q8JTJVra6X5mQ20uTThdK+0kR7UEaDrAWEQcRiBtWJzga4eRpP6afNwwLsX2SET2JhVB1Q==",
++      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/csstype": {
++      "version": "3.2.3",
++      "resolved": "https://registry.npmjs.org/csstype/-/csstype-3.2.3.tgz",
++      "integrity": "sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==",
++      "license": "MIT"
++    },
++    "node_modules/de-indent": {
++      "version": "1.0.2",
++      "resolved": "https://registry.npmjs.org/de-indent/-/de-indent-1.0.2.tgz",
++      "integrity": "sha512-e/1zu3xH5MQryN2zdVaF0OrdNLUbvWxzMbi+iNA6Bky7l1RoP8a2fIbRocyHclXt/arDrrR6lL3TqFD9pMQTsg==",
++      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/entities": {
++      "version": "4.5.0",
++      "resolved": "https://registry.npmjs.org/entities/-/entities-4.5.0.tgz",
++      "integrity": "sha512-V0hjH4dGPh9Ao5p0MoRY6BVqtwCjhz6vI5LT8AJ55H+4g9/4vbHx1I54fS0XuclLhDHArPQCiMjDxjaL8fPxhw==",
++      "license": "BSD-2-Clause",
++      "engines": {
++        "node": ">=0.12"
++      },
++      "funding": {
++        "url": "https://github.com/fb55/entities?sponsor=1"
++      }
++    },
++    "node_modules/esbuild": {
++      "version": "0.19.12",
++      "resolved": "https://registry.npmjs.org/esbuild/-/esbuild-0.19.12.tgz",
++      "integrity": "sha512-aARqgq8roFBj054KvQr5f1sFu0D65G+miZRCuJyJ0G13Zwx7vRar5Zhn2tkQNzIXcBrNVsv/8stehpj+GAjgbg==",
++      "dev": true,
++      "hasInstallScript": true,
++      "license": "MIT",
++      "bin": {
++        "esbuild": "bin/esbuild"
++      },
++      "engines": {
++        "node": ">=12"
++      },
++      "optionalDependencies": {
++        "@esbuild/aix-ppc64": "0.19.12",
++        "@esbuild/android-arm": "0.19.12",
++        "@esbuild/android-arm64": "0.19.12",
++        "@esbuild/android-x64": "0.19.12",
++        "@esbuild/darwin-arm64": "0.19.12",
++        "@esbuild/darwin-x64": "0.19.12",
++        "@esbuild/freebsd-arm64": "0.19.12",
++        "@esbuild/freebsd-x64": "0.19.12",
++        "@esbuild/linux-arm": "0.19.12",
++        "@esbuild/linux-arm64": "0.19.12",
++        "@esbuild/linux-ia32": "0.19.12",
++        "@esbuild/linux-loong64": "0.19.12",
++        "@esbuild/linux-mips64el": "0.19.12",
++        "@esbuild/linux-ppc64": "0.19.12",
++        "@esbuild/linux-riscv64": "0.19.12",
++        "@esbuild/linux-s390x": "0.19.12",
++        "@esbuild/linux-x64": "0.19.12",
++        "@esbuild/netbsd-x64": "0.19.12",
++        "@esbuild/openbsd-x64": "0.19.12",
++        "@esbuild/sunos-x64": "0.19.12",
++        "@esbuild/win32-arm64": "0.19.12",
++        "@esbuild/win32-ia32": "0.19.12",
++        "@esbuild/win32-x64": "0.19.12"
++      }
++    },
++    "node_modules/estree-walker": {
++      "version": "2.0.2",
++      "resolved": "https://registry.npmjs.org/estree-walker/-/estree-walker-2.0.2.tgz",
++      "integrity": "sha512-Rfkk/Mp/DL7JVje3u18FxFujQlTNR2q6QfMSMB7AvCBx91NGj/ba3kCfza0f6dVDbw7YlRf/nDrn7pQrCCyQ/w==",
++      "license": "MIT"
++    },
++    "node_modules/fsevents": {
++      "version": "2.3.3",
++      "resolved": "https://registry.npmjs.org/fsevents/-/fsevents-2.3.3.tgz",
++      "integrity": "sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==",
++      "dev": true,
++      "hasInstallScript": true,
++      "license": "MIT",
++      "optional": true,
++      "os": [
++        "darwin"
++      ],
++      "engines": {
++        "node": "^8.16.0 || ^10.6.0 || >=11.0.0"
++      }
++    },
++    "node_modules/he": {
++      "version": "1.2.0",
++      "resolved": "https://registry.npmjs.org/he/-/he-1.2.0.tgz",
++      "integrity": "sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==",
++      "dev": true,
++      "license": "MIT",
++      "bin": {
++        "he": "bin/he"
++      }
++    },
++    "node_modules/magic-string": {
++      "version": "0.30.21",
++      "resolved": "https://registry.npmjs.org/magic-string/-/magic-string-0.30.21.tgz",
++      "integrity": "sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@jridgewell/sourcemap-codec": "^1.5.5"
++      }
++    },
++    "node_modules/minimatch": {
++      "version": "9.0.5",
++      "resolved": "https://registry.npmjs.org/minimatch/-/minimatch-9.0.5.tgz",
++      "integrity": "sha512-G6T0ZX48xgozx7587koeX9Ys2NYy6Gmv//P89sEte9V9whIapMNF4idKxnW2QtCcLiTWlb/wfCabAtAFWhhBow==",
++      "dev": true,
++      "license": "ISC",
++      "dependencies": {
++        "brace-expansion": "^2.0.1"
++      },
++      "engines": {
++        "node": ">=16 || 14 >=14.17"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/isaacs"
++      }
++    },
++    "node_modules/muggle-string": {
++      "version": "0.3.1",
++      "resolved": "https://registry.npmjs.org/muggle-string/-/muggle-string-0.3.1.tgz",
++      "integrity": "sha512-ckmWDJjphvd/FvZawgygcUeQCxzvohjFO5RxTjj4eq8kw359gFF3E1brjfI+viLMxss5JrHTDRHZvu2/tuy0Qg==",
++      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/nanoid": {
++      "version": "3.3.11",
++      "resolved": "https://registry.npmjs.org/nanoid/-/nanoid-3.3.11.tgz",
++      "integrity": "sha512-N8SpfPUnUp1bK+PMYW8qSWdl9U+wwNWI4QKxOYDy9JAro3WMX7p2OeVRF9v+347pnakNevPmiHhNmZ2HbFA76w==",
++      "funding": [
++        {
++          "type": "github",
++          "url": "https://github.com/sponsors/ai"
++        }
++      ],
++      "license": "MIT",
++      "bin": {
++        "nanoid": "bin/nanoid.cjs"
++      },
++      "engines": {
++        "node": "^10 || ^12 || ^13.7 || ^14 || >=15.0.1"
++      }
++    },
++    "node_modules/path-browserify": {
++      "version": "1.0.1",
++      "resolved": "https://registry.npmjs.org/path-browserify/-/path-browserify-1.0.1.tgz",
++      "integrity": "sha512-b7uo2UCUOYZcnF/3ID0lulOJi/bafxa1xPe7ZPsammBSpjSWQkjNxlt635YGS2MiR9GjvuXCtz2emr3jbsz98g==",
++      "dev": true,
++      "license": "MIT"
++    },
++    "node_modules/picocolors": {
++      "version": "1.1.1",
++      "resolved": "https://registry.npmjs.org/picocolors/-/picocolors-1.1.1.tgz",
++      "integrity": "sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==",
++      "license": "ISC"
++    },
++    "node_modules/pinia": {
++      "version": "2.1.7",
++      "resolved": "https://registry.npmjs.org/pinia/-/pinia-2.1.7.tgz",
++      "integrity": "sha512-+C2AHFtcFqjPih0zpYuvof37SFxMQ7OEG2zV9jRI12i9BOy3YQVAHwdKtyyc8pDcDyIc33WCIsZaCFWU7WWxGQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@vue/devtools-api": "^6.5.0",
++        "vue-demi": ">=0.14.5"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/posva"
++      },
++      "peerDependencies": {
++        "@vue/composition-api": "^1.4.0",
++        "typescript": ">=4.4.4",
++        "vue": "^2.6.14 || ^3.3.0"
++      },
++      "peerDependenciesMeta": {
++        "@vue/composition-api": {
++          "optional": true
++        },
++        "typescript": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/pinia/node_modules/vue-demi": {
++      "version": "0.14.10",
++      "resolved": "https://registry.npmjs.org/vue-demi/-/vue-demi-0.14.10.tgz",
++      "integrity": "sha512-nMZBOwuzabUO0nLgIcc6rycZEebF6eeUfaiQx9+WSk8e29IbLvPU9feI6tqW4kTo3hvoYAJkMh8n8D0fuISphg==",
++      "hasInstallScript": true,
++      "license": "MIT",
++      "bin": {
++        "vue-demi-fix": "bin/vue-demi-fix.js",
++        "vue-demi-switch": "bin/vue-demi-switch.js"
++      },
++      "engines": {
++        "node": ">=12"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/antfu"
++      },
++      "peerDependencies": {
++        "@vue/composition-api": "^1.0.0-rc.1",
++        "vue": "^3.0.0-0 || ^2.6.0"
++      },
++      "peerDependenciesMeta": {
++        "@vue/composition-api": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/postcss": {
++      "version": "8.5.6",
++      "resolved": "https://registry.npmjs.org/postcss/-/postcss-8.5.6.tgz",
++      "integrity": "sha512-3Ybi1tAuwAP9s0r1UQ2J4n5Y0G05bJkpUIO0/bI9MhwmD70S5aTWbXGBwxHrelT+XM1k6dM0pk+SwNkpTRN7Pg==",
++      "funding": [
++        {
++          "type": "opencollective",
++          "url": "https://opencollective.com/postcss/"
++        },
++        {
++          "type": "tidelift",
++          "url": "https://tidelift.com/funding/github/npm/postcss"
++        },
++        {
++          "type": "github",
++          "url": "https://github.com/sponsors/ai"
++        }
++      ],
++      "license": "MIT",
++      "dependencies": {
++        "nanoid": "^3.3.11",
++        "picocolors": "^1.1.1",
++        "source-map-js": "^1.2.1"
++      },
++      "engines": {
++        "node": "^10 || ^12 || >=14"
++      }
++    },
++    "node_modules/rollup": {
++      "version": "4.57.0",
++      "resolved": "https://registry.npmjs.org/rollup/-/rollup-4.57.0.tgz",
++      "integrity": "sha512-e5lPJi/aui4TO1LpAXIRLySmwXSE8k3b9zoGfd42p67wzxog4WHjiZF3M2uheQih4DGyc25QEV4yRBbpueNiUA==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@types/estree": "1.0.8"
++      },
++      "bin": {
++        "rollup": "dist/bin/rollup"
++      },
++      "engines": {
++        "node": ">=18.0.0",
++        "npm": ">=8.0.0"
++      },
++      "optionalDependencies": {
++        "@rollup/rollup-android-arm-eabi": "4.57.0",
++        "@rollup/rollup-android-arm64": "4.57.0",
++        "@rollup/rollup-darwin-arm64": "4.57.0",
++        "@rollup/rollup-darwin-x64": "4.57.0",
++        "@rollup/rollup-freebsd-arm64": "4.57.0",
++        "@rollup/rollup-freebsd-x64": "4.57.0",
++        "@rollup/rollup-linux-arm-gnueabihf": "4.57.0",
++        "@rollup/rollup-linux-arm-musleabihf": "4.57.0",
++        "@rollup/rollup-linux-arm64-gnu": "4.57.0",
++        "@rollup/rollup-linux-arm64-musl": "4.57.0",
++        "@rollup/rollup-linux-loong64-gnu": "4.57.0",
++        "@rollup/rollup-linux-loong64-musl": "4.57.0",
++        "@rollup/rollup-linux-ppc64-gnu": "4.57.0",
++        "@rollup/rollup-linux-ppc64-musl": "4.57.0",
++        "@rollup/rollup-linux-riscv64-gnu": "4.57.0",
++        "@rollup/rollup-linux-riscv64-musl": "4.57.0",
++        "@rollup/rollup-linux-s390x-gnu": "4.57.0",
++        "@rollup/rollup-linux-x64-gnu": "4.57.0",
++        "@rollup/rollup-linux-x64-musl": "4.57.0",
++        "@rollup/rollup-openbsd-x64": "4.57.0",
++        "@rollup/rollup-openharmony-arm64": "4.57.0",
++        "@rollup/rollup-win32-arm64-msvc": "4.57.0",
++        "@rollup/rollup-win32-ia32-msvc": "4.57.0",
++        "@rollup/rollup-win32-x64-gnu": "4.57.0",
++        "@rollup/rollup-win32-x64-msvc": "4.57.0",
++        "fsevents": "~2.3.2"
++      }
++    },
++    "node_modules/semver": {
++      "version": "7.7.3",
++      "resolved": "https://registry.npmjs.org/semver/-/semver-7.7.3.tgz",
++      "integrity": "sha512-SdsKMrI9TdgjdweUSR9MweHA4EJ8YxHn8DFaDisvhVlUOe4BF1tLD7GAj0lIqWVl+dPb/rExr0Btby5loQm20Q==",
++      "dev": true,
++      "license": "ISC",
++      "bin": {
++        "semver": "bin/semver.js"
++      },
++      "engines": {
++        "node": ">=10"
++      }
++    },
++    "node_modules/source-map-js": {
++      "version": "1.2.1",
++      "resolved": "https://registry.npmjs.org/source-map-js/-/source-map-js-1.2.1.tgz",
++      "integrity": "sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==",
++      "license": "BSD-3-Clause",
++      "engines": {
++        "node": ">=0.10.0"
++      }
++    },
++    "node_modules/typescript": {
++      "version": "5.3.3",
++      "resolved": "https://registry.npmjs.org/typescript/-/typescript-5.3.3.tgz",
++      "integrity": "sha512-pXWcraxM0uxAS+tN0AG/BF2TyqmHO014Z070UsJ+pFvYuRSq8KH8DmWpnbXe0pEPDHXZV3FcAbJkijJ5oNEnWw==",
++      "devOptional": true,
++      "license": "Apache-2.0",
++      "bin": {
++        "tsc": "bin/tsc",
++        "tsserver": "bin/tsserver"
++      },
++      "engines": {
++        "node": ">=14.17"
++      }
++    },
++    "node_modules/vite": {
++      "version": "5.0.12",
++      "resolved": "https://registry.npmjs.org/vite/-/vite-5.0.12.tgz",
++      "integrity": "sha512-4hsnEkG3q0N4Tzf1+t6NdN9dg/L3BM+q8SWgbSPnJvrgH2kgdyzfVJwbR1ic69/4uMJJ/3dqDZZE5/WwqW8U1w==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "esbuild": "^0.19.3",
++        "postcss": "^8.4.32",
++        "rollup": "^4.2.0"
++      },
++      "bin": {
++        "vite": "bin/vite.js"
++      },
++      "engines": {
++        "node": "^18.0.0 || >=20.0.0"
++      },
++      "funding": {
++        "url": "https://github.com/vitejs/vite?sponsor=1"
++      },
++      "optionalDependencies": {
++        "fsevents": "~2.3.3"
++      },
++      "peerDependencies": {
++        "@types/node": "^18.0.0 || >=20.0.0",
++        "less": "*",
++        "lightningcss": "^1.21.0",
++        "sass": "*",
++        "stylus": "*",
++        "sugarss": "*",
++        "terser": "^5.4.0"
++      },
++      "peerDependenciesMeta": {
++        "@types/node": {
++          "optional": true
++        },
++        "less": {
++          "optional": true
++        },
++        "lightningcss": {
++          "optional": true
++        },
++        "sass": {
++          "optional": true
++        },
++        "stylus": {
++          "optional": true
++        },
++        "sugarss": {
++          "optional": true
++        },
++        "terser": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/vue": {
++      "version": "3.4.15",
++      "resolved": "https://registry.npmjs.org/vue/-/vue-3.4.15.tgz",
++      "integrity": "sha512-jC0GH4KkWLWJOEQjOpkqU1bQsBwf4R1rsFtw5GQJbjHVKWDzO6P0nWWBTmjp1xSemAioDFj1jdaK1qa3DnMQoQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@vue/compiler-dom": "3.4.15",
++        "@vue/compiler-sfc": "3.4.15",
++        "@vue/runtime-dom": "3.4.15",
++        "@vue/server-renderer": "3.4.15",
++        "@vue/shared": "3.4.15"
++      },
++      "peerDependencies": {
++        "typescript": "*"
++      },
++      "peerDependenciesMeta": {
++        "typescript": {
++          "optional": true
++        }
++      }
++    },
++    "node_modules/vue-router": {
++      "version": "4.3.0",
++      "resolved": "https://registry.npmjs.org/vue-router/-/vue-router-4.3.0.tgz",
++      "integrity": "sha512-dqUcs8tUeG+ssgWhcPbjHvazML16Oga5w34uCUmsk7i0BcnskoLGwjpa15fqMr2Fa5JgVBrdL2MEgqz6XZ/6IQ==",
++      "license": "MIT",
++      "dependencies": {
++        "@vue/devtools-api": "^6.5.1"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/posva"
++      },
++      "peerDependencies": {
++        "vue": "^3.2.0"
++      }
++    },
++    "node_modules/vue-template-compiler": {
++      "version": "2.7.16",
++      "resolved": "https://registry.npmjs.org/vue-template-compiler/-/vue-template-compiler-2.7.16.tgz",
++      "integrity": "sha512-AYbUWAJHLGGQM7+cNTELw+KsOG9nl2CnSv467WobS5Cv9uk3wFcnr1Etsz2sEIHEZvw1U+o9mRlEO6QbZvUPGQ==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "de-indent": "^1.0.2",
++        "he": "^1.2.0"
++      }
++    },
++    "node_modules/vue-tsc": {
++      "version": "1.8.27",
++      "resolved": "https://registry.npmjs.org/vue-tsc/-/vue-tsc-1.8.27.tgz",
++      "integrity": "sha512-WesKCAZCRAbmmhuGl3+VrdWItEvfoFIPXOvUJkjULi+x+6G/Dy69yO3TBRJDr9eUlmsNAwVmxsNZxvHKzbkKdg==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "@volar/typescript": "~1.11.1",
++        "@vue/language-core": "1.8.27",
++        "semver": "^7.5.4"
++      },
++      "bin": {
++        "vue-tsc": "bin/vue-tsc.js"
++      },
++      "peerDependencies": {
++        "typescript": "*"
++      }
++    }
++  }
++}
+diff --git a/repository_after/package.json b/repository_after/package.json
+new file mode 100644
+index 00000000..73acdc33
+--- /dev/null
++++ b/repository_after/package.json
+@@ -0,0 +1,22 @@
++{
++  "name": "frontend-only-voting-app",
++  "private": true,
++  "version": "0.1.0",
++  "type": "module",
++  "scripts": {
++    "dev": "vite",
++    "build": "vue-tsc -p tsconfig.json --noEmit && vite build",
++    "preview": "vite preview --host"
++  },
++  "dependencies": {
++    "pinia": "2.1.7",
++    "vue": "3.4.15",
++    "vue-router": "4.3.0"
++  },
++  "devDependencies": {
++    "@vitejs/plugin-vue": "5.0.4",
++    "typescript": "5.3.3",
++    "vite": "5.0.12",
++    "vue-tsc": "1.8.27"
++  }
++}
+diff --git a/repository_after/src/App.vue b/repository_after/src/App.vue
+new file mode 100644
+index 00000000..b102d25e
+--- /dev/null
++++ b/repository_after/src/App.vue
+@@ -0,0 +1,66 @@
++<script setup lang="ts">
++import { onMounted } from "vue";
++import { RouterLink, RouterView } from "vue-router";
++
++import { useUiStore } from "@/stores/ui";
++import BaseButton from "@/components/ui/BaseButton.vue";
++
++const ui = useUiStore();
++
++onMounted(() => {
++  ui.hydrateTheme();
++});
++</script>
++
++<template>
++  <div>
++    <header class="app-header">
++      <div class="container header-inner">
++        <RouterLink to="/" class="brand" aria-label="Go to home">
++          Voting App
++        </RouterLink>
++
++        <div
++          class="row wrap"
++          style="justify-content: flex-end; align-items: center"
++        >
++          <BaseButton
++            variant="ghost"
++            :aria-pressed="ui.theme === 'dark'"
++            @click="ui.toggleTheme"
++          >
++            {{ ui.theme === "dark" ? "Dark" : "Light" }} mode
++          </BaseButton>
++        </div>
++      </div>
++    </header>
++
++    <main class="container">
++      <RouterView />
++    </main>
++  </div>
++</template>
++
++<style scoped>
++.app-header {
++  position: sticky;
++  top: 0;
++  z-index: 10;
++  background: color-mix(in oklab, var(--bg), transparent 0%);
++  border-bottom: 1px solid var(--border);
++  backdrop-filter: blur(8px);
++}
++
++.header-inner {
++  display: flex;
++  justify-content: space-between;
++  align-items: center;
++  gap: 12px;
++}
++
++.brand {
++  font-weight: 700;
++  text-decoration: none;
++  padding: 10px 0;
++}
++</style>
+diff --git a/repository_after/src/components/polls/OptionEditor.vue b/repository_after/src/components/polls/OptionEditor.vue
+new file mode 100644
+index 00000000..908d30fd
+--- /dev/null
++++ b/repository_after/src/components/polls/OptionEditor.vue
+@@ -0,0 +1,75 @@
++<script setup lang="ts">
++import BaseButton from "@/components/ui/BaseButton.vue";
++import BaseInput from "@/components/ui/BaseInput.vue";
++
++type Props = {
++  modelValue: string[];
++  error?: string;
++};
++
++const props = withDefaults(defineProps<Props>(), {
++  error: undefined,
++});
++const emit = defineEmits<{ "update:modelValue": [value: string[]] }>();
++
++function updateAt(index: number, value: string) {
++  const next = [...props.modelValue];
++  next[index] = value;
++  emit("update:modelValue", next);
++}
++
++function add() {
++  emit("update:modelValue", [...props.modelValue, ""]);
++}
++
++function removeAt(index: number) {
++  const next = props.modelValue.filter((_, i) => i !== index);
++  emit("update:modelValue", next);
++}
++</script>
++
++<template>
++  <div class="stack" aria-label="Options editor">
++    <div
++      class="row wrap"
++      style="justify-content: space-between; align-items: center"
++    >
++      <div>
++        <div class="muted" style="font-size: 13px">Options</div>
++        <div v-if="error" class="error" role="alert">{{ error }}</div>
++      </div>
++      <BaseButton variant="ghost" @click="add">Add option</BaseButton>
++    </div>
++
++    <div
++      v-for="(opt, idx) in modelValue"
++      :key="idx"
++      class="row"
++      style="align-items: end"
++    >
++      <div style="flex: 1">
++        <BaseInput
++          :id="`opt-${idx}`"
++          :label="`Option ${idx + 1}`"
++          :model-value="opt"
++          placeholder="Option text"
++          @update:model-value="(v) => updateAt(idx, v)"
++        />
++      </div>
++      <BaseButton
++        variant="ghost"
++        :disabled="modelValue.length <= 2"
++        @click="removeAt(idx)"
++      >
++        Remove
++      </BaseButton>
++    </div>
++  </div>
++</template>
++
++<style scoped>
++.error {
++  font-size: 12px;
++  color: var(--danger);
++}
++</style>
+diff --git a/repository_after/src/components/polls/PollCard.vue b/repository_after/src/components/polls/PollCard.vue
+new file mode 100644
+index 00000000..41af9378
+--- /dev/null
++++ b/repository_after/src/components/polls/PollCard.vue
+@@ -0,0 +1,115 @@
++<script setup lang="ts">
++import { computed } from "vue";
++import { RouterLink } from "vue-router";
++
++import { usePollsStore } from "@/stores/polls";
++import BaseButton from "@/components/ui/BaseButton.vue";
++import { formatDateTime } from "@/utils/time";
++
++type Props = {
++  pollId: string;
++};
++
++const props = defineProps<Props>();
++const polls = usePollsStore();
++
++const poll = computed(() => polls.getById(props.pollId));
++const status = computed(() => polls.getStatus(props.pollId));
++const results = computed(() => polls.getResults(props.pollId));
++</script>
++
++<template>
++  <article
++    v-if="poll"
++    class="card item"
++    :data-status="status"
++    aria-label="Poll"
++  >
++    <div
++      class="row wrap"
++      style="justify-content: space-between; align-items: start"
++    >
++      <div style="min-width: 220px">
++        <RouterLink :to="`/poll/${poll.id}`" class="title">{{
++          poll.title
++        }}</RouterLink>
++        <div class="row wrap" style="margin-top: 6px; align-items: center">
++          <span class="badge" :data-status="status">{{
++            polls.getStatusLabel(poll.id)
++          }}</span>
++          <span class="muted" style="font-size: 13px">
++            {{ results.total }} vote{{ results.total === 1 ? "" : "s" }}
++          </span>
++        </div>
++        <p v-if="poll.description" class="muted" style="margin: 8px 0 0">
++          {{ poll.description }}
++        </p>
++        <p class="muted" style="margin: 8px 0 0; font-size: 13px">
++          Starts: {{ formatDateTime(poll.startAt) }} · Ends:
++          {{ formatDateTime(poll.endAt) }}
++        </p>
++        <div v-if="poll.tags.length" class="row wrap" style="margin-top: 8px">
++          <span v-for="t in poll.tags" :key="t" class="tag">#{{ t }}</span>
++        </div>
++      </div>
++
++      <div class="row wrap" style="justify-content: flex-end">
++        <BaseButton variant="ghost" @click="polls.duplicatePoll(poll.id)"
++          >Duplicate</BaseButton
++        >
++        <BaseButton variant="danger" @click="polls.requestDelete(poll.id)"
++          >Delete</BaseButton
++        >
++      </div>
++    </div>
++  </article>
++</template>
++
++<style scoped>
++.item {
++  padding: 14px;
++  transition: transform 120ms ease;
++}
++
++.item:hover {
++  transform: translateY(-1px);
++}
++
++.title {
++  font-weight: 700;
++  text-decoration: none;
++}
++
++.title:focus-visible {
++  outline: 2px solid color-mix(in oklab, var(--accent), white 20%);
++  outline-offset: 4px;
++  border-radius: 8px;
++}
++
++.badge {
++  font-size: 12px;
++  padding: 4px 8px;
++  border-radius: 999px;
++  border: 1px solid var(--border);
++}
++
++.badge[data-status="active"] {
++  border-color: color-mix(in oklab, var(--success), white 40%);
++}
++
++.badge[data-status="closed"] {
++  border-color: color-mix(in oklab, var(--muted), white 40%);
++}
++
++.badge[data-status="expired"] {
++  border-color: color-mix(in oklab, var(--danger), white 40%);
++}
++
++.tag {
++  font-size: 12px;
++  color: var(--muted);
++  border: 1px solid var(--border);
++  border-radius: 999px;
++  padding: 4px 8px;
++}
++</style>
+diff --git a/repository_after/src/components/polls/PollFilters.vue b/repository_after/src/components/polls/PollFilters.vue
+new file mode 100644
+index 00000000..f6d73c57
+--- /dev/null
++++ b/repository_after/src/components/polls/PollFilters.vue
+@@ -0,0 +1,93 @@
++<script setup lang="ts">
++import { computed } from "vue";
++
++import { usePollsStore } from "@/stores/polls";
++import BaseInput from "@/components/ui/BaseInput.vue";
++import BaseSelect from "@/components/ui/BaseSelect.vue";
++import TagChip from "@/components/ui/TagChip.vue";
++
++type Props = {
++  tags: string[];
++};
++
++defineProps<Props>();
++
++const polls = usePollsStore();
++
++const statusOptions = [
++  { value: "all", label: "All" },
++  { value: "active", label: "Active" },
++  { value: "closed", label: "Closed" },
++  { value: "expired", label: "Expired" },
++];
++
++const sortOptions = [
++  { value: "newest", label: "Newest" },
++  { value: "endingSoon", label: "Ending soon" },
++  { value: "mostVotes", label: "Most votes" },
++  { value: "trending", label: "Trending" },
++];
++
++const selectedTag = computed(() => polls.filters.tag);
++</script>
++
++<template>
++  <section class="card" style="padding: 12px">
++    <div
++      class="row wrap"
++      style="align-items: end; justify-content: space-between"
++    >
++      <div style="flex: 1; min-width: 220px">
++        <BaseInput
++          id="poll-search"
++          label="Search"
++          placeholder="Search by title, description, or tag"
++          :model-value="polls.filters.query"
++          @update:model-value="polls.setQuery"
++        />
++      </div>
++
++      <div style="min-width: 170px">
++        <BaseSelect
++          id="poll-status"
++          label="Status"
++          :model-value="polls.filters.status"
++          :options="statusOptions"
++          @update:model-value="(v) => polls.setStatusFilter(v as any)"
++        />
++      </div>
++
++      <div style="min-width: 170px">
++        <BaseSelect
++          id="poll-sort"
++          label="Sort"
++          :model-value="polls.filters.sort"
++          :options="sortOptions"
++          @update:model-value="(v) => polls.setSort(v as any)"
++        />
++      </div>
++    </div>
++
++    <div
++      v-if="tags.length"
++      class="row wrap"
++      style="margin-top: 12px; align-items: center"
++    >
++      <span class="muted" style="font-size: 13px">Tags:</span>
++      <TagChip
++        label="all"
++        :selected="selectedTag === null"
++        aria-label="Filter by all tags"
++        @click="polls.setTagFilter(null)"
++      />
++      <TagChip
++        v-for="t in tags"
++        :key="t"
++        :label="t"
++        :selected="selectedTag === t"
++        :aria-label="`Filter by tag ${t}`"
++        @click="polls.setTagFilter(selectedTag === t ? null : t)"
++      />
++    </div>
++  </section>
++</template>
+diff --git a/repository_after/src/components/polls/PollForm.vue b/repository_after/src/components/polls/PollForm.vue
+new file mode 100644
+index 00000000..f86a3610
+--- /dev/null
++++ b/repository_after/src/components/polls/PollForm.vue
+@@ -0,0 +1,199 @@
++<script setup lang="ts">
++import { computed, reactive, ref } from "vue";
++import { useRouter } from "vue-router";
++
++import { usePollsStore } from "@/stores/polls";
++import type { PollVotingMode } from "@/types/poll";
++import BaseButton from "@/components/ui/BaseButton.vue";
++import BaseInput from "@/components/ui/BaseInput.vue";
++import BaseTextarea from "@/components/ui/BaseTextarea.vue";
++import BaseSelect from "@/components/ui/BaseSelect.vue";
++import OptionEditor from "./OptionEditor.vue";
++import {
++  validatePollDraft,
++  type PollDraft,
++  normalizeTags,
++  ValidationError,
++} from "@/utils/validation";
++import { fromInputDateTimeValue, toInputDateTimeValue } from "@/utils/time";
++
++type Props =
++  | { mode: "create"; pollId?: never }
++  | { mode: "edit"; pollId: string };
++
++const props = defineProps<Props>();
++const emit = defineEmits<{ cancel: []; saved: [pollId: string] }>();
++
++const router = useRouter();
++const polls = usePollsStore();
++
++const existing = computed(() =>
++  props.mode === "edit" ? polls.getById(props.pollId) : undefined
++);
++
++const draft = reactive<PollDraft>({
++  title: existing.value?.title ?? "",
++  description: existing.value?.description ?? "",
++  tags: (existing.value?.tags ?? []).join(", "),
++  votingMode: (existing.value?.votingMode ?? "single") as PollVotingMode,
++  isAnonymous: existing.value?.isAnonymous ?? true,
++  startAt: existing.value?.startAt,
++  endAt: existing.value?.endAt,
++  options: existing.value?.options.map((o) => o.text) ?? ["", ""],
++});
++
++const errors = ref<ValidationError[]>([]);
++
++const fieldError = computed(() => {
++  const map: Record<string, string> = {};
++  for (const e of errors.value) map[e.field] = e.message;
++  return map;
++});
++
++const startValue = computed(() => toInputDateTimeValue(draft.startAt));
++const endValue = computed(() => toInputDateTimeValue(draft.endAt));
++
++function onStartChange(v: string) {
++  draft.startAt = fromInputDateTimeValue(v);
++}
++
++function onEndChange(v: string) {
++  draft.endAt = fromInputDateTimeValue(v);
++}
++
++const votingModeOptions = [
++  { value: "single", label: "Single choice" },
++  { value: "multi", label: "Multiple choice" },
++];
++
++function toggleAnonymous() {
++  draft.isAnonymous = !draft.isAnonymous;
++}
++
++function save() {
++  errors.value = validatePollDraft(draft);
++  if (errors.value.length) return;
++
++  // normalize tags once to keep consistent
++  const tags = normalizeTags(draft.tags);
++  draft.tags = tags.join(", ");
++
++  let id: string;
++  if (props.mode === "create") {
++    id = polls.createPoll(draft);
++  } else {
++    polls.updatePoll(props.pollId, draft);
++    id = props.pollId;
++  }
++
++  emit("saved", id);
++
++  // if used in a modal, navigating is optional; we do it only on create
++  if (props.mode === "create") {
++    router.push(`/poll/${id}`);
++  }
++}
++</script>
++
++<template>
++  <form class="stack" @submit.prevent="save" aria-label="Poll form">
++    <BaseInput
++      id="poll-title"
++      v-model="draft.title"
++      label="Title"
++      :error="fieldError.title"
++    />
++
++    <BaseTextarea
++      id="poll-desc"
++      v-model="draft.description"
++      label="Description (optional)"
++      placeholder="Add context or instructions"
++      :error="fieldError.description"
++      :rows="4"
++    />
++
++    <BaseInput
++      id="poll-tags"
++      v-model="draft.tags"
++      label="Tags (comma-separated)"
++      placeholder="e.g. product, team, weekend"
++    />
++
++    <div class="row wrap">
++      <div style="min-width: 200px">
++        <BaseSelect
++          id="poll-mode"
++          v-model="draft.votingMode"
++          label="Voting"
++          :options="votingModeOptions"
++          :error="fieldError.votingMode"
++        />
++      </div>
++
++      <div class="card" style="padding: 12px; flex: 1">
++        <div
++          class="row"
++          style="justify-content: space-between; align-items: center"
++        >
++          <div>
++            <div style="font-weight: 600">
++              {{ draft.isAnonymous ? "Anonymous voting" : "Named voting" }}
++            </div>
++            <div class="muted" style="font-size: 13px">
++              {{
++                draft.isAnonymous
++                  ? "Voter names are not collected."
++                  : "Voters must enter a name (stored locally)."
++              }}
++            </div>
++          </div>
++          <BaseButton variant="ghost" type="button" @click="toggleAnonymous"
++            >Toggle</BaseButton
++          >
++        </div>
++      </div>
++    </div>
++
++    <div class="row wrap">
++      <BaseInput
++        id="poll-start"
++        label="Start time (optional)"
++        type="datetime-local"
++        :model-value="startValue"
++        @update:model-value="onStartChange"
++      />
++      <BaseInput
++        id="poll-end"
++        label="End time (optional)"
++        type="datetime-local"
++        :model-value="endValue"
++        :error="fieldError.endAt"
++        @update:model-value="onEndChange"
++      />
++    </div>
++
++    <OptionEditor v-model="draft.options" :error="fieldError.options" />
++
++    <div class="row" style="justify-content: flex-end">
++      <BaseButton variant="ghost" type="button" @click="$emit('cancel')"
++        >Cancel</BaseButton
++      >
++      <BaseButton type="submit">Save</BaseButton>
++    </div>
++
++    <div
++      v-if="errors.length"
++      class="card"
++      style="
++        padding: 12px;
++        border-color: color-mix(in oklab, var(--danger), white 30%);
++      "
++    >
++      <strong>Fix the following:</strong>
++      <ul style="margin: 8px 0 0">
++        <li v-for="(e, idx) in errors" :key="idx">{{ e.message }}</li>
++      </ul>
++    </div>
++  </form>
++</template>
+diff --git a/repository_after/src/components/polls/PollList.vue b/repository_after/src/components/polls/PollList.vue
+new file mode 100644
+index 00000000..16b758f6
+--- /dev/null
++++ b/repository_after/src/components/polls/PollList.vue
+@@ -0,0 +1,64 @@
++<script setup lang="ts">
++import { onMounted } from "vue";
++
++import { usePollsStore } from "@/stores/polls";
++import PollCard from "./PollCard.vue";
++import BaseModal from "@/components/ui/BaseModal.vue";
++import BaseButton from "@/components/ui/BaseButton.vue";
++
++const polls = usePollsStore();
++
++onMounted(() => {
++  polls.hydrate();
++  polls.ensureTickerStarted();
++});
++</script>
++
++<template>
++  <section class="stack" aria-label="Poll list">
++    <div
++      v-if="polls.filteredSortedPolls.length === 0"
++      class="card"
++      style="padding: 16px"
++    >
++      <h2 style="margin: 0 0 8px; font-size: 18px">No polls found</h2>
++      <p class="muted" style="margin: 0">
++        Try adjusting filters, or create your first poll.
++      </p>
++    </div>
++
++    <div v-else class="list">
++      <PollCard
++        v-for="p in polls.filteredSortedPolls"
++        :key="p.id"
++        :poll-id="p.id"
++      />
++    </div>
++
++    <BaseModal v-model:open="polls.confirmDelete.open" title="Delete poll">
++      <p style="margin-top: 0">This action cannot be undone.</p>
++      <div class="row" style="justify-content: flex-end">
++        <BaseButton variant="ghost" @click="polls.cancelDelete"
++          >Cancel</BaseButton
++        >
++        <BaseButton variant="danger" @click="polls.commitDelete"
++          >Delete</BaseButton
++        >
++      </div>
++    </BaseModal>
++  </section>
++</template>
++
++<style scoped>
++.list {
++  display: grid;
++  grid-template-columns: 1fr;
++  gap: 12px;
++}
++
++@media (min-width: 760px) {
++  .list {
++    grid-template-columns: 1fr 1fr;
++  }
++}
++</style>
+diff --git a/repository_after/src/components/polls/PollResults.vue b/repository_after/src/components/polls/PollResults.vue
+new file mode 100644
+index 00000000..08607014
+--- /dev/null
++++ b/repository_after/src/components/polls/PollResults.vue
+@@ -0,0 +1,65 @@
++<script setup lang="ts">
++import { computed, onMounted } from "vue";
++
++import { usePollsStore } from "@/stores/polls";
++import ProgressBar from "@/components/ui/ProgressBar.vue";
++
++type Props = {
++  pollId: string;
++};
++
++const props = defineProps<Props>();
++const polls = usePollsStore();
++
++onMounted(() => {
++  polls.hydrate();
++  polls.ensureTickerStarted();
++});
++
++const poll = computed(() => polls.getById(props.pollId));
++const status = computed(() => polls.getStatus(props.pollId));
++const results = computed(() => polls.getResults(props.pollId));
++</script>
++
++<template>
++  <div v-if="!poll" class="muted">Poll not found.</div>
++
++  <div v-else class="stack">
++    <div
++      class="row wrap"
++      style="justify-content: space-between; align-items: center"
++    >
++      <div class="muted">
++        Total: <strong>{{ results.total }}</strong>
++      </div>
++      <div class="muted" style="font-size: 13px">
++        Results are {{ status === "active" ? "live" : "locked" }}.
++      </div>
++    </div>
++
++    <div v-if="results.items.length === 0" class="muted">
++      No options to display.
++    </div>
++
++    <div v-else class="stack" aria-label="Results list">
++      <div v-for="item in results.items" :key="item.optionId" class="result">
++        <div
++          class="row wrap"
++          style="justify-content: space-between; align-items: baseline"
++        >
++          <strong>{{ item.label }}</strong>
++          <span class="muted" style="font-size: 13px">
++            {{ item.count }} ({{ Math.round(item.pct * 100) }}%)
++          </span>
++        </div>
++        <ProgressBar :value="item.pct" />
++      </div>
++    </div>
++  </div>
++</template>
++
++<style scoped>
++.result {
++  padding: 10px 0;
++}
++</style>
+diff --git a/repository_after/src/components/polls/PollVote.vue b/repository_after/src/components/polls/PollVote.vue
+new file mode 100644
+index 00000000..51588c98
+--- /dev/null
++++ b/repository_after/src/components/polls/PollVote.vue
+@@ -0,0 +1,153 @@
++<script setup lang="ts">
++import { computed, ref, watchEffect } from "vue";
++
++import { usePollsStore } from "@/stores/polls";
++import BaseButton from "@/components/ui/BaseButton.vue";
++import BaseInput from "@/components/ui/BaseInput.vue";
++
++type Props = {
++  pollId: string;
++};
++
++const props = defineProps<Props>();
++const polls = usePollsStore();
++
++const poll = computed(() => polls.getById(props.pollId));
++const can = computed(() => polls.canVote(props.pollId));
++const alreadyVoted = computed(() => polls.hasVotedThisSession(props.pollId));
++
++const voterName = ref("");
++const selected = ref<string[]>([]);
++const submitErrors = ref<string[]>([]);
++
++watchEffect(() => {
++  // keep selection sane when switching mode
++  if (!poll.value) return;
++  if (poll.value.votingMode === "single" && selected.value.length > 1) {
++    selected.value = selected.value.slice(0, 1);
++  }
++});
++
++function toggleOption(optionId: string) {
++  if (!poll.value) return;
++
++  if (poll.value.votingMode === "single") {
++    selected.value = [optionId];
++    return;
++  }
++
++  const set = new Set(selected.value);
++  if (set.has(optionId)) set.delete(optionId);
++  else set.add(optionId);
++  selected.value = Array.from(set);
++}
++
++function submit() {
++  submitErrors.value = [];
++  if (!poll.value) return;
++
++  const result = polls.castVote(props.pollId, selected.value, voterName.value);
++  if (!result.ok) {
++    submitErrors.value = result.errors ?? ["Could not submit vote."];
++    return;
++  }
++}
++</script>
++
++<template>
++  <div v-if="!poll" class="muted">Poll not found.</div>
++
++  <div v-else class="stack">
++    <div v-if="alreadyVoted" class="card" style="padding: 12px">
++      <strong>Thanks!</strong>
++      <p class="muted" style="margin: 6px 0 0">
++        You already voted in this browser session.
++      </p>
++    </div>
++
++    <div v-else-if="!can.ok" class="card" style="padding: 12px">
++      <strong>Voting unavailable</strong>
++      <p class="muted" style="margin: 6px 0 0">{{ can.reason }}</p>
++    </div>
++
++    <form v-else class="stack" @submit.prevent="submit" aria-label="Vote form">
++      <div v-if="!poll.isAnonymous">
++        <BaseInput
++          id="voter-name"
++          v-model="voterName"
++          label="Your name"
++          placeholder="Enter your name"
++          autocomplete="name"
++        />
++      </div>
++
++      <fieldset
++        class="stack"
++        style="border: 0; padding: 0; margin: 0"
++        :aria-label="
++          poll.votingMode === 'single'
++            ? 'Single choice options'
++            : 'Multiple choice options'
++        "
++      >
++        <legend class="visually-hidden">Options</legend>
++
++        <label v-for="o in poll.options" :key="o.id" class="option">
++          <input
++            :type="poll.votingMode === 'single' ? 'radio' : 'checkbox'"
++            name="vote"
++            :checked="selected.includes(o.id)"
++            @change="toggleOption(o.id)"
++          />
++          <span>{{ o.text }}</span>
++        </label>
++      </fieldset>
++
++      <div
++        v-if="submitErrors.length"
++        class="card"
++        style="
++          padding: 12px;
++          border-color: color-mix(in oklab, var(--danger), white 30%);
++        "
++        role="alert"
++      >
++        <strong>Could not vote</strong>
++        <ul style="margin: 8px 0 0">
++          <li v-for="(e, idx) in submitErrors" :key="idx">{{ e }}</li>
++        </ul>
++      </div>
++
++      <div class="row" style="justify-content: flex-end">
++        <BaseButton type="submit">Submit vote</BaseButton>
++      </div>
++    </form>
++  </div>
++</template>
++
++<style scoped>
++.option {
++  display: flex;
++  gap: 10px;
++  align-items: center;
++  border: 1px solid var(--border);
++  border-radius: 12px;
++  padding: 10px 12px;
++  cursor: pointer;
++  background: color-mix(in oklab, var(--card), var(--bg) 35%);
++  transition: transform 120ms ease, border-color 120ms ease;
++}
++
++.option:hover {
++  transform: translateY(-1px);
++}
++
++.option:has(input:focus-visible) {
++  outline: 2px solid color-mix(in oklab, var(--accent), white 20%);
++  outline-offset: 2px;
++}
++
++input {
++  accent-color: var(--accent);
++}
++</style>
+diff --git a/repository_after/src/components/ui/BaseButton.vue b/repository_after/src/components/ui/BaseButton.vue
+new file mode 100644
+index 00000000..8f4ad9a8
+--- /dev/null
++++ b/repository_after/src/components/ui/BaseButton.vue
+@@ -0,0 +1,71 @@
++<script setup lang="ts">
++import { computed } from "vue";
++
++type Variant = "primary" | "ghost" | "danger";
++
++type Props = {
++  variant?: Variant;
++  type?: "button" | "submit" | "reset";
++  disabled?: boolean;
++};
++
++const props = withDefaults(defineProps<Props>(), {
++  variant: "primary",
++  type: "button",
++  disabled: false,
++});
++
++const classes = computed(() => {
++  if (props.variant === "danger") return "btn danger";
++  if (props.variant === "ghost") return "btn ghost";
++  return "btn primary";
++});
++</script>
++
++<template>
++  <button :type="type" :class="classes" :disabled="disabled">
++    <slot />
++  </button>
++</template>
++
++<style scoped>
++.btn {
++  border-radius: 10px;
++  border: 1px solid var(--border);
++  padding: 10px 12px;
++  cursor: pointer;
++  transition: transform 120ms ease, background-color 120ms ease,
++    border-color 120ms ease;
++  user-select: none;
++}
++
++.btn:active {
++  transform: scale(0.98);
++}
++
++.btn:focus-visible {
++  outline: 2px solid color-mix(in oklab, var(--accent), white 20%);
++  outline-offset: 2px;
++}
++
++.primary {
++  background: var(--accent);
++  border-color: color-mix(in oklab, var(--accent), black 10%);
++  color: white;
++}
++
++.ghost {
++  background: transparent;
++}
++
++.danger {
++  background: var(--danger);
++  border-color: color-mix(in oklab, var(--danger), black 10%);
++  color: white;
++}
++
++.btn:disabled {
++  opacity: 0.6;
++  cursor: not-allowed;
++}
++</style>
+diff --git a/repository_after/src/components/ui/BaseInput.vue b/repository_after/src/components/ui/BaseInput.vue
+new file mode 100644
+index 00000000..a3befae1
+--- /dev/null
++++ b/repository_after/src/components/ui/BaseInput.vue
+@@ -0,0 +1,80 @@
++<script setup lang="ts">
++type Props = {
++  id?: string;
++  modelValue: string;
++  label?: string;
++  placeholder?: string;
++  error?: string;
++  type?: string;
++  autocomplete?: string;
++};
++
++withDefaults(defineProps<Props>(), {
++  type: "text",
++  placeholder: "",
++  label: undefined,
++  error: undefined,
++  id: undefined,
++  autocomplete: undefined,
++});
++
++defineEmits<{ "update:modelValue": [value: string] }>();
++</script>
++
++<template>
++  <label class="field">
++    <span v-if="label" class="label">{{ label }}</span>
++    <input
++      :id="id"
++      class="input"
++      :class="{ invalid: !!error }"
++      :type="type"
++      :value="modelValue"
++      :placeholder="placeholder"
++      :autocomplete="autocomplete"
++      :aria-invalid="!!error"
++      :aria-describedby="error ? `${id}-error` : undefined"
++      @input="
++        $emit('update:modelValue', ($event.target as HTMLInputElement).value)
++      "
++    />
++    <span v-if="error" :id="`${id}-error`" class="error" role="alert">{{
++      error
++    }}</span>
++  </label>
++</template>
++
++<style scoped>
++.field {
++  display: flex;
++  flex-direction: column;
++  gap: 6px;
++}
++
++.label {
++  font-size: 13px;
++  color: var(--muted);
++}
++
++.input {
++  border-radius: 10px;
++  border: 1px solid var(--border);
++  padding: 10px 12px;
++  background: var(--bg);
++  color: var(--fg);
++}
++
++.input:focus-visible {
++  outline: 2px solid color-mix(in oklab, var(--accent), white 20%);
++  outline-offset: 2px;
++}
++
++.invalid {
++  border-color: color-mix(in oklab, var(--danger), white 10%);
++}
++
++.error {
++  font-size: 12px;
++  color: var(--danger);
++}
++</style>
+diff --git a/repository_after/src/components/ui/BaseModal.vue b/repository_after/src/components/ui/BaseModal.vue
+new file mode 100644
+index 00000000..02fe7bf5
+--- /dev/null
++++ b/repository_after/src/components/ui/BaseModal.vue
+@@ -0,0 +1,114 @@
++<script setup lang="ts">
++import { computed, watch } from "vue";
++
++import BaseButton from "./BaseButton.vue";
++import { useFocusTrap } from "@/composables/useFocusTrap";
++
++type Props = {
++  open: boolean;
++  title: string;
++};
++
++const props = defineProps<Props>();
++const emit = defineEmits<{ "update:open": [value: boolean] }>();
++
++const isOpen = computed(() => props.open);
++const { containerRef, activate, deactivate } = useFocusTrap(isOpen);
++
++function close() {
++  emit("update:open", false);
++}
++
++function onKeydown(e: KeyboardEvent) {
++  if (!props.open) return;
++  if (e.key === "Escape") {
++    e.preventDefault();
++    close();
++  }
++}
++
++watch(
++  () => props.open,
++  (open) => {
++    if (open) {
++      activate();
++      window.addEventListener("keydown", onKeydown);
++    } else {
++      window.removeEventListener("keydown", onKeydown);
++      deactivate();
++    }
++  },
++  { immediate: true }
++);
++</script>
++
++<template>
++  <Teleport to="body">
++    <div v-if="open" class="overlay" @mousedown.self="close">
++      <div
++        ref="containerRef"
++        class="dialog"
++        role="dialog"
++        aria-modal="true"
++        :aria-label="title"
++        tabindex="-1"
++      >
++        <div class="header">
++          <h2 style="margin: 0; font-size: 18px">{{ title }}</h2>
++          <BaseButton variant="ghost" aria-label="Close" @click="close"
++            >Close</BaseButton
++          >
++        </div>
++        <div class="body">
++          <slot />
++        </div>
++      </div>
++    </div>
++  </Teleport>
++</template>
++
++<style scoped>
++.overlay {
++  position: fixed;
++  inset: 0;
++  background: rgba(0, 0, 0, 0.45);
++  display: grid;
++  place-items: center;
++  padding: 16px;
++}
++
++.dialog {
++  width: min(720px, 100%);
++  max-height: min(85vh, 900px);
++  overflow: auto;
++  background: var(--bg);
++  color: var(--fg);
++  border: 1px solid var(--border);
++  border-radius: 14px;
++  box-shadow: var(--shadow);
++  animation: pop 120ms ease;
++}
++
++@keyframes pop {
++  from {
++    transform: translateY(6px);
++    opacity: 0.8;
++  }
++  to {
++    transform: translateY(0);
++    opacity: 1;
++  }
++}
++
++.header {
++  display: flex;
++  justify-content: space-between;
++  align-items: center;
++  padding: 14px 14px 8px;
++  border-bottom: 1px solid var(--border);
++}
++
++.body {
++  padding: 14px;
++}
++</style>
+diff --git a/repository_after/src/components/ui/BaseSelect.vue b/repository_after/src/components/ui/BaseSelect.vue
+new file mode 100644
+index 00000000..1e934907
+--- /dev/null
++++ b/repository_after/src/components/ui/BaseSelect.vue
+@@ -0,0 +1,78 @@
++<script setup lang="ts">
++type Option = { value: string; label: string };
++
++type Props = {
++  id?: string;
++  modelValue: string;
++  label?: string;
++  error?: string;
++  options: Option[];
++};
++
++withDefaults(defineProps<Props>(), {
++  id: undefined,
++  label: undefined,
++  error: undefined,
++});
++
++defineEmits<{ "update:modelValue": [value: string] }>();
++</script>
++
++<template>
++  <label class="field">
++    <span v-if="label" class="label">{{ label }}</span>
++    <select
++      :id="id"
++      class="input"
++      :class="{ invalid: !!error }"
++      :value="modelValue"
++      :aria-invalid="!!error"
++      :aria-describedby="error ? `${id}-error` : undefined"
++      @change="
++        $emit('update:modelValue', ($event.target as HTMLSelectElement).value)
++      "
++    >
++      <option v-for="o in options" :key="o.value" :value="o.value">
++        {{ o.label }}
++      </option>
++    </select>
++    <span v-if="error" :id="`${id}-error`" class="error" role="alert">{{
++      error
++    }}</span>
++  </label>
++</template>
++
++<style scoped>
++.field {
++  display: flex;
++  flex-direction: column;
++  gap: 6px;
++}
++
++.label {
++  font-size: 13px;
++  color: var(--muted);
++}
++
++.input {
++  border-radius: 10px;
++  border: 1px solid var(--border);
++  padding: 10px 12px;
++  background: var(--bg);
++  color: var(--fg);
++}
++
++.input:focus-visible {
++  outline: 2px solid color-mix(in oklab, var(--accent), white 20%);
++  outline-offset: 2px;
++}
++
++.invalid {
++  border-color: color-mix(in oklab, var(--danger), white 10%);
++}
++
++.error {
++  font-size: 12px;
++  color: var(--danger);
++}
++</style>
+diff --git a/repository_after/src/components/ui/BaseTextarea.vue b/repository_after/src/components/ui/BaseTextarea.vue
+new file mode 100644
+index 00000000..8c8f5bf3
+--- /dev/null
++++ b/repository_after/src/components/ui/BaseTextarea.vue
+@@ -0,0 +1,78 @@
++<script setup lang="ts">
++type Props = {
++  id?: string;
++  modelValue: string;
++  label?: string;
++  placeholder?: string;
++  error?: string;
++  rows?: number;
++};
++
++withDefaults(defineProps<Props>(), {
++  placeholder: "",
++  label: undefined,
++  error: undefined,
++  id: undefined,
++  rows: 3,
++});
++
++defineEmits<{ "update:modelValue": [value: string] }>();
++</script>
++
++<template>
++  <label class="field">
++    <span v-if="label" class="label">{{ label }}</span>
++    <textarea
++      :id="id"
++      class="input"
++      :class="{ invalid: !!error }"
++      :rows="rows"
++      :value="modelValue"
++      :placeholder="placeholder"
++      :aria-invalid="!!error"
++      :aria-describedby="error ? `${id}-error` : undefined"
++      @input="
++        $emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)
++      "
++    />
++    <span v-if="error" :id="`${id}-error`" class="error" role="alert">{{
++      error
++    }}</span>
++  </label>
++</template>
++
++<style scoped>
++.field {
++  display: flex;
++  flex-direction: column;
++  gap: 6px;
++}
++
++.label {
++  font-size: 13px;
++  color: var(--muted);
++}
++
++.input {
++  border-radius: 10px;
++  border: 1px solid var(--border);
++  padding: 10px 12px;
++  background: var(--bg);
++  color: var(--fg);
++  resize: vertical;
++}
++
++.input:focus-visible {
++  outline: 2px solid color-mix(in oklab, var(--accent), white 20%);
++  outline-offset: 2px;
++}
++
++.invalid {
++  border-color: color-mix(in oklab, var(--danger), white 10%);
++}
++
++.error {
++  font-size: 12px;
++  color: var(--danger);
++}
++</style>
+diff --git a/repository_after/src/components/ui/ProgressBar.vue b/repository_after/src/components/ui/ProgressBar.vue
+new file mode 100644
+index 00000000..75f7417a
+--- /dev/null
++++ b/repository_after/src/components/ui/ProgressBar.vue
+@@ -0,0 +1,42 @@
++<script setup lang="ts">
++import { computed } from "vue";
++
++type Props = {
++  value: number; // 0..1
++};
++
++const props = defineProps<Props>();
++
++const pct = computed(() => {
++  const v = Number.isFinite(props.value) ? props.value : 0;
++  return `${Math.max(0, Math.min(1, v)) * 100}%`;
++});
++</script>
++
++<template>
++  <div
++    class="track"
++    role="progressbar"
++    :aria-valuemin="0"
++    :aria-valuemax="100"
++    :aria-valuenow="Math.round((value || 0) * 100)"
++  >
++    <div class="bar" :style="{ width: pct }" />
++  </div>
++</template>
++
++<style scoped>
++.track {
++  height: 10px;
++  border-radius: 999px;
++  background: color-mix(in oklab, var(--border), transparent 15%);
++  overflow: hidden;
++}
++
++.bar {
++  height: 100%;
++  border-radius: 999px;
++  background: var(--accent);
++  transition: width 220ms ease;
++}
++</style>
+diff --git a/repository_after/src/components/ui/TagChip.vue b/repository_after/src/components/ui/TagChip.vue
+new file mode 100644
+index 00000000..d17c0d78
+--- /dev/null
++++ b/repository_after/src/components/ui/TagChip.vue
+@@ -0,0 +1,48 @@
++<script setup lang="ts">
++import { computed } from "vue";
++
++type Props = {
++  label: string;
++  selected?: boolean;
++};
++
++const props = withDefaults(defineProps<Props>(), {
++  selected: false,
++});
++
++const cls = computed(() => ({
++  chip: true,
++  selected: props.selected,
++}));
++</script>
++
++<template>
++  <button type="button" :class="cls">
++    <span>#{{ label }}</span>
++  </button>
++</template>
++
++<style scoped>
++.chip {
++  border-radius: 999px;
++  border: 1px solid var(--border);
++  background: transparent;
++  color: var(--fg);
++  padding: 6px 10px;
++  cursor: pointer;
++  transition: transform 120ms ease, border-color 120ms ease;
++}
++
++.chip:active {
++  transform: scale(0.98);
++}
++
++.chip:focus-visible {
++  outline: 2px solid color-mix(in oklab, var(--accent), white 20%);
++  outline-offset: 2px;
++}
++
++.selected {
++  border-color: var(--accent);
++}
++</style>
+diff --git a/repository_after/src/composables/useFocusTrap.ts b/repository_after/src/composables/useFocusTrap.ts
+new file mode 100644
+index 00000000..9a336d5e
+--- /dev/null
++++ b/repository_after/src/composables/useFocusTrap.ts
+@@ -0,0 +1,83 @@
++import { onBeforeUnmount, onMounted, ref, type Ref } from "vue";
++
++const FOCUSABLE = [
++  "a[href]",
++  "button:not([disabled])",
++  "textarea:not([disabled])",
++  "input:not([disabled])",
++  "select:not([disabled])",
++  '[tabindex]:not([tabindex="-1"])',
++].join(",");
++
++export function useFocusTrap(active: Ref<boolean>) {
++  const containerRef = ref<HTMLElement | null>(null);
++  let previousActive: Element | null = null;
++
++  function focusFirst() {
++    const el = containerRef.value;
++    if (!el) return;
++
++    const focusables = Array.from(el.querySelectorAll<HTMLElement>(FOCUSABLE));
++    const target = focusables[0] ?? el;
++    target.focus?.();
++  }
++
++  function onKeydown(e: KeyboardEvent) {
++    if (!active.value) return;
++    if (e.key !== "Tab") return;
++
++    const el = containerRef.value;
++    if (!el) return;
++
++    const focusables = Array.from(
++      el.querySelectorAll<HTMLElement>(FOCUSABLE)
++    ).filter((n) => !n.hasAttribute("disabled") && n.tabIndex !== -1);
++
++    if (focusables.length === 0) {
++      e.preventDefault();
++      el.focus?.();
++      return;
++    }
++
++    const first = focusables[0];
++    const last = focusables[focusables.length - 1];
++    const current = document.activeElement;
++
++    if (e.shiftKey) {
++      if (current === first || current === el) {
++        e.preventDefault();
++        last.focus();
++      }
++    } else {
++      if (current === last) {
++        e.preventDefault();
++        first.focus();
++      }
++    }
++  }
++
++  onMounted(() => {
++    window.addEventListener("keydown", onKeydown);
++  });
++
++  onBeforeUnmount(() => {
++    window.removeEventListener("keydown", onKeydown);
++  });
++
++  function activate() {
++    previousActive = document.activeElement;
++    queueMicrotask(() => focusFirst());
++  }
++
++  function deactivate() {
++    const prev = previousActive as HTMLElement | null;
++    prev?.focus?.();
++    previousActive = null;
++  }
++
++  return {
++    containerRef,
++    activate,
++    deactivate,
++  };
++}
+diff --git a/repository_after/src/env.d.ts b/repository_after/src/env.d.ts
+new file mode 100644
+index 00000000..fc812394
+--- /dev/null
++++ b/repository_after/src/env.d.ts
+@@ -0,0 +1,7 @@
++/// <reference types="vite/client" />
++
++declare module "*.vue" {
++  import type { DefineComponent } from "vue";
++  const component: DefineComponent<{}, {}, any>;
++  export default component;
++}
+diff --git a/repository_after/src/main.ts b/repository_after/src/main.ts
+new file mode 100644
+index 00000000..bde5a7a0
+--- /dev/null
++++ b/repository_after/src/main.ts
+@@ -0,0 +1,12 @@
++import { createApp } from "vue";
++import { createPinia } from "pinia";
++
++import App from "./App.vue";
++import router from "./router";
++
++import "./styles/base.css";
++
++const app = createApp(App);
++app.use(createPinia());
++app.use(router);
++app.mount("#app");
+diff --git a/repository_after/src/router/index.ts b/repository_after/src/router/index.ts
+new file mode 100644
+index 00000000..e19de24a
+--- /dev/null
++++ b/repository_after/src/router/index.ts
+@@ -0,0 +1,17 @@
++import { createRouter, createWebHistory } from "vue-router";
++
++import HomeView from "@/views/HomeView.vue";
++import PollDetailView from "@/views/PollDetailView.vue";
++
++const router = createRouter({
++  history: createWebHistory(),
++  routes: [
++    { path: "/", name: "home", component: HomeView },
++    { path: "/poll/:id", name: "poll", component: PollDetailView, props: true },
++  ],
++  scrollBehavior() {
++    return { top: 0 };
++  },
++});
++
++export default router;
+diff --git a/repository_after/src/stores/polls.ts b/repository_after/src/stores/polls.ts
+new file mode 100644
+index 00000000..aad2eb6b
+--- /dev/null
++++ b/repository_after/src/stores/polls.ts
+@@ -0,0 +1,454 @@
++import { defineStore } from "pinia";
++
++import type { Ballot, Poll, PollOption, PollStatus } from "@/types/poll";
++import { createId } from "@/utils/id";
++import { nowMs } from "@/utils/time";
++import {
++  readLocalStorageJson,
++  readSessionStorage,
++  STORAGE_KEYS,
++  writeLocalStorageJson,
++  writeSessionStorage,
++} from "@/utils/storage";
++import {
++  normalizeTags,
++  validateVote,
++  type PollDraft,
++} from "@/utils/validation";
++
++type PersistedStateV1 = {
++  version: 1;
++  polls: Poll[];
++};
++
++type SortMode = "newest" | "endingSoon" | "mostVotes" | "trending";
++
++type ListFilters = {
++  status: "all" | PollStatus;
++  tag: string | null;
++  sort: SortMode;
++  query: string;
++};
++
++function votedSessionKey(pollId: string): string {
++  return `voting_app:voted:${pollId}`;
++}
++
++function clamp01(n: number): number {
++  if (!Number.isFinite(n)) return 0;
++  return Math.max(0, Math.min(1, n));
++}
++
++function computeStatus(poll: Poll, now: number): PollStatus {
++  if (poll.closedManuallyAt) return "closed";
++  if (poll.endAt && now >= poll.endAt) return "expired";
++  return "active";
++}
++
++function isWithinVotingWindow(poll: Poll, now: number): boolean {
++  if (poll.closedManuallyAt) return false;
++  if (poll.startAt && now < poll.startAt) return false;
++  if (poll.endAt && now >= poll.endAt) return false;
++  return true;
++}
++
++function totalVotes(poll: Poll): number {
++  return poll.ballots.length;
++}
++
++function trendingScore(poll: Poll, now: number): number {
++  const votes = totalVotes(poll);
++  const ageHours = Math.max(1, (now - poll.createdAt) / (1000 * 60 * 60));
++  const recentBoost = poll.lastVoteAt
++    ? Math.max(0, 24 - (now - poll.lastVoteAt) / (1000 * 60 * 60)) / 24
++    : 0;
++  return votes / ageHours + recentBoost;
++}
++
++export const usePollsStore = defineStore("polls", {
++  state: () => ({
++    hydrated: false,
++    nowTick: nowMs(),
++    tickerStarted: false,
++    polls: [] as Poll[],
++    filters: {
++      status: "all",
++      tag: null,
++      sort: "newest",
++      query: "",
++    } as ListFilters,
++    confirmDelete: {
++      open: false,
++      pollId: null as string | null,
++    },
++  }),
++  getters: {
++    allTags(state): string[] {
++      const set = new Set<string>();
++      for (const poll of state.polls) {
++        for (const t of poll.tags) set.add(t);
++      }
++      return Array.from(set).sort((a, b) => a.localeCompare(b));
++    },
++
++    filteredSortedPolls(state): Poll[] {
++      const now = state.nowTick;
++      const query = state.filters.query.trim().toLowerCase();
++
++      let list = state.polls.slice();
++
++      if (state.filters.status !== "all") {
++        list = list.filter(
++          (p) => computeStatus(p, now) === state.filters.status
++        );
++      }
++
++      if (state.filters.tag) {
++        list = list.filter((p) => p.tags.includes(state.filters.tag as string));
++      }
++
++      if (query) {
++        list = list.filter((p) => {
++          const hay = `${p.title} ${p.description ?? ""} ${p.tags.join(
++            " "
++          )}`.toLowerCase();
++          return hay.includes(query);
++        });
++      }
++
++      const sort = state.filters.sort;
++      list.sort((a, b) => {
++        if (sort === "newest") return b.createdAt - a.createdAt;
++        if (sort === "mostVotes") return totalVotes(b) - totalVotes(a);
++        if (sort === "endingSoon") {
++          const aEnd = a.endAt ?? Number.POSITIVE_INFINITY;
++          const bEnd = b.endAt ?? Number.POSITIVE_INFINITY;
++          return aEnd - bEnd;
++        }
++        // trending
++        return trendingScore(b, now) - trendingScore(a, now);
++      });
++
++      return list;
++    },
++  },
++  actions: {
++    ensureTickerStarted() {
++      if (this.tickerStarted) return;
++      this.tickerStarted = true;
++      // keep status + progress reactive
++      window.setInterval(() => {
++        this.nowTick = nowMs();
++      }, 15_000);
++    },
++
++    hydrate() {
++      if (this.hydrated) return;
++      this.hydrated = true;
++      const data = readLocalStorageJson<PersistedStateV1>(STORAGE_KEYS.polls);
++      if (!data || data.version !== 1 || !Array.isArray(data.polls)) {
++        this.polls = [];
++        return;
++      }
++      // basic shape guard
++      this.polls = data.polls
++        .filter(
++          (p): p is Poll =>
++            !!p &&
++            typeof p.id === "string" &&
++            Array.isArray(p.options) &&
++            Array.isArray(p.ballots)
++        )
++        .map((p) => ({
++          ...p,
++          tags: Array.isArray(p.tags) ? p.tags : [],
++          ballots: Array.isArray(p.ballots) ? p.ballots : [],
++          options: Array.isArray(p.options) ? p.options : [],
++        }));
++    },
++
++    persist() {
++      const payload: PersistedStateV1 = {
++        version: 1,
++        polls: this.polls,
++      };
++      writeLocalStorageJson(STORAGE_KEYS.polls, payload);
++    },
++
++    setQuery(query: string) {
++      this.filters.query = query;
++    },
++
++    setStatusFilter(status: ListFilters["status"]) {
++      this.filters.status = status;
++    },
++
++    setTagFilter(tag: string | null) {
++      this.filters.tag = tag;
++    },
++
++    setSort(sort: SortMode) {
++      this.filters.sort = sort;
++    },
++
++    getById(pollId: string): Poll | undefined {
++      this.hydrate();
++      return this.polls.find((p) => p.id === pollId);
++    },
++
++    getStatus(pollId: string): PollStatus {
++      const poll = this.getById(pollId);
++      if (!poll) return "expired";
++      return computeStatus(poll, this.nowTick);
++    },
++
++    getStatusLabel(pollId: string): string {
++      const poll = this.getById(pollId);
++      if (!poll) return "Not found";
++      const status = computeStatus(poll, this.nowTick);
++      if (status === "closed") return "Closed";
++      if (status === "expired") return "Expired";
++      if (poll.startAt && this.nowTick < poll.startAt)
++        return "Active (not started)";
++      return "Active";
++    },
++
++    hasVotedThisSession(pollId: string): boolean {
++      const key = votedSessionKey(pollId);
++      return !!readSessionStorage(key);
++    },
++
++    canVote(pollId: string): { ok: boolean; reason?: string } {
++      const poll = this.getById(pollId);
++      if (!poll) return { ok: false, reason: "Poll not found." };
++
++      const now = this.nowTick;
++      if (!isWithinVotingWindow(poll, now)) {
++        const status = computeStatus(poll, now);
++        if (status === "expired")
++          return { ok: false, reason: "Poll has ended." };
++        if (status === "closed")
++          return { ok: false, reason: "Poll is closed." };
++        if (poll.startAt && now < poll.startAt)
++          return { ok: false, reason: "Poll has not started yet." };
++        return { ok: false, reason: "Voting is not available." };
++      }
++
++      if (this.hasVotedThisSession(pollId)) {
++        return {
++          ok: false,
++          reason: "You already voted on this poll in this browser session.",
++        };
++      }
++
++      return { ok: true };
++    },
++
++    createPoll(draft: PollDraft): string {
++      this.hydrate();
++      const id = createId("poll");
++      const createdAt = nowMs();
++
++      const options: PollOption[] = draft.options
++        .map((t) => t.trim())
++        .filter(Boolean)
++        .map((text) => ({ id: createId("opt"), text }));
++
++      const poll: Poll = {
++        id,
++        title: draft.title.trim(),
++        description: draft.description.trim() || undefined,
++        tags: normalizeTags(draft.tags),
++        votingMode: draft.votingMode,
++        isAnonymous: draft.isAnonymous,
++        startAt: draft.startAt,
++        endAt: draft.endAt,
++        options,
++        ballots: [],
++        createdAt,
++        updatedAt: createdAt,
++      };
++
++      this.polls.unshift(poll);
++      this.persist();
++      return id;
++    },
++
++    updatePoll(pollId: string, draft: PollDraft) {
++      this.hydrate();
++      const idx = this.polls.findIndex((p) => p.id === pollId);
++      if (idx < 0) return;
++
++      const prev = this.polls[idx];
++      const now = nowMs();
++
++      const newOptions: PollOption[] = draft.options
++        .map((t) => t.trim())
++        .filter(Boolean)
++        .map((text, i) => {
++          const existing = prev.options[i];
++          return { id: existing?.id ?? createId("opt"), text };
++        });
++
++      const poll: Poll = {
++        ...prev,
++        title: draft.title.trim(),
++        description: draft.description.trim() || undefined,
++        tags: normalizeTags(draft.tags),
++        votingMode: draft.votingMode,
++        isAnonymous: draft.isAnonymous,
++        startAt: draft.startAt,
++        endAt: draft.endAt,
++        options: newOptions,
++        updatedAt: now,
++      };
++
++      this.polls.splice(idx, 1, poll);
++      this.persist();
++    },
++
++    duplicatePoll(pollId: string): string | null {
++      this.hydrate();
++      const original = this.polls.find((p) => p.id === pollId);
++      if (!original) return null;
++
++      const now = nowMs();
++      const newId = createId("poll");
++      const options = original.options.map((o) => ({
++        id: createId("opt"),
++        text: o.text,
++      }));
++
++      const copy: Poll = {
++        ...original,
++        id: newId,
++        title: `Copy of ${original.title}`,
++        ballots: [],
++        options,
++        createdAt: now,
++        updatedAt: now,
++        lastVoteAt: undefined,
++        closedManuallyAt: undefined,
++      };
++
++      this.polls.unshift(copy);
++      this.persist();
++      return newId;
++    },
++
++    requestDelete(pollId: string) {
++      this.confirmDelete.open = true;
++      this.confirmDelete.pollId = pollId;
++    },
++
++    cancelDelete() {
++      this.confirmDelete.open = false;
++      this.confirmDelete.pollId = null;
++    },
++
++    commitDelete() {
++      const pollId = this.confirmDelete.pollId;
++      if (!pollId) return;
++      this.deletePoll(pollId);
++      this.cancelDelete();
++    },
++
++    deletePoll(pollId: string) {
++      this.hydrate();
++      this.polls = this.polls.filter((p) => p.id !== pollId);
++      this.persist();
++    },
++
++    closePoll(pollId: string) {
++      this.hydrate();
++      const poll = this.polls.find((p) => p.id === pollId);
++      if (!poll) return;
++      if (poll.closedManuallyAt) return;
++      poll.closedManuallyAt = nowMs();
++      poll.updatedAt = poll.closedManuallyAt;
++      this.persist();
++    },
++
++    castVote(
++      pollId: string,
++      optionIds: string[],
++      voterName?: string
++    ): { ok: boolean; errors?: string[] } {
++      this.hydrate();
++      const poll = this.polls.find((p) => p.id === pollId);
++      if (!poll) return { ok: false, errors: ["Poll not found."] };
++
++      this.ensureTickerStarted();
++
++      const can = this.canVote(pollId);
++      if (!can.ok) return { ok: false, errors: [can.reason ?? "Cannot vote."] };
++
++      const cleaned = Array.from(new Set(optionIds)).filter(Boolean);
++      const voteErrors = validateVote(
++        poll.votingMode,
++        cleaned,
++        voterName,
++        poll.isAnonymous
++      );
++      if (voteErrors.length)
++        return { ok: false, errors: voteErrors.map((e) => e.message) };
++
++      const allowed = new Set(poll.options.map((o) => o.id));
++      const finalOptionIds = cleaned.filter((id) => allowed.has(id));
++      if (finalOptionIds.length === 0) {
++        return { ok: false, errors: ["Selected options are invalid."] };
++      }
++
++      const ballot: Ballot = {
++        id: createId("ballot"),
++        pollId: poll.id,
++        optionIds:
++          poll.votingMode === "single" ? [finalOptionIds[0]] : finalOptionIds,
++        voterName: poll.isAnonymous ? undefined : (voterName ?? "").trim(),
++        createdAt: nowMs(),
++      };
++
++      poll.ballots.push(ballot);
++      poll.lastVoteAt = ballot.createdAt;
++      poll.updatedAt = ballot.createdAt;
++      this.persist();
++
++      writeSessionStorage(votedSessionKey(pollId), ballot.id);
++      return { ok: true };
++    },
++
++    getResults(pollId: string): {
++      total: number;
++      items: Array<{
++        optionId: string;
++        label: string;
++        count: number;
++        pct: number;
++      }>;
++    } {
++      const poll = this.getById(pollId);
++      if (!poll) return { total: 0, items: [] };
++
++      const counts = new Map<string, number>();
++      for (const opt of poll.options) counts.set(opt.id, 0);
++
++      for (const ballot of poll.ballots) {
++        for (const optionId of ballot.optionIds) {
++          counts.set(optionId, (counts.get(optionId) ?? 0) + 1);
++        }
++      }
++
++      const total = poll.ballots.length;
++      const items = poll.options.map((opt) => {
++        const count = counts.get(opt.id) ?? 0;
++        const pct = total === 0 ? 0 : clamp01(count / total);
++        return { optionId: opt.id, label: opt.text, count, pct };
++      });
++
++      // stable sort by count desc, then label
++      items.sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
++
++      return { total, items };
++    },
++  },
++});
+diff --git a/repository_after/src/stores/ui.ts b/repository_after/src/stores/ui.ts
+new file mode 100644
+index 00000000..206c641a
+--- /dev/null
++++ b/repository_after/src/stores/ui.ts
+@@ -0,0 +1,33 @@
++import { defineStore } from "pinia";
++
++import { STORAGE_KEYS } from "@/utils/storage";
++
++export type Theme = "light" | "dark";
++
++export const useUiStore = defineStore("ui", {
++  state: () => ({
++    theme: "light" as Theme,
++  }),
++  actions: {
++    hydrateTheme() {
++      if (typeof window === "undefined") return;
++      const stored = window.localStorage.getItem(STORAGE_KEYS.theme);
++      if (stored === "dark" || stored === "light") {
++        this.theme = stored;
++      } else {
++        const prefersDark = window.matchMedia?.(
++          "(prefers-color-scheme: dark)"
++        )?.matches;
++        this.theme = prefersDark ? "dark" : "light";
++      }
++      document.documentElement.dataset.theme = this.theme;
++    },
++    toggleTheme() {
++      this.theme = this.theme === "dark" ? "light" : "dark";
++      if (typeof window !== "undefined") {
++        window.localStorage.setItem(STORAGE_KEYS.theme, this.theme);
++      }
++      document.documentElement.dataset.theme = this.theme;
++    },
++  },
++});
+diff --git a/repository_after/src/styles/base.css b/repository_after/src/styles/base.css
+new file mode 100644
+index 00000000..7392c38f
+--- /dev/null
++++ b/repository_after/src/styles/base.css
+@@ -0,0 +1,104 @@
++:root {
++  color-scheme: light dark;
++  --bg: #ffffff;
++  --fg: #111827;
++  --muted: #6b7280;
++  --card: #f9fafb;
++  --border: #e5e7eb;
++  --accent: #2563eb;
++  --danger: #dc2626;
++  --success: #16a34a;
++  --shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
++}
++
++:root[data-theme="dark"] {
++  --bg: #0b1220;
++  --fg: #e5e7eb;
++  --muted: #9ca3af;
++  --card: #0f172a;
++  --border: #1f2937;
++  --accent: #60a5fa;
++  --danger: #f87171;
++  --success: #4ade80;
++  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
++}
++
++* {
++  box-sizing: border-box;
++}
++
++html,
++body {
++  height: 100%;
++}
++
++body {
++  margin: 0;
++  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
++    Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
++  background: var(--bg);
++  color: var(--fg);
++}
++
++a {
++  color: inherit;
++}
++
++button,
++input,
++textarea,
++select {
++  font: inherit;
++}
++
++.container {
++  max-width: 1100px;
++  margin: 0 auto;
++  padding: 16px;
++}
++
++.card {
++  background: var(--card);
++  border: 1px solid var(--border);
++  border-radius: 12px;
++  box-shadow: var(--shadow);
++}
++
++.row {
++  display: flex;
++  gap: 12px;
++}
++
++.row.wrap {
++  flex-wrap: wrap;
++}
++
++.stack {
++  display: flex;
++  flex-direction: column;
++  gap: 12px;
++}
++
++.muted {
++  color: var(--muted);
++}
++
++.visually-hidden {
++  position: absolute !important;
++  height: 1px;
++  width: 1px;
++  overflow: hidden;
++  clip: rect(1px, 1px, 1px, 1px);
++  white-space: nowrap;
++}
++
++@media (prefers-reduced-motion: reduce) {
++  *,
++  *::before,
++  *::after {
++    animation-duration: 0.01ms !important;
++    animation-iteration-count: 1 !important;
++    transition-duration: 0.01ms !important;
++    scroll-behavior: auto !important;
++  }
++}
+diff --git a/repository_after/src/types/poll.ts b/repository_after/src/types/poll.ts
+new file mode 100644
+index 00000000..385d10e9
+--- /dev/null
++++ b/repository_after/src/types/poll.ts
+@@ -0,0 +1,37 @@
++export type PollVotingMode = "single" | "multi";
++
++export type PollStatus = "active" | "closed" | "expired";
++
++export type PollOption = {
++  id: string;
++  text: string;
++};
++
++export type Ballot = {
++  id: string;
++  pollId: string;
++  optionIds: string[];
++  voterName?: string;
++  createdAt: number;
++};
++
++export type Poll = {
++  id: string;
++  title: string;
++  description?: string;
++  tags: string[];
++
++  votingMode: PollVotingMode;
++  isAnonymous: boolean;
++
++  startAt?: number;
++  endAt?: number;
++  closedManuallyAt?: number;
++
++  options: PollOption[];
++  ballots: Ballot[];
++
++  createdAt: number;
++  updatedAt: number;
++  lastVoteAt?: number;
++};
+diff --git a/repository_after/src/utils/id.ts b/repository_after/src/utils/id.ts
+new file mode 100644
+index 00000000..dc5a4844
+--- /dev/null
++++ b/repository_after/src/utils/id.ts
+@@ -0,0 +1,5 @@
++export function createId(prefix = "id"): string {
++  const rand = Math.random().toString(16).slice(2);
++  const time = Date.now().toString(16);
++  return `${prefix}_${time}_${rand}`;
++}
+diff --git a/repository_after/src/utils/storage.ts b/repository_after/src/utils/storage.ts
+new file mode 100644
+index 00000000..83b21837
+--- /dev/null
++++ b/repository_after/src/utils/storage.ts
+@@ -0,0 +1,41 @@
++export const STORAGE_KEYS = {
++  polls: "voting_app:polls_store:v1",
++  theme: "voting_app:theme:v1",
++};
++
++export function safeJsonParse<T>(raw: string | null): T | null {
++  if (!raw) return null;
++  try {
++    return JSON.parse(raw) as T;
++  } catch {
++    return null;
++  }
++}
++
++export function readLocalStorageJson<T>(key: string): T | null {
++  if (typeof window === "undefined") return null;
++  return safeJsonParse<T>(window.localStorage.getItem(key));
++}
++
++export function writeLocalStorageJson(key: string, value: unknown): void {
++  if (typeof window === "undefined") return;
++  window.localStorage.setItem(key, JSON.stringify(value));
++}
++
++export function readSessionStorage(key: string): string | null {
++  if (typeof window === "undefined") return null;
++  try {
++    return window.sessionStorage.getItem(key);
++  } catch {
++    return null;
++  }
++}
++
++export function writeSessionStorage(key: string, value: string): void {
++  if (typeof window === "undefined") return;
++  try {
++    window.sessionStorage.setItem(key, value);
++  } catch {
++    // ignore
++  }
++}
+diff --git a/repository_after/src/utils/time.ts b/repository_after/src/utils/time.ts
+new file mode 100644
+index 00000000..4abae4b6
+--- /dev/null
++++ b/repository_after/src/utils/time.ts
+@@ -0,0 +1,30 @@
++export function nowMs(): number {
++  return Date.now();
++}
++
++export function formatDateTime(ms?: number): string {
++  if (!ms) return "—";
++  try {
++    return new Date(ms).toLocaleString();
++  } catch {
++    return "—";
++  }
++}
++
++export function toInputDateTimeValue(ms?: number): string {
++  if (!ms) return "";
++  const d = new Date(ms);
++  const pad = (n: number) => String(n).padStart(2, "0");
++  const yyyy = d.getFullYear();
++  const mm = pad(d.getMonth() + 1);
++  const dd = pad(d.getDate());
++  const hh = pad(d.getHours());
++  const mi = pad(d.getMinutes());
++  return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
++}
++
++export function fromInputDateTimeValue(value: string): number | undefined {
++  if (!value) return undefined;
++  const ms = new Date(value).getTime();
++  return Number.isFinite(ms) ? ms : undefined;
++}
+diff --git a/repository_after/src/utils/validation.ts b/repository_after/src/utils/validation.ts
+new file mode 100644
+index 00000000..edf4ea78
+--- /dev/null
++++ b/repository_after/src/utils/validation.ts
+@@ -0,0 +1,96 @@
++import type { PollVotingMode } from "@/types/poll";
++
++export type PollDraft = {
++  title: string;
++  description: string;
++  tags: string;
++  votingMode: PollVotingMode;
++  isAnonymous: boolean;
++  startAt?: number;
++  endAt?: number;
++  options: string[];
++};
++
++export type ValidationError = {
++  field: string;
++  message: string;
++};
++
++export function normalizeTags(raw: string): string[] {
++  return raw
++    .split(",")
++    .map((t) => t.trim())
++    .filter(Boolean)
++    .map((t) => t.slice(0, 24));
++}
++
++export function validatePollDraft(draft: PollDraft): ValidationError[] {
++  const errors: ValidationError[] = [];
++
++  if (!draft.title.trim()) {
++    errors.push({ field: "title", message: "Title is required." });
++  } else if (draft.title.trim().length > 120) {
++    errors.push({ field: "title", message: "Title is too long." });
++  }
++
++  if (draft.description.trim().length > 500) {
++    errors.push({ field: "description", message: "Description is too long." });
++  }
++
++  const cleaned = draft.options.map((o) => o.trim()).filter(Boolean);
++  if (cleaned.length < 2) {
++    errors.push({ field: "options", message: "Add at least two options." });
++  }
++
++  const uniq = new Set(cleaned.map((o) => o.toLowerCase()));
++  if (uniq.size !== cleaned.length) {
++    errors.push({ field: "options", message: "Options must be unique." });
++  }
++
++  if (draft.startAt && draft.endAt && draft.endAt <= draft.startAt) {
++    errors.push({
++      field: "endAt",
++      message: "End time must be after start time.",
++    });
++  }
++
++  if (draft.votingMode !== "single" && draft.votingMode !== "multi") {
++    errors.push({ field: "votingMode", message: "Voting mode is invalid." });
++  }
++
++  return errors;
++}
++
++export function validateVote(
++  votingMode: PollVotingMode,
++  selectedOptionIds: string[],
++  voterName: string | undefined,
++  isAnonymous: boolean
++): ValidationError[] {
++  const errors: ValidationError[] = [];
++
++  if (selectedOptionIds.length === 0) {
++    errors.push({ field: "selection", message: "Select at least one option." });
++  }
++
++  if (votingMode === "single" && selectedOptionIds.length > 1) {
++    errors.push({
++      field: "selection",
++      message: "Only one option can be selected.",
++    });
++  }
++
++  if (!isAnonymous) {
++    const name = (voterName ?? "").trim();
++    if (!name) {
++      errors.push({
++        field: "voterName",
++        message: "Name is required for named voting.",
++      });
++    } else if (name.length > 40) {
++      errors.push({ field: "voterName", message: "Name is too long." });
++    }
++  }
++
++  return errors;
++}
+diff --git a/repository_after/src/views/HomeView.vue b/repository_after/src/views/HomeView.vue
+new file mode 100644
+index 00000000..bc7b8f0f
+--- /dev/null
++++ b/repository_after/src/views/HomeView.vue
+@@ -0,0 +1,46 @@
++<script setup lang="ts">
++import { computed, ref } from "vue";
++
++import { usePollsStore } from "@/stores/polls";
++import PollList from "@/components/polls/PollList.vue";
++import PollFilters from "@/components/polls/PollFilters.vue";
++import PollForm from "@/components/polls/PollForm.vue";
++import BaseButton from "@/components/ui/BaseButton.vue";
++import BaseModal from "@/components/ui/BaseModal.vue";
++
++const polls = usePollsStore();
++
++const showCreate = ref(false);
++
++const tags = computed(() => polls.allTags);
++</script>
++
++<template>
++  <div class="stack">
++    <div
++      class="row wrap"
++      style="justify-content: space-between; align-items: center"
++    >
++      <div>
++        <h1 style="margin: 0">Polls</h1>
++        <p class="muted" style="margin: 6px 0 0">
++          Create, vote, and view results. State persists locally.
++        </p>
++      </div>
++
++      <BaseButton @click="showCreate = true">Create poll</BaseButton>
++    </div>
++
++    <PollFilters :tags="tags" />
++
++    <PollList />
++
++    <BaseModal v-model:open="showCreate" title="Create poll">
++      <PollForm
++        mode="create"
++        @cancel="showCreate = false"
++        @saved="showCreate = false"
++      />
++    </BaseModal>
++  </div>
++</template>
+diff --git a/repository_after/src/views/PollDetailView.vue b/repository_after/src/views/PollDetailView.vue
+new file mode 100644
+index 00000000..98773e01
+--- /dev/null
++++ b/repository_after/src/views/PollDetailView.vue
+@@ -0,0 +1,137 @@
++<script setup lang="ts">
++import { computed, ref, watchEffect } from "vue";
++import { useRoute, useRouter } from "vue-router";
++
++import { usePollsStore } from "@/stores/polls";
++import PollVote from "@/components/polls/PollVote.vue";
++import PollResults from "@/components/polls/PollResults.vue";
++import PollForm from "@/components/polls/PollForm.vue";
++import BaseButton from "@/components/ui/BaseButton.vue";
++import BaseModal from "@/components/ui/BaseModal.vue";
++
++const route = useRoute();
++const router = useRouter();
++const polls = usePollsStore();
++
++const pollId = computed(() => String(route.params.id));
++
++const poll = computed(() => polls.getById(pollId.value));
++
++const showEdit = ref(false);
++const showClose = ref(false);
++
++watchEffect(() => {
++  if (!poll.value) {
++    // small guard: route may be stale
++  }
++});
++
++function goHome() {
++  router.push("/");
++}
++</script>
++
++<template>
++  <div v-if="!poll" class="card" style="padding: 16px">
++    <h1 style="margin: 0 0 8px">Poll not found</h1>
++    <p class="muted" style="margin: 0 0 12px">It may have been deleted.</p>
++    <BaseButton @click="goHome">Back to polls</BaseButton>
++  </div>
++
++  <div v-else class="stack">
++    <div
++      class="row wrap"
++      style="justify-content: space-between; align-items: start"
++    >
++      <div>
++        <h1 style="margin: 0">{{ poll.title }}</h1>
++        <p v-if="poll.description" class="muted" style="margin: 6px 0 0">
++          {{ poll.description }}
++        </p>
++        <p class="muted" style="margin: 6px 0 0">
++          Status: <strong>{{ polls.getStatusLabel(poll.id) }}</strong>
++        </p>
++      </div>
++
++      <div class="row wrap" style="justify-content: flex-end">
++        <BaseButton
++          v-if="polls.getStatus(poll.id) === 'active'"
++          variant="ghost"
++          @click="showClose = true"
++          >Close</BaseButton
++        >
++        <BaseButton variant="ghost" @click="polls.duplicatePoll(poll.id)"
++          >Duplicate</BaseButton
++        >
++        <BaseButton variant="ghost" @click="showEdit = true">Edit</BaseButton>
++        <BaseButton variant="danger" @click="polls.requestDelete(poll.id)"
++          >Delete</BaseButton
++        >
++      </div>
++    </div>
++
++    <div class="grid">
++      <section class="card" style="padding: 16px">
++        <h2 style="margin: 0 0 12px; font-size: 18px">Vote</h2>
++        <PollVote :poll-id="poll.id" />
++      </section>
++
++      <section class="card" style="padding: 16px">
++        <h2 style="margin: 0 0 12px; font-size: 18px">Results</h2>
++        <PollResults :poll-id="poll.id" />
++      </section>
++    </div>
++
++    <BaseModal v-model:open="showEdit" title="Edit poll">
++      <PollForm
++        mode="edit"
++        :poll-id="poll.id"
++        @cancel="showEdit = false"
++        @saved="showEdit = false"
++      />
++    </BaseModal>
++
++    <BaseModal v-model:open="showClose" title="Close poll">
++      <p style="margin-top: 0">Closing will lock voting and freeze results.</p>
++      <div class="row" style="justify-content: flex-end">
++        <BaseButton variant="ghost" @click="showClose = false"
++          >Cancel</BaseButton
++        >
++        <BaseButton
++          variant="danger"
++          @click="
++            polls.closePoll(poll.id);
++            showClose = false;
++          "
++          >Close poll</BaseButton
++        >
++      </div>
++    </BaseModal>
++
++    <BaseModal v-model:open="polls.confirmDelete.open" title="Delete poll">
++      <p style="margin-top: 0">This action cannot be undone.</p>
++      <div class="row" style="justify-content: flex-end">
++        <BaseButton variant="ghost" @click="polls.cancelDelete"
++          >Cancel</BaseButton
++        >
++        <BaseButton variant="danger" @click="polls.commitDelete"
++          >Delete</BaseButton
++        >
++      </div>
++    </BaseModal>
++  </div>
++</template>
++
++<style scoped>
++.grid {
++  display: grid;
++  grid-template-columns: 1fr;
++  gap: 12px;
++}
++
++@media (min-width: 900px) {
++  .grid {
++    grid-template-columns: 1fr 1fr;
++  }
++}
++</style>
+diff --git a/repository_after/tsconfig.json b/repository_after/tsconfig.json
+new file mode 100644
+index 00000000..2b68a8ec
+--- /dev/null
++++ b/repository_after/tsconfig.json
+@@ -0,0 +1,27 @@
++{
++  "compilerOptions": {
++    "target": "ES2022",
++    "useDefineForClassFields": true,
++    "module": "ESNext",
++    "lib": ["ES2022", "DOM", "DOM.Iterable"],
++    "skipLibCheck": true,
++
++    "moduleResolution": "Bundler",
++    "resolveJsonModule": true,
++    "isolatedModules": true,
++    "noEmit": true,
++    "jsx": "preserve",
++
++    "strict": true,
++    "noUnusedLocals": true,
++    "noUnusedParameters": true,
++    "noFallthroughCasesInSwitch": true,
++
++    "baseUrl": ".",
++    "paths": {
++      "@/*": ["./src/*"]
++    }
++  },
++  "include": ["src/**/*.ts", "src/**/*.vue", "src/**/*.d.ts"],
++  "references": [{ "path": "./tsconfig.node.json" }]
++}
+diff --git a/repository_after/tsconfig.node.json b/repository_after/tsconfig.node.json
+new file mode 100644
+index 00000000..3adda81a
+--- /dev/null
++++ b/repository_after/tsconfig.node.json
+@@ -0,0 +1,10 @@
++{
++  "compilerOptions": {
++    "composite": true,
++    "skipLibCheck": true,
++    "module": "ESNext",
++    "moduleResolution": "Bundler",
++    "allowSyntheticDefaultImports": true
++  },
++  "include": ["vite.config.ts"]
++}
+diff --git a/repository_after/vite.config.ts b/repository_after/vite.config.ts
+new file mode 100644
+index 00000000..2520e399
+--- /dev/null
++++ b/repository_after/vite.config.ts
+@@ -0,0 +1,17 @@
++import { fileURLToPath, URL } from "node:url";
++
++import { defineConfig } from "vite";
++import vue from "@vitejs/plugin-vue";
++
++export default defineConfig({
++  plugins: [vue()],
++  resolve: {
++    alias: {
++      "@": fileURLToPath(new URL("./src", import.meta.url)),
++    },
++  },
++  server: {
++    port: 5173,
++    strictPort: true,
++  },
++});

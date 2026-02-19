@@ -1,0 +1,22 @@
+services:
+  app:
+    build: .
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/api_monitor?schema=public
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=test-secret-key
+    volumes:
+      - .:/app
+      - /app/repository_after/node_modules
+    depends_on:
+      - db
+    command: node evaluation/evaluation.js
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=api_monitor
+    ports:
+      - "5432:5432"

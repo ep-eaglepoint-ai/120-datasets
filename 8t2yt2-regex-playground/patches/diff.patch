@@ -1,0 +1,1724 @@
+diff --git a/repository_before/.gitkeep b/repository_before/.gitkeep
+deleted file mode 100644
+index 3766329b6..000000000
+--- a/repository_before/.gitkeep
++++ /dev/null
+@@ -1 +0,0 @@
+-# Placeholder for initial state before task completion
+diff --git a/repository_after/src/components/Card.tsx b/repository_after/src/components/Card.tsx
+new file mode 100644
+index 000000000..cb511c683
+--- /dev/null
++++ b/repository_after/src/components/Card.tsx
+@@ -0,0 +1,18 @@
++import React, { FunctionComponent } from "react";
++
++interface Props {
++  color?: string;
++  children?: React.ReactNode;
++}
++
++const Card: FunctionComponent<Props> = ({ children, color }) => {
++  return (
++    <div
++      className={`bg-white border-t-4 ${color === "pink" ? "border-theme_hotPink" : "border-theme_slateBlue"} px-5 py-2`}
++    >
++      {children}
++    </div>
++  );
++};
++
++export default Card;
+diff --git a/repository_after/src/components/Examples.tsx b/repository_after/src/components/Examples.tsx
+new file mode 100644
+index 000000000..bbfa9c703
+--- /dev/null
++++ b/repository_after/src/components/Examples.tsx
+@@ -0,0 +1,7 @@
++import React, { FunctionComponent } from "react";
++
++const Examples: FunctionComponent = () => {
++  return null;
++};
++
++export default Examples;
+diff --git a/repository_after/src/components/FabButton.tsx b/repository_after/src/components/FabButton.tsx
+new file mode 100644
+index 000000000..435434254
+--- /dev/null
++++ b/repository_after/src/components/FabButton.tsx
+@@ -0,0 +1,23 @@
++import React, { FunctionComponent } from "react";
++
++interface Props {
++  onClick: () => void;
++  name?: string;
++  children?: React.ReactNode;
++}
++
++const FabButton: FunctionComponent<Props> = ({ children, name, onClick }) => {
++  return (
++    <button
++      role="button"
++      type="button"
++      onClick={onClick}
++      aria-label={name}
++      className="w-10 h-10 p-2 rounded-full bg-gradient-to-br to-theme_slateBlue from-theme_hotPink shadow"
++    >
++      {children}
++    </button>
++  );
++};
++
++export default FabButton;
+diff --git a/repository_after/src/components/FlagToggles.tsx b/repository_after/src/components/FlagToggles.tsx
+new file mode 100644
+index 000000000..ff3395054
+--- /dev/null
++++ b/repository_after/src/components/FlagToggles.tsx
+@@ -0,0 +1,43 @@
++import React, { FunctionComponent } from "react";
++
++const FLAGS = [
++  { flag: "g", label: "Global" },
++  { flag: "i", label: "Insensitive" },
++  { flag: "m", label: "Multiline" },
++  { flag: "s", label: "Dotall" },
++  { flag: "u", label: "Unicode" },
++  { flag: "y", label: "Sticky" },
++];
++
++interface Props {
++  flags: string;
++  onToggle: (flag: string) => void;
++}
++
++const FlagToggles: FunctionComponent<Props> = ({ flags, onToggle }) => {
++  return (
++    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
++      {FLAGS.map(({ flag, label }) => {
++        const enabled = flags.includes(flag);
++        return (
++          <button
++            key={flag}
++            type="button"
++            onClick={() => onToggle(flag)}
++            className={`px-3 py-2 rounded border-2 text-sm font-semibold transition ${
++              enabled
++                ? "border-theme_slateBlue text-theme_slateBlue bg-white"
++                : "border-theme_lavenderBlue text-theme_textGray bg-white"
++            }
++            `}
++          >
++            <span className="font-mono mr-1">{flag}</span>
++            {label}
++          </button>
++        );
++      })}
++    </div>
++  );
++};
++
++export default FlagToggles;
+diff --git a/repository_after/src/components/HighlightedTextarea.tsx b/repository_after/src/components/HighlightedTextarea.tsx
+new file mode 100644
+index 000000000..2aa82a9a4
+--- /dev/null
++++ b/repository_after/src/components/HighlightedTextarea.tsx
+@@ -0,0 +1,138 @@
++import React, { FunctionComponent, useEffect, useMemo, useRef } from "react";
++
++import { HighlightRange, buildHighlightLayout } from "../utils/highlight";
++
++interface Props {
++  id: string;
++  label: string;
++  value: string;
++  onChange: (value: string) => void;
++  ranges: HighlightRange[];
++  highlightEnabled: boolean;
++  helperText?: string;
++}
++
++const HighlightedTextarea: FunctionComponent<Props> = ({
++  id,
++  label,
++  value,
++  onChange,
++  ranges,
++  highlightEnabled,
++  helperText,
++}) => {
++  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
++  const highlightRef = useRef<HTMLPreElement | null>(null);
++
++  const layout = useMemo(
++    () =>
++      highlightEnabled
++        ? buildHighlightLayout(value, ranges)
++        : { tokens: [{ type: "text", text: value, activeCount: 0 }] },
++    [value, ranges, highlightEnabled],
++  );
++
++  useEffect(() => {
++    const textarea = textareaRef.current;
++    const highlight = highlightRef.current;
++    if (!textarea || !highlight) return;
++
++    const syncScroll = () => {
++      highlight.scrollTop = textarea.scrollTop;
++      highlight.scrollLeft = textarea.scrollLeft;
++    };
++
++    textarea.addEventListener("scroll", syncScroll);
++    return () => textarea.removeEventListener("scroll", syncScroll);
++  }, []);
++
++  if (!highlightEnabled) {
++    return (
++      <div>
++        <div className="pb-0.5 flex justify-between items-center">
++          <label
++            htmlFor={id}
++            className="uppercase font-semibold text-sm tracking-wide"
++          >
++            {label}
++          </label>
++          {helperText && (
++            <span className="text-xs text-theme_textGray">{helperText}</span>
++          )}
++        </div>
++        <textarea
++          id={id}
++          name={id}
++          value={value}
++          onChange={(event) => onChange(event.target.value)}
++          className="font-mono text-sm border-3 border-black rounded-md w-full h-72 focus:border-none focus:border-theme_hotPink focus:ring focus:ring-theme_hotPink focus:ring-opacity-50 bg-white"
++          spellCheck={false}
++        />
++      </div>
++    );
++  }
++
++  return (
++    <div>
++      <div className="pb-0.5 flex justify-between items-center">
++        <label
++          htmlFor={id}
++          className="uppercase font-semibold text-sm tracking-wide"
++        >
++          {label}
++        </label>
++        {helperText && (
++          <span className="text-xs text-theme_textGray">{helperText}</span>
++        )}
++      </div>
++      <div className="relative border-3 border-black rounded-md focus-within:border-none focus-within:border-theme_hotPink focus-within:ring focus-within:ring-theme_hotPink focus-within:ring-opacity-50 bg-white">
++        <pre
++          ref={highlightRef}
++          aria-hidden
++          className="font-mono text-sm whitespace-pre-wrap break-words px-3 py-2 text-gray-900 overflow-auto"
++          style={{ minHeight: "18rem" }}
++        >
++          {layout.tokens.map((token, index) => {
++            if (token.type === "marker") {
++              return (
++                <span
++                  key={`marker-${index}`}
++                  className="inline-block w-0 border-l-2 border-theme_hotPink h-[1.1em] align-text-bottom"
++                />
++              );
++            }
++
++            if (token.type === "text") {
++              const className =
++                token.activeCount === 0
++                  ? ""
++                  : token.activeCount === 1
++                    ? "bg-theme_lightSkyBlue"
++                    : token.activeCount === 2
++                      ? "bg-theme_frenchSkyBlue"
++                      : "bg-theme_rajah";
++              return (
++                <span key={`seg-${index}`} className={className}>
++                  {token.text}
++                </span>
++              );
++            }
++            return null;
++          })}
++        </pre>
++        <textarea
++          ref={textareaRef}
++          id={id}
++          name={id}
++          value={value}
++          onChange={(event) => onChange(event.target.value)}
++          className="absolute inset-0 w-full h-full font-mono text-sm px-3 py-2 bg-transparent text-transparent caret-gray-900 resize-none overflow-auto"
++          style={{ caretColor: "#111827" }}
++          spellCheck={false}
++        />
++      </div>
++    </div>
++  );
++};
++
++export default HighlightedTextarea;
+diff --git a/repository_after/src/components/Input.tsx b/repository_after/src/components/Input.tsx
+new file mode 100644
+index 000000000..a09b892b4
+--- /dev/null
++++ b/repository_after/src/components/Input.tsx
+@@ -0,0 +1,44 @@
++import React, { FunctionComponent, useCallback } from 'react'
++
++interface Props {
++  label: string
++  defaultValue: string
++  onChange: (event: string) => void
++}
++
++const Input: FunctionComponent<Props> = ({ label, defaultValue, onChange }) => {
++  // Normally I wouldn't like to use `defaultValue` (uncontrolled Input), but it solves the
++  // issue of the text cursor jumping to the end of the input after every keypress.
++  // The Input can still be "controlled" from the parent component, by providing a new `key`
++  // prop to force a new value. Think of `key` as the identifier for the session of the life
++  // of the input.
++  // For example, when the Clear button is clicked, or when a new RegEx Example is clicked,
++  // resetting all the Inputs to the new `defaultValue`.
++  const handleChange = useCallback(({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => {
++    onChange(value)
++  }, [onChange])
++
++  return (
++    <div>
++      <div className="pb-0.5">
++        <label className="uppercase font-semibold text-sm tracking-wide" htmlFor={label}>{label}</label>
++      </div>
++      <div>
++        <input
++          id={label}
++          name={label}
++          type="text"
++          className="border-3 border-black rounded-md w-full focus:border-none focus:border-theme_hotPink focus:ring focus:ring-theme_hotPink focus:ring-opacity-50"
++          placeholder="Placeholder"
++          autoCapitalize="off"
++          autoCorrect="off"
++          autoComplete="off"
++          defaultValue={defaultValue}
++          onChange={handleChange}
++        />
++      </div>
++    </div>
++  )
++}
++
++export default Input
+diff --git a/repository_after/src/components/Match.tsx b/repository_after/src/components/Match.tsx
+new file mode 100644
+index 000000000..ac45f0b1f
+--- /dev/null
++++ b/repository_after/src/components/Match.tsx
+@@ -0,0 +1,14 @@
++import React, { FunctionComponent } from "react";
++
++interface Props {
++  id: string;
++  value: string;
++  onChange: (value: string) => void;
++  onClickRemove: () => void;
++}
++
++const Match: FunctionComponent<Props> = () => {
++  return null;
++};
++
++export default Match;
+diff --git a/repository_after/src/components/MatchResults.tsx b/repository_after/src/components/MatchResults.tsx
+new file mode 100644
+index 000000000..971952ba4
+--- /dev/null
++++ b/repository_after/src/components/MatchResults.tsx
+@@ -0,0 +1,135 @@
++import React, { FunctionComponent } from "react";
++
++import { MatchResult } from "../types/regex";
++
++interface Props {
++  matches: MatchResult[];
++  executionTimeMs: number;
++  truncated: boolean;
++  error?: string;
++  status: "idle" | "running";
++}
++
++const MatchResults: FunctionComponent<Props> = ({
++  matches,
++  executionTimeMs,
++  truncated,
++  error,
++  status,
++}) => {
++  if (error) {
++    return (
++      <div className="bg-white border-t-4 border-theme_hotPink px-5 py-4">
++        <h3 className="font-semibold text-theme_hotPink">Regex Error</h3>
++        <p className="text-sm text-theme_textGray mt-1">{error}</p>
++      </div>
++    );
++  }
++
++  return (
++    <div className="space-y-4">
++      <div className="bg-white border-t-4 border-theme_slateBlue px-5 py-4">
++        <div className="flex flex-wrap gap-4 text-sm">
++          <div className="font-semibold text-theme_slateBlue">
++            {matches.length} match{matches.length === 1 ? "" : "es"}
++          </div>
++          <div className="text-theme_textGray">
++            Execution: {executionTimeMs.toFixed(2)}ms
++          </div>
++          {status === "running" && (
++            <div className="text-theme_textGray">Running…</div>
++          )}
++          {truncated && (
++            <div className="text-theme_hotPink">Results truncated</div>
++          )}
++        </div>
++      </div>
++
++      {matches.length === 0 && (
++        <div className="bg-white border-2 border-dashed border-theme_lavenderBlue px-5 py-6 text-center text-theme_textGray text-sm">
++          No matches to display. Adjust your pattern, flags, or test text.
++        </div>
++      )}
++
++      {matches.map((match, matchIndex) => (
++        <div
++          key={`match-${matchIndex}`}
++          className="bg-white border-2 border-theme_lavenderBlue rounded"
++        >
++          <div className="px-4 py-3 border-b border-theme_lavenderBlue flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
++            <div className="text-sm font-semibold text-theme_slateBlue">
++              Match {matchIndex + 1}
++            </div>
++            <div className="text-xs text-theme_textGray font-mono">
++              [{match.index}, {match.end})
++            </div>
++          </div>
++          <div className="px-4 py-3">
++            <div className="text-xs uppercase text-theme_textGray tracking-wide">
++              Matched Text
++            </div>
++            <div className="font-mono text-sm bg-theme_gray p-2 rounded mt-1 overflow-x-auto">
++              {match.match || (
++                <span className="text-theme_textGray">(empty)</span>
++              )}
++            </div>
++
++            <div className="mt-4">
++              <div className="text-xs uppercase text-theme_textGray tracking-wide">
++                Capture Groups
++              </div>
++              {match.groups.length === 0 && (
++                <div className="text-sm text-theme_textGray mt-1">
++                  No capturing groups.
++                </div>
++              )}
++              {match.groups.length > 0 && (
++                <ul className="mt-2 space-y-2">
++                  {match.groups.map((group) => {
++                    const indent = group.parentIndex
++                      ? "pl-4 border-l-2 border-theme_lavenderBlue"
++                      : "";
++                    return (
++                      <li
++                        key={`group-${matchIndex}-${group.index}`}
++                        className={`text-sm ${indent}`}
++                      >
++                        <div className="flex flex-wrap gap-2 items-baseline">
++                          <span className="font-mono text-theme_slateBlue">
++                            #{group.index}
++                          </span>
++                          {group.name && (
++                            <span className="text-xs text-theme_textGray">
++                              ({group.name})
++                            </span>
++                          )}
++                          {group.parentIndex && (
++                            <span className="text-xs text-theme_textGray">
++                              parent #{group.parentIndex}
++                            </span>
++                          )}
++                        </div>
++                        <div className="font-mono text-sm bg-theme_gray p-2 rounded mt-1 overflow-x-auto">
++                          {group.text ?? (
++                            <span className="text-theme_textGray">(empty)</span>
++                          )}
++                        </div>
++                        {group.start != null && group.end != null && (
++                          <div className="text-xs text-theme_textGray mt-1">
++                            [{group.start}, {group.end})
++                          </div>
++                        )}
++                      </li>
++                    );
++                  })}
++                </ul>
++              )}
++            </div>
++          </div>
++        </div>
++      ))}
++    </div>
++  );
++};
++
++export default MatchResults;
+diff --git a/repository_after/src/components/Pattern.tsx b/repository_after/src/components/Pattern.tsx
+new file mode 100644
+index 000000000..a5e7f14a1
+--- /dev/null
++++ b/repository_after/src/components/Pattern.tsx
+@@ -0,0 +1,7 @@
++import React, { FunctionComponent } from "react";
++
++const Pattern: FunctionComponent = () => {
++  return null;
++};
++
++export default Pattern;
+diff --git a/repository_after/src/components/Permalink.tsx b/repository_after/src/components/Permalink.tsx
+new file mode 100644
+index 000000000..a7146d3dd
+--- /dev/null
++++ b/repository_after/src/components/Permalink.tsx
+@@ -0,0 +1,7 @@
++import React, { FunctionComponent } from "react";
++
++const Permalink: FunctionComponent = () => {
++  return null;
++};
++
++export default Permalink;
+diff --git a/repository_after/src/components/RegexPlayground.tsx b/repository_after/src/components/RegexPlayground.tsx
+new file mode 100644
+index 000000000..3b6715679
+--- /dev/null
++++ b/repository_after/src/components/RegexPlayground.tsx
+@@ -0,0 +1,139 @@
++import React, { FunctionComponent, useMemo } from "react";
++
++import FlagToggles from "./FlagToggles";
++import HighlightedTextarea from "./HighlightedTextarea";
++import MatchResults from "./MatchResults";
++import useLocalStorageState from "../hooks/useLocalStorageState";
++import useRegexWorker from "../hooks/useRegexWorker";
++
++const DEFAULT_PATTERN = "(?<word>\\w+)";
++const DEFAULT_TEXT = `Regex playground\n\nTry patterns with groups, flags, and Unicode: 😊 café naïve\nLine two: alpha_beta123\n\nUse anchors, lookarounds, and named groups to inspect results.`;
++const DEFAULT_FLAGS = "g";
++const FLAG_ORDER = ["g", "i", "m", "s", "u", "y"];
++
++const RegexPlayground: FunctionComponent = () => {
++  const [pattern, setPattern] = useLocalStorageState(
++    "regex-playground:pattern",
++    DEFAULT_PATTERN,
++  );
++  const [flags, setFlags] = useLocalStorageState(
++    "regex-playground:flags",
++    DEFAULT_FLAGS,
++  );
++  const [text, setText] = useLocalStorageState(
++    "regex-playground:text",
++    DEFAULT_TEXT,
++  );
++
++  const { matches, executionTimeMs, truncated, error, status } = useRegexWorker(
++    {
++      pattern,
++      flags,
++      text,
++    },
++  );
++
++  const highlightRanges = useMemo(
++    () => matches.map((match) => ({ start: match.index, end: match.end })),
++    [matches],
++  );
++
++  const highlightEnabled = text.length <= 200000 && matches.length <= 5000;
++  const helperText = highlightEnabled
++    ? "Matches highlighted in real time."
++    : "Highlighting disabled for large input or many matches.";
++
++  const toggleFlag = (flag: string) => {
++    const set = new Set(flags.split(""));
++    if (set.has(flag)) {
++      set.delete(flag);
++    } else {
++      set.add(flag);
++    }
++    const next = FLAG_ORDER.filter((item) => set.has(item)).join("");
++    setFlags(next);
++  };
++
++  const resetState = () => {
++    setPattern(DEFAULT_PATTERN);
++    setFlags(DEFAULT_FLAGS);
++    setText(DEFAULT_TEXT);
++  };
++
++  return (
++    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
++      <section className="space-y-6">
++        <div className="bg-white border-t-4 border-theme_slateBlue px-5 py-4">
++          <div className="flex flex-col gap-3">
++            <div>
++              <label
++                htmlFor="pattern"
++                className="uppercase font-semibold text-sm tracking-wide"
++              >
++                Pattern
++              </label>
++              <input
++                id="pattern"
++                name="pattern"
++                type="text"
++                value={pattern}
++                onChange={(event) => setPattern(event.target.value)}
++                className="mt-1 font-mono text-sm border-3 border-black rounded-md w-full focus:border-none focus:border-theme_hotPink focus:ring focus:ring-theme_hotPink focus:ring-opacity-50"
++                placeholder="Enter a regular expression pattern"
++                autoCapitalize="off"
++                autoCorrect="off"
++                autoComplete="off"
++                spellCheck={false}
++              />
++            </div>
++            <div>
++              <div className="uppercase font-semibold text-sm tracking-wide">
++                Flags
++              </div>
++              <FlagToggles flags={flags} onToggle={toggleFlag} />
++              <div className="text-xs text-theme_textGray mt-1 font-mono">
++                /{pattern || ""}/{flags || ""}
++              </div>
++            </div>
++            <div className="flex flex-wrap gap-2">
++              <button
++                type="button"
++                onClick={resetState}
++                className="px-3 py-2 text-sm font-semibold border-2 border-theme_slateBlue text-theme_slateBlue rounded hover:text-theme_hotPink hover:border-theme_hotPink"
++              >
++                Reset
++              </button>
++              <div className="text-xs text-theme_textGray self-center">
++                State saved locally.
++              </div>
++            </div>
++          </div>
++        </div>
++
++        <div className="bg-white border-t-4 border-theme_slateBlue px-5 py-4">
++          <HighlightedTextarea
++            id="test-text"
++            label="Test Text"
++            value={text}
++            onChange={setText}
++            ranges={highlightRanges}
++            highlightEnabled={highlightEnabled}
++            helperText={helperText}
++          />
++        </div>
++      </section>
++
++      <section className="space-y-6">
++        <MatchResults
++          matches={matches}
++          executionTimeMs={executionTimeMs}
++          truncated={truncated}
++          error={error}
++          status={status}
++        />
++      </section>
++    </div>
++  );
++};
++
++export default RegexPlayground;
+diff --git a/repository_after/src/components/Textarea.tsx b/repository_after/src/components/Textarea.tsx
+new file mode 100644
+index 000000000..d19b324f0
+--- /dev/null
++++ b/repository_after/src/components/Textarea.tsx
+@@ -0,0 +1,16 @@
++import React, { FunctionComponent } from "react";
++
++interface Props {
++  id: string;
++  label: string;
++  value: string;
++  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
++  onClickRemove: (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => void;
++  pattern: RegExp | null;
++}
++
++const Textarea: FunctionComponent<Props> = () => {
++  return null;
++};
++
++export default Textarea;
+diff --git a/repository_after/src/hooks/useIsMounted.ts b/repository_after/src/hooks/useIsMounted.ts
+new file mode 100644
+index 000000000..d1ff05f50
+--- /dev/null
++++ b/repository_after/src/hooks/useIsMounted.ts
+@@ -0,0 +1,12 @@
++import { useState, useEffect } from 'react'
++
++const useIsMounted = (): boolean => {
++  const [isMounted, setIsMounted] = useState(false)
++  useEffect(() => {
++    setIsMounted(() => true)
++  }, [])
++
++  return isMounted
++}
++
++export default useIsMounted
+diff --git a/repository_after/src/hooks/useLocalStorageState.ts b/repository_after/src/hooks/useLocalStorageState.ts
+new file mode 100644
+index 000000000..fc7212b7d
+--- /dev/null
++++ b/repository_after/src/hooks/useLocalStorageState.ts
+@@ -0,0 +1,34 @@
++import { useCallback, useEffect, useState } from "react";
++
++const safeParse = <T>(value: string | null, fallback: T): T => {
++  if (!value) return fallback;
++  try {
++    return JSON.parse(value) as T;
++  } catch (err) {
++    return fallback;
++  }
++};
++
++const useLocalStorageState = <T>(
++  key: string,
++  initialValue: T,
++): [T, (value: T) => void] => {
++  const [state, setState] = useState<T>(initialValue);
++
++  useEffect(() => {
++    const stored = safeParse<T>(window.localStorage.getItem(key), initialValue);
++    setState(stored);
++  }, [key, initialValue]);
++
++  const updateState = useCallback(
++    (value: T) => {
++      setState(value);
++      window.localStorage.setItem(key, JSON.stringify(value));
++    },
++    [key],
++  );
++
++  return [state, updateState];
++};
++
++export default useLocalStorageState;
+diff --git a/repository_after/src/hooks/useQueryParams.ts b/repository_after/src/hooks/useQueryParams.ts
+new file mode 100644
+index 000000000..f64a4331a
+--- /dev/null
++++ b/repository_after/src/hooks/useQueryParams.ts
+@@ -0,0 +1,18 @@
++import { useState } from "react";
++
++const useQueryParams = () => {
++  const [state, setState] = useState({
++    pattern: "",
++    flags: "",
++    key: "",
++    matches: [""],
++  });
++
++  const updateState = (next: Partial<typeof state>) => {
++    setState((prev) => ({ ...prev, ...next }));
++  };
++
++  return [state, updateState] as const;
++};
++
++export default useQueryParams;
+diff --git a/repository_after/src/hooks/useRegexWorker.ts b/repository_after/src/hooks/useRegexWorker.ts
+new file mode 100644
+index 000000000..98d800a2f
+--- /dev/null
++++ b/repository_after/src/hooks/useRegexWorker.ts
+@@ -0,0 +1,347 @@
++import { useEffect, useMemo, useRef, useState } from "react";
++
++import { MatchResult, RegexWorkerResult } from "../types/regex";
++import {
++  createRegexWorker,
++  createRegexWorkerRequest,
++} from "../utils/regexWorkerFactory";
++
++interface Options {
++  pattern: string;
++  flags: string;
++  text: string;
++  debounceMs?: number;
++  timeoutMs?: number;
++  maxMatches?: number;
++}
++
++const emptyResult: RegexWorkerResult = {
++  ok: true,
++  error: undefined,
++  matches: [],
++  executionTimeMs: 0,
++  truncated: false,
++  groupDefs: [],
++};
++
++const advanceIndex = (str: string, index: number, unicode: boolean): number => {
++  if (!unicode) return index + 1;
++  const code = str.codePointAt(index);
++  if (code === undefined) return index + 1;
++  return index + (code > 0xffff ? 2 : 1);
++};
++
++const parseCapturingGroups = (pattern: string) => {
++  const groups: Array<{
++    index: number;
++    name?: string;
++    parentIndex?: number | null;
++  }> = [];
++  const stack: Array<{ capturingIndex: number | null }> = [];
++  let inClass = false;
++  let escaped = false;
++
++  const getParentIndex = () => {
++    for (let i = stack.length - 1; i >= 0; i -= 1) {
++      if (stack[i].capturingIndex) return stack[i].capturingIndex;
++    }
++    return null;
++  };
++
++  for (let i = 0; i < pattern.length; i += 1) {
++    const char = pattern[i];
++
++    if (escaped) {
++      escaped = false;
++      continue;
++    }
++
++    if (char === "\\") {
++      escaped = true;
++      continue;
++    }
++
++    if (char === "[" && !inClass) {
++      inClass = true;
++      continue;
++    }
++
++    if (char === "]" && inClass) {
++      inClass = false;
++      continue;
++    }
++
++    if (inClass) continue;
++
++    if (char === "(") {
++      let capturing = true;
++      let name: string | undefined;
++
++      if (pattern[i + 1] === "?") {
++        const next = pattern[i + 2];
++        if (next === ":" || next === "=" || next === "!" || next === ">") {
++          capturing = false;
++        } else if (next === "<") {
++          const lookahead = pattern[i + 3];
++          if (lookahead === "=" || lookahead === "!") {
++            capturing = false;
++          } else {
++            capturing = true;
++            let nameEnd = i + 3;
++            while (nameEnd < pattern.length && pattern[nameEnd] !== ">") {
++              nameEnd += 1;
++            }
++            if (nameEnd < pattern.length) {
++              name = pattern.slice(i + 3, nameEnd);
++              i = nameEnd;
++            }
++          }
++        } else {
++          capturing = false;
++        }
++      }
++
++      if (capturing) {
++        const index = groups.length + 1;
++        const parentIndex = getParentIndex();
++        groups.push({ index, name, parentIndex });
++        stack.push({ capturingIndex: index });
++      } else {
++        stack.push({ capturingIndex: null });
++      }
++      continue;
++    }
++
++    if (char === ")") {
++      if (stack.length > 0) {
++        stack.pop();
++      }
++    }
++  }
++
++  return groups;
++};
++
++const buildMatchResults = (
++  re: RegExp,
++  text: string,
++  maxMatches: number,
++): MatchResult[] => {
++  const results: MatchResult[] = [];
++  const groupDefs = parseCapturingGroups(re.source);
++  const isIterative = re.global || re.sticky;
++
++  const buildGroups = (match: RegExpExecArray) => {
++    const baseStart = match.index;
++    const baseEnd = match.index + match[0].length;
++    let searchStart = baseStart;
++    return groupDefs.map((def) => {
++      const value = match[def.index];
++      const textVal =
++        value === undefined ? null : (value as string | null);
++      let start: number | null = null;
++      let end: number | null = null;
++      if (textVal !== null && textVal !== undefined && textVal !== "") {
++        const pos = text.indexOf(textVal, searchStart);
++        if (pos !== -1 && pos + textVal.length <= baseEnd) {
++          start = pos;
++          end = pos + textVal.length;
++          searchStart = end;
++        }
++      } else if (textVal === "") {
++        start = searchStart;
++        end = searchStart;
++      }
++      return {
++        index: def.index,
++        name: def.name,
++        text: textVal,
++        start,
++        end,
++        parentIndex: def.parentIndex ?? null,
++      };
++    });
++  };
++
++  if (!isIterative) {
++    const match = re.exec(text);
++    if (match) {
++      results.push({
++        index: match.index,
++        end: match.index + match[0].length,
++        match: match[0],
++        groups: buildGroups(match),
++      });
++    }
++    return results;
++  }
++
++  let match: RegExpExecArray | null;
++  while ((match = re.exec(text)) !== null) {
++    results.push({
++      index: match.index,
++      end: match.index + match[0].length,
++      match: match[0],
++      groups: buildGroups(match),
++    });
++
++    if (results.length >= maxMatches) {
++      break;
++    }
++
++    if (match[0].length === 0) {
++      re.lastIndex = advanceIndex(text, re.lastIndex, re.unicode);
++    }
++  }
++
++  return results;
++};
++
++const useRegexWorker = ({
++  pattern,
++  flags,
++  text,
++  debounceMs = 150,
++  timeoutMs = 2000,
++  maxMatches = 5000,
++}: Options): RegexWorkerResult & { status: "idle" | "running" } => {
++  const [result, setResult] = useState<RegexWorkerResult>(emptyResult);
++  const [status, setStatus] = useState<"idle" | "running">("idle");
++  const latestRequest = useRef(0);
++  const workerRef = useRef<Worker | null>(null);
++  const workerAvailableRef = useRef(true);
++
++  const requestPayload = useMemo(
++    () => createRegexWorkerRequest(pattern, flags, text, maxMatches),
++    [pattern, flags, text, maxMatches],
++  );
++
++  useEffect(() => {
++    if (!pattern) {
++      setResult({ ...emptyResult, groupDefs: [] });
++      setStatus("idle");
++      return () => undefined;
++    }
++
++    const requestId = latestRequest.current + 1;
++    latestRequest.current = requestId;
++
++    const debounceTimer = window.setTimeout(() => {
++      const safeFallback = text.length <= 20000 && pattern.length <= 200;
++
++      const runFallback = (errorMessage?: string) => {
++        if (!safeFallback) {
++          setResult({
++            ok: false,
++            error:
++              errorMessage ||
++              "Regex worker unavailable. Reduce input size or simplify the pattern.",
++            matches: [],
++            executionTimeMs: 0,
++            truncated: false,
++            groupDefs: [],
++          });
++          setStatus("idle");
++          return;
++        }
++
++        try {
++          const start = performance.now();
++          const re = new RegExp(pattern, flags);
++          const matches = buildMatchResults(re, text, maxMatches);
++          const executionTimeMs = performance.now() - start;
++          setResult({
++            ok: true,
++            error: undefined,
++            matches,
++            executionTimeMs,
++            truncated: matches.length >= maxMatches,
++            groupDefs: parseCapturingGroups(pattern),
++          });
++          setStatus("idle");
++        } catch (err) {
++          setResult({
++            ok: false,
++            error:
++              err && (err as Error).message
++                ? (err as Error).message
++                : "Invalid regular expression",
++            matches: [],
++            executionTimeMs: 0,
++            truncated: false,
++            groupDefs: [],
++          });
++          setStatus("idle");
++        }
++      };
++
++      if (!workerAvailableRef.current) {
++        runFallback();
++        return;
++      }
++
++      if (workerRef.current) {
++        workerRef.current.terminate();
++      }
++      let worker: Worker;
++      try {
++        worker = createRegexWorker();
++      } catch (err) {
++        workerAvailableRef.current = false;
++        runFallback("Regex worker failed to start. Falling back to safe mode.");
++        return;
++      }
++      workerRef.current = worker;
++      setStatus("running");
++
++      const timeoutTimer = window.setTimeout(() => {
++        worker.terminate();
++        workerRef.current = null;
++        if (latestRequest.current === requestId) {
++          runFallback(
++            `Execution exceeded ${timeoutMs}ms. Consider simplifying the pattern or reducing input size.`,
++          );
++        }
++      }, timeoutMs);
++
++      worker.onmessage = (event: MessageEvent<RegexWorkerResult>) => {
++        if (latestRequest.current !== requestId) {
++          worker.terminate();
++          workerRef.current = null;
++          return;
++        }
++        window.clearTimeout(timeoutTimer);
++        setResult(event.data);
++        setStatus("idle");
++        worker.terminate();
++        workerRef.current = null;
++      };
++
++      worker.onerror = () => {
++        window.clearTimeout(timeoutTimer);
++        worker.terminate();
++        workerRef.current = null;
++        if (latestRequest.current === requestId) {
++          workerAvailableRef.current = false;
++          runFallback(
++            "Regex worker failed to start. Falling back to safe mode.",
++          );
++        }
++      };
++
++      worker.postMessage(requestPayload);
++    }, debounceMs);
++
++    return () => {
++      window.clearTimeout(debounceTimer);
++      if (workerRef.current) {
++        workerRef.current.terminate();
++        workerRef.current = null;
++      }
++    };
++  }, [requestPayload, debounceMs, timeoutMs, pattern, flags, text, maxMatches]);
++
++  return { ...result, status };
++};
++
++export default useRegexWorker;
+diff --git a/repository_after/src/hooks/useWindowLocation.ts b/repository_after/src/hooks/useWindowLocation.ts
+new file mode 100644
+index 000000000..efb0dad8e
+--- /dev/null
++++ b/repository_after/src/hooks/useWindowLocation.ts
+@@ -0,0 +1,29 @@
++import useIsMounted from './useIsMounted'
++import { useEffect, useState } from 'react'
++
++const useWindowLocation = (): Location|void => {
++  const isMounted = useIsMounted()
++  const [location, setLocation] = useState<Location|void>()
++
++  useEffect(() => {
++    if (!isMounted) return
++
++    const setWindowLocation = () => {
++      setLocation(window.location)
++    }
++
++    if (!location) {
++      setWindowLocation()
++    }
++
++    window.addEventListener('popstate', setWindowLocation)
++
++    return () => {
++      window.removeEventListener('popstate', setWindowLocation)
++    }
++  }, [isMounted, location])
++
++  return location
++}
++
++export default useWindowLocation
+diff --git a/repository_after/src/pages/_app.tsx b/repository_after/src/pages/_app.tsx
+new file mode 100644
+index 000000000..124ce0a26
+--- /dev/null
++++ b/repository_after/src/pages/_app.tsx
+@@ -0,0 +1,9 @@
++import React, { FunctionComponent } from "react";
++import type { AppProps } from "next/app";
++import "../styles/globals.css";
++
++const MyApp: FunctionComponent<AppProps> = ({ Component, pageProps }) => {
++  return <Component {...pageProps} />;
++};
++
++export default MyApp;
+diff --git a/repository_after/src/pages/index.tsx b/repository_after/src/pages/index.tsx
+new file mode 100644
+index 000000000..56fa77796
+--- /dev/null
++++ b/repository_after/src/pages/index.tsx
+@@ -0,0 +1,43 @@
++import React, { FunctionComponent } from "react";
++import Head from "next/head";
++
++import RegexPlayground from "../components/RegexPlayground";
++
++const Home: FunctionComponent = () => {
++  return (
++    <div>
++      <Head>
++        <title>Regex Playground</title>
++        <link rel="icon" href="/favicon.ico" />
++        <link rel="preconnect" href="https://fonts.gstatic.com" />
++        <link
++          href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Poppins:wght@500;700&display=swap"
++          rel="stylesheet"
++        />
++      </Head>
++      <div className="min-h-screen flex flex-col bg-theme_gray max-w-full">
++        <main className="flex flex-col w-full px-4 sm:px-6 lg:px-10 py-6">
++          <div className="flex flex-col lg:flex-row lg:items-center pb-6 gap-4">
++            <div>
++              <h1 className="text-theme_slateBlue font-semibold text-2xl">
++                Regex Playground
++              </h1>
++              <p className="text-sm text-theme_textGray">
++                Write, test, and debug regular expressions in a safe, fast, and
++                deterministic environment.
++              </p>
++            </div>
++          </div>
++          <RegexPlayground />
++        </main>
++        <footer className="bg-gradient-to-br to-theme_slateBlue from-theme_hotPink py-4 mt-auto w-full">
++          <div className="text-center text-white text-sm">
++            Regex Playground • Client-side only
++          </div>
++        </footer>
++      </div>
++    </div>
++  );
++};
++
++export default Home;
+diff --git a/repository_after/src/providers/NextJsQueryParamProvider.tsx b/repository_after/src/providers/NextJsQueryParamProvider.tsx
+new file mode 100644
+index 000000000..7d6acc45f
+--- /dev/null
++++ b/repository_after/src/providers/NextJsQueryParamProvider.tsx
+@@ -0,0 +1,9 @@
++import React, { FunctionComponent, ReactNode } from "react";
++
++const NextJsQueryParamProvider: FunctionComponent<{ children: ReactNode }> = ({
++  children,
++}) => {
++  return <>{children}</>;
++};
++
++export default NextJsQueryParamProvider;
+diff --git a/repository_after/src/styles/globals.css b/repository_after/src/styles/globals.css
+new file mode 100644
+index 000000000..caecc838a
+--- /dev/null
++++ b/repository_after/src/styles/globals.css
+@@ -0,0 +1,12 @@
++@tailwind base;
++@tailwind components;
++@tailwind utilities;
++
++html,
++body {
++  height: 100%;
++}
++
++body {
++  font-family: "Poppins", sans-serif;
++}
+diff --git a/repository_after/src/tests/Index.test.tsx b/repository_after/src/tests/Index.test.tsx
+new file mode 100644
+index 000000000..b58f4de7b
+--- /dev/null
++++ b/repository_after/src/tests/Index.test.tsx
+@@ -0,0 +1,30 @@
++import React from "react";
++import { render, screen } from "@testing-library/react";
++
++import Index from "../pages/index";
++
++describe("Index (Home page)", () => {
++  it("renders the Regex Playground heading and description", () => {
++    render(<Index />);
++
++    expect(
++      screen.getByRole("heading", { name: /regex playground/i }),
++    ).toBeInTheDocument();
++    expect(
++      screen.getByText(/write, test, and debug regular expressions/i),
++    ).toBeInTheDocument();
++  });
++
++  it("renders the RegexPlayground with pattern and test text inputs", () => {
++    render(<Index />);
++
++    expect(screen.getByLabelText("Pattern")).toBeInTheDocument();
++    expect(screen.getByLabelText("Test Text")).toBeInTheDocument();
++  });
++
++  it("renders the client-side only footer", () => {
++    render(<Index />);
++
++    expect(screen.getByText(/client-side only/i)).toBeInTheDocument();
++  });
++});
+diff --git a/repository_after/src/tests/global.d.ts b/repository_after/src/tests/global.d.ts
+new file mode 100644
+index 000000000..5b6f034a1
+--- /dev/null
++++ b/repository_after/src/tests/global.d.ts
+@@ -0,0 +1 @@
++declare module 'react-highlight-within-textarea'
+diff --git a/repository_after/src/tests/tsconfig.json b/repository_after/src/tests/tsconfig.json
+new file mode 100644
+index 000000000..60c68318d
+--- /dev/null
++++ b/repository_after/src/tests/tsconfig.json
+@@ -0,0 +1,30 @@
++{
++  "compilerOptions": {
++    "target": "es5",
++    "lib": [
++      "dom",
++      "dom.iterable",
++      "esnext"
++    ],
++    "allowJs": true,
++    "skipLibCheck": true,
++    "strict": true,
++    "forceConsistentCasingInFileNames": true,
++    "noEmit": true,
++    "esModuleInterop": true,
++    "module": "commonjs",
++    "moduleResolution": "node",
++    "resolveJsonModule": true,
++    "isolatedModules": true,
++    "jsx": "react",
++    "alwaysStrict": true,
++  },
++  "include": [
++    "next-env.d.ts",
++    "**/*.ts",
++    "**/*.tsx"
++  ],
++  "exclude": [
++    "node_modules",
++  ]
++}
+diff --git a/repository_after/src/types/regex.ts b/repository_after/src/types/regex.ts
+new file mode 100644
+index 000000000..9bd6dc94d
+--- /dev/null
++++ b/repository_after/src/types/regex.ts
+@@ -0,0 +1,30 @@
++export interface GroupDef {
++  index: number;
++  name?: string;
++  parentIndex?: number | null;
++}
++
++export interface MatchGroup {
++  index: number;
++  name?: string;
++  text: string | null;
++  start?: number | null;
++  end?: number | null;
++  parentIndex?: number | null;
++}
++
++export interface MatchResult {
++  index: number;
++  end: number;
++  match: string;
++  groups: MatchGroup[];
++}
++
++export interface RegexWorkerResult {
++  ok: boolean;
++  error?: string;
++  matches: MatchResult[];
++  executionTimeMs: number;
++  truncated: boolean;
++  groupDefs: GroupDef[];
++}
+diff --git a/repository_after/src/utils/generateKey.ts b/repository_after/src/utils/generateKey.ts
+new file mode 100644
+index 000000000..fbaf727bb
+--- /dev/null
++++ b/repository_after/src/utils/generateKey.ts
+@@ -0,0 +1,3 @@
++// Return a random alphanumeric string 5 chars long
++// https://stackoverflow.com/a/33146982/2696867
++export default () => btoa(+new Date + '').slice(-7, -2)
+diff --git a/repository_after/src/utils/highlight.ts b/repository_after/src/utils/highlight.ts
+new file mode 100644
+index 000000000..4b19dc3d8
+--- /dev/null
++++ b/repository_after/src/utils/highlight.ts
+@@ -0,0 +1,112 @@
++export interface HighlightRange {
++  start: number;
++  end: number;
++}
++
++export type HighlightToken =
++  | { type: "text"; text: string; activeCount: number }
++  | { type: "marker" };
++
++export interface HighlightLayout {
++  tokens: HighlightToken[];
++}
++
++export const buildHighlightLayout = (
++  text: string,
++  ranges: HighlightRange[],
++): HighlightLayout => {
++  if (!text || ranges.length === 0) {
++    return { tokens: [{ type: "text", text, activeCount: 0 }] };
++  }
++
++  const events: Array<{ index: number; type: "start" | "end" }> = [];
++  const markers = new Map();
++  const maxIndex = text.length;
++
++  ranges.forEach((range) => {
++    const start = Math.max(0, Math.min(maxIndex, range.start));
++    const end = Math.max(0, Math.min(maxIndex, range.end));
++    if (start === end) {
++      const count = markers.get(start) || 0;
++      markers.set(start, count + 1);
++      return;
++    }
++    events.push({ index: start, type: "start" });
++    events.push({ index: end, type: "end" });
++  });
++
++  events.sort((a, b) => {
++    if (a.index !== b.index) return a.index - b.index;
++    if (a.type === b.type) return 0;
++    return a.type === "end" ? -1 : 1;
++  });
++
++  const tokens: HighlightToken[] = [];
++  let activeCount = 0;
++  let cursor = 0;
++  let markerIndex = 0;
++  const markerPositions = Array.from(markers.keys()).sort((a, b) => a - b);
++
++  const pushMarkersUpTo = (index: number) => {
++    while (
++      markerIndex < markerPositions.length &&
++      markerPositions[markerIndex] <= index
++    ) {
++      const position = markerPositions[markerIndex];
++      if (cursor < position) {
++        tokens.push({
++          type: "text",
++          text: text.slice(cursor, position),
++          activeCount,
++        });
++        cursor = position;
++      }
++      const count = markers.get(position) || 0;
++      for (let i = 0; i < count; i += 1) {
++        tokens.push({ type: "marker" });
++      }
++      markerIndex += 1;
++    }
++  };
++
++  let eventIndex = 0;
++  while (eventIndex < events.length) {
++    const currentIndex = events[eventIndex].index;
++    pushMarkersUpTo(currentIndex);
++
++    if (cursor < currentIndex) {
++      tokens.push({
++        type: "text",
++        text: text.slice(cursor, currentIndex),
++        activeCount,
++      });
++      cursor = currentIndex;
++    }
++
++    while (
++      eventIndex < events.length &&
++      events[eventIndex].index === currentIndex &&
++      events[eventIndex].type === "end"
++    ) {
++      activeCount = Math.max(0, activeCount - 1);
++      eventIndex += 1;
++    }
++
++    while (
++      eventIndex < events.length &&
++      events[eventIndex].index === currentIndex &&
++      events[eventIndex].type === "start"
++    ) {
++      activeCount += 1;
++      eventIndex += 1;
++    }
++  }
++
++  pushMarkersUpTo(text.length);
++
++  if (cursor < text.length) {
++    tokens.push({ type: "text", text: text.slice(cursor), activeCount });
++  }
++
++  return { tokens };
++};
+diff --git a/repository_after/src/utils/regexWorkerFactory.ts b/repository_after/src/utils/regexWorkerFactory.ts
+new file mode 100644
+index 000000000..bd98ed8d1
+--- /dev/null
++++ b/repository_after/src/utils/regexWorkerFactory.ts
+@@ -0,0 +1,239 @@
++import { RegexWorkerResult } from "../types/regex";
++
++export interface RegexWorkerRequest {
++  pattern: string;
++  flags: string;
++  text: string;
++  maxMatches: number;
++}
++
++const workerSource = `
++const supportsIndices = (() => {
++  try {
++    // eslint-disable-next-line no-new
++    new RegExp('', 'd')
++    return true
++  } catch (err) {
++    return false
++  }
++})()
++
++const advanceIndex = (str, index, unicode) => {
++  if (!unicode) return index + 1
++  const code = str.codePointAt(index)
++  if (code === undefined) return index + 1
++  return index + (code > 0xFFFF ? 2 : 1)
++}
++
++const parseCapturingGroups = (pattern) => {
++  const groups = []
++  const stack = []
++  let inClass = false
++  let escaped = false
++
++  const getParentIndex = () => {
++    for (let i = stack.length - 1; i >= 0; i -= 1) {
++      if (stack[i].capturingIndex) return stack[i].capturingIndex
++    }
++    return null
++  }
++
++  for (let i = 0; i < pattern.length; i += 1) {
++    const char = pattern[i]
++
++    if (escaped) {
++      escaped = false
++      continue
++    }
++
++    if (char === '\\') {
++      escaped = true
++      continue
++    }
++
++    if (char === '[' && !inClass) {
++      inClass = true
++      continue
++    }
++
++    if (char === ']' && inClass) {
++      inClass = false
++      continue
++    }
++
++    if (inClass) continue
++
++    if (char === '(') {
++      let capturing = true
++      let name
++
++      if (pattern[i + 1] === '?') {
++        const next = pattern[i + 2]
++        if (next === ':' || next === '=' || next === '!' || next === '>') {
++          capturing = false
++        } else if (next === '<') {
++          const lookahead = pattern[i + 3]
++          if (lookahead === '=' || lookahead === '!') {
++            capturing = false
++          } else {
++            capturing = true
++            let nameEnd = i + 3
++            while (nameEnd < pattern.length && pattern[nameEnd] !== '>') {
++              nameEnd += 1
++            }
++            if (nameEnd < pattern.length) {
++              name = pattern.slice(i + 3, nameEnd)
++              i = nameEnd
++            }
++          }
++        } else {
++          capturing = false
++        }
++      }
++
++      if (capturing) {
++        const index = groups.length + 1
++        const parentIndex = getParentIndex()
++        groups.push({ index, name, parentIndex })
++        stack.push({ capturingIndex: index })
++      } else {
++        stack.push({ capturingIndex: null })
++      }
++      continue
++    }
++
++    if (char === ')') {
++      if (stack.length > 0) {
++        stack.pop()
++      }
++    }
++  }
++
++  return groups
++}
++
++const buildGroups = (match, groupDefs, useIndices) => {
++  const indices = useIndices && match.indices ? match.indices : null
++  return groupDefs.map((def) => {
++    const value = match[def.index]
++    const indexTuple = indices && indices[def.index] ? indices[def.index] : null
++    return {
++      index: def.index,
++      name: def.name,
++      text: value === undefined ? null : value,
++      start: indexTuple ? indexTuple[0] : null,
++      end: indexTuple ? indexTuple[1] : null,
++      parentIndex: def.parentIndex ?? null,
++    }
++  })
++}
++
++self.onmessage = (event) => {
++  const { pattern, flags, text, maxMatches } = event.data
++
++  const groupDefs = parseCapturingGroups(pattern || '')
++
++  if (!pattern) {
++    self.postMessage({
++      ok: true,
++      error: null,
++      matches: [],
++      executionTimeMs: 0,
++      truncated: false,
++      groupDefs,
++    })
++    return
++  }
++
++  let re
++  let useIndices = false
++  const safeFlags = flags || ''
++
++  try {
++    if (supportsIndices && !safeFlags.includes('d')) {
++      re = new RegExp(pattern, safeFlags + 'd')
++      useIndices = true
++    } else {
++      re = new RegExp(pattern, safeFlags)
++      useIndices = supportsIndices && safeFlags.includes('d')
++    }
++  } catch (err) {
++    self.postMessage({
++      ok: false,
++      error: err && err.message ? err.message : 'Invalid regular expression',
++      matches: [],
++      executionTimeMs: 0,
++      truncated: false,
++      groupDefs,
++    })
++    return
++  }
++
++  const start = performance.now()
++  const matches = []
++  let truncated = false
++  const isIterative = re.global || re.sticky
++
++  if (!isIterative) {
++    const match = re.exec(text)
++    if (match) {
++      matches.push({
++        index: match.index,
++        end: match.index + match[0].length,
++        match: match[0],
++        groups: buildGroups(match, groupDefs, useIndices),
++      })
++    }
++  } else {
++    let match
++    while ((match = re.exec(text)) !== null) {
++      matches.push({
++        index: match.index,
++        end: match.index + match[0].length,
++        match: match[0],
++        groups: buildGroups(match, groupDefs, useIndices),
++      })
++
++      if (matches.length >= maxMatches) {
++        truncated = true
++        break
++      }
++
++      if (match[0].length === 0) {
++        re.lastIndex = advanceIndex(text, re.lastIndex, re.unicode)
++      }
++    }
++  }
++
++  const executionTimeMs = performance.now() - start
++
++  self.postMessage({
++    ok: true,
++    error: null,
++    matches,
++    executionTimeMs,
++    truncated,
++    groupDefs,
++  })
++}
++`;
++
++export const createRegexWorker = (): Worker => {
++  const blob = new Blob([workerSource], { type: "text/javascript" });
++  const url = URL.createObjectURL(blob);
++  return new Worker(url);
++};
++
++export const createRegexWorkerRequest = (
++  pattern: string,
++  flags: string,
++  text: string,
++  maxMatches: number,
++): RegexWorkerRequest => ({
++  pattern,
++  flags,
++  text,
++  maxMatches,
++});
++
++export type RegexWorkerResponse = RegexWorkerResult;

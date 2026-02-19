@@ -1,0 +1,8 @@
+services:
+  app:
+    build: .
+    volumes:
+      - .:/app
+    environment:
+      TEST_IMPLEMENTATION: ${TEST_IMPLEMENTATION:-}
+    command: python evaluation/evaluation.py

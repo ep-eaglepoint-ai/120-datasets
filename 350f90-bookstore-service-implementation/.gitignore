@@ -1,0 +1,6 @@
+evaluation/reports/**
+evaluation/reports/latest.json
+evaluation/reports/report.json
+# Rust build output
+repository_after/bookstore_backend/target/
+**/__pycache__/

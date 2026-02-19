@@ -1,0 +1,4300 @@
+diff --git a/repository_after/.env.local.example b/repository_after/.env.local.example
+new file mode 100644
+index 000000000..48ff24803
+--- /dev/null
++++ b/repository_after/.env.local.example
+@@ -0,0 +1,4 @@
++MONGODB_URI=mongodb://localhost:27017
++DB_NAME=study_planner
++
++NEXT_PUBLIC_API_URL=http://localhost:3000
+diff --git a/repository_before/.gitkeep b/repository_before/.gitkeep
+deleted file mode 100644
+index e69de29bb..000000000
+diff --git a/repository_after/next.config.js b/repository_after/next.config.js
+new file mode 100644
+index 000000000..8e8c7c134
+--- /dev/null
++++ b/repository_after/next.config.js
+@@ -0,0 +1,10 @@
++/** @type {import('next').NextConfig} */
++const nextConfig = {
++  reactStrictMode: true,
++  swcMinify: true,
++  experimental: {
++    serverActions: true,
++  },
++}
++
++module.exports = nextConfig
+diff --git a/repository_after/postcss.config.js b/repository_after/postcss.config.js
+new file mode 100644
+index 000000000..33ad091d2
+--- /dev/null
++++ b/repository_after/postcss.config.js
+@@ -0,0 +1,6 @@
++module.exports = {
++  plugins: {
++    tailwindcss: {},
++    autoprefixer: {},
++  },
++}
+diff --git a/repository_after/src/app/api/analytics/route.ts b/repository_after/src/app/api/analytics/route.ts
+new file mode 100644
+index 000000000..af1d6a358
+--- /dev/null
++++ b/repository_after/src/app/api/analytics/route.ts
+@@ -0,0 +1,47 @@
++/**
++ * Analytics API Route
++ * 
++ * GET /api/analytics/dashboard - Get dashboard statistics
++ * GET /api/analytics/streak - Get study streak information
++ */
++
++import { NextRequest, NextResponse } from 'next/server';
++import { getDashboardStats, calculateStudyStreak } from '@/services/analyticsService';
++import { ApiResponse } from '@/types';
++import { createErrorResponse } from '@/lib/utils';
++
++/**
++ * GET /api/analytics/dashboard
++ * Get comprehensive dashboard statistics
++ */
++export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse>> {
++  try {
++    const searchParams = request.nextUrl.searchParams;
++    const endpoint = searchParams.get('endpoint');
++
++    if (endpoint === 'streak') {
++      const streak = await calculateStudyStreak();
++      return NextResponse.json({
++        success: true,
++        data: streak,
++      });
++    }
++
++    // Default: return full dashboard stats
++    const stats = await getDashboardStats();
++
++    return NextResponse.json({
++      success: true,
++      data: stats,
++    });
++  } catch (error) {
++    console.error('Error fetching analytics:', error);
++    return NextResponse.json(
++      {
++        success: false,
++        ...createErrorResponse(error),
++      },
++      { status: 500 }
++    );
++  }
++}
+diff --git a/repository_after/src/app/api/reminders/[id]/route.ts b/repository_after/src/app/api/reminders/[id]/route.ts
+new file mode 100644
+index 000000000..79525bb78
+--- /dev/null
++++ b/repository_after/src/app/api/reminders/[id]/route.ts
+@@ -0,0 +1,150 @@
++/**
++ * Individual Reminder API Route
++ *
++ * GET /api/reminders/[id] - Get a reminder
++ * PATCH /api/reminders/[id] - Update a reminder
++ * DELETE /api/reminders/[id] - Delete a reminder
++ */
++
++import { NextRequest, NextResponse } from 'next/server';
++import { ZodError } from 'zod';
++import {
++  getReminderById,
++  updateReminder,
++  deleteReminder,
++} from '@/services/reminderService';
++import { ApiResponse } from '@/types';
++import { createErrorResponse, isValidObjectId } from '@/lib/utils';
++
++interface RouteParams {
++  params: { id: string };
++}
++
++/**
++ * GET /api/reminders/[id]
++ */
++export async function GET(
++  request: NextRequest,
++  { params }: RouteParams
++): Promise<NextResponse<ApiResponse>> {
++  try {
++    const { id } = params;
++
++    if (!isValidObjectId(id)) {
++      return NextResponse.json(
++        { success: false, error: 'Invalid reminder ID format' },
++        { status: 400 }
++      );
++    }
++
++    const reminder = await getReminderById(id);
++
++    if (!reminder) {
++      return NextResponse.json(
++        { success: false, error: 'Reminder not found' },
++        { status: 404 }
++      );
++    }
++
++    return NextResponse.json({ success: true, data: reminder });
++  } catch (error) {
++    console.error('Error fetching reminder:', error);
++    return NextResponse.json(
++      { success: false, ...createErrorResponse(error) },
++      { status: 500 }
++    );
++  }
++}
++
++/**
++ * PATCH /api/reminders/[id]
++ */
++export async function PATCH(
++  request: NextRequest,
++  { params }: RouteParams
++): Promise<NextResponse<ApiResponse>> {
++  try {
++    const { id } = params;
++
++    if (!isValidObjectId(id)) {
++      return NextResponse.json(
++        { success: false, error: 'Invalid reminder ID format' },
++        { status: 400 }
++      );
++    }
++
++    const body = await request.json();
++    const reminder = await updateReminder(id, body);
++
++    return NextResponse.json({
++      success: true,
++      data: reminder,
++      message: 'Reminder updated successfully',
++    });
++  } catch (error) {
++    console.error('Error updating reminder:', error);
++
++    if (error instanceof ZodError) {
++      return NextResponse.json(
++        {
++          success: false,
++          error: 'Validation failed',
++          details: error.flatten().fieldErrors as Record<string, string[]>,
++        },
++        { status: 400 }
++      );
++    }
++
++    if (error instanceof Error && error.message === 'Reminder not found') {
++      return NextResponse.json(
++        { success: false, error: error.message },
++        { status: 404 }
++      );
++    }
++
++    return NextResponse.json(
++      { success: false, ...createErrorResponse(error) },
++      { status: 500 }
++    );
++  }
++}
++
++/**
++ * DELETE /api/reminders/[id]
++ */
++export async function DELETE(
++  request: NextRequest,
++  { params }: RouteParams
++): Promise<NextResponse<ApiResponse>> {
++  try {
++    const { id } = params;
++
++    if (!isValidObjectId(id)) {
++      return NextResponse.json(
++        { success: false, error: 'Invalid reminder ID format' },
++        { status: 400 }
++      );
++    }
++
++    const deleted = await deleteReminder(id);
++
++    if (!deleted) {
++      return NextResponse.json(
++        { success: false, error: 'Reminder not found' },
++        { status: 404 }
++      );
++    }
++
++    return NextResponse.json({
++      success: true,
++      data: { id },
++      message: 'Reminder deleted successfully',
++    });
++  } catch (error) {
++    console.error('Error deleting reminder:', error);
++    return NextResponse.json(
++      { success: false, ...createErrorResponse(error) },
++      { status: 500 }
++    );
++  }
++}
+diff --git a/repository_after/src/app/api/reminders/route.ts b/repository_after/src/app/api/reminders/route.ts
+new file mode 100644
+index 000000000..502917843
+--- /dev/null
++++ b/repository_after/src/app/api/reminders/route.ts
+@@ -0,0 +1,106 @@
++/**
++ * Reminders API Route
++ *
++ * GET /api/reminders - List reminders
++ * POST /api/reminders - Create a reminder
++ */
++
++import { NextRequest, NextResponse } from 'next/server';
++import { ZodError } from 'zod';
++import { createReminder, getAllReminders } from '@/services/reminderService';
++import { ApiResponse } from '@/types';
++import { createErrorResponse } from '@/lib/utils';
++
++/**
++ * GET /api/reminders
++ * List reminders with optional filters
++ */
++export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse>> {
++  try {
++    const searchParams = request.nextUrl.searchParams;
++    const isActive = searchParams.get('isActive');
++    const subjectId = searchParams.get('subjectId') || undefined;
++    const upcoming = searchParams.get('upcoming') === 'true';
++    const page = parseInt(searchParams.get('page') || '1', 10);
++    const limit = parseInt(searchParams.get('limit') || '100', 10);
++    const sortBy = (searchParams.get('sortBy') as 'triggerTime' | 'createdAt') || 'triggerTime';
++    const sortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || 'asc';
++
++    const reminders = await getAllReminders({
++      isActive: isActive === 'true' ? true : isActive === 'false' ? false : undefined,
++      subjectId,
++      upcoming,
++      page,
++      limit,
++      sortBy,
++      sortOrder,
++    });
++
++    return NextResponse.json({
++      success: true,
++      data: reminders,
++    });
++  } catch (error) {
++    console.error('Error fetching reminders:', error);
++    return NextResponse.json(
++      {
++        success: false,
++        ...createErrorResponse(error),
++      },
++      { status: 500 }
++    );
++  }
++}
++
++/**
++ * POST /api/reminders
++ * Create a new reminder
++ */
++export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse>> {
++  try {
++    const body = await request.json();
++    const reminder = await createReminder(body);
++
++    return NextResponse.json(
++      {
++        success: true,
++        data: reminder,
++        message: 'Reminder created successfully',
++      },
++      { status: 201 }
++    );
++  } catch (error) {
++    console.error('Error creating reminder:', error);
++
++    if (error instanceof ZodError) {
++      return NextResponse.json(
++        {
++          success: false,
++          error: 'Validation failed',
++          details: error.flatten().fieldErrors as Record<string, string[]>,
++        },
++        { status: 400 }
++      );
++    }
++
++    if (error instanceof Error) {
++      if (error.message === 'Subject not found') {
++        return NextResponse.json(
++          {
++            success: false,
++            error: error.message,
++          },
++          { status: 404 }
++        );
++      }
++    }
++
++    return NextResponse.json(
++      {
++        success: false,
++        ...createErrorResponse(error),
++      },
++      { status: 500 }
++    );
++  }
++}
+diff --git a/repository_after/src/app/api/sessions/[id]/route.ts b/repository_after/src/app/api/sessions/[id]/route.ts
+new file mode 100644
+index 000000000..ae929269e
+--- /dev/null
++++ b/repository_after/src/app/api/sessions/[id]/route.ts
+@@ -0,0 +1,185 @@
++/**
++ * Individual Study Session API Route
++ * 
++ * GET /api/sessions/[id] - Get a specific study session
++ * PUT /api/sessions/[id] - Update a study session
++ * DELETE /api/sessions/[id] - Delete a study session
++ */
++
++import { NextRequest, NextResponse } from 'next/server';
++import { ZodError } from 'zod';
++import {
++  getStudySessionById,
++  updateStudySession,
++  deleteStudySession,
++} from '@/services/studySessionService';
++import { ApiResponse } from '@/types';
++import { createErrorResponse, isValidObjectId } from '@/lib/utils';
++
++interface RouteParams {
++  params: {
++    id: string;
++  };
++}
++
++/**
++ * GET /api/sessions/[id]
++ * Get a specific study session by ID
++ */
++export async function GET(
++  request: NextRequest,
++  { params }: RouteParams
++): Promise<NextResponse<ApiResponse>> {
++  try {
++    const { id } = params;
++
++    if (!isValidObjectId(id)) {
++      return NextResponse.json(
++        {
++          success: false,
++          error: 'Invalid session ID format',
++        },
++        { status: 400 }
++      );
++    }
++
++    const session = await getStudySessionById(id);
++
++    if (!session) {
++      return NextResponse.json(
++        {
++          success: false,
++          error: 'Study session not found',
++        },
++        { status: 404 }
++      );
++    }
++
++    return NextResponse.json({
++      success: true,
++      data: session,
++    });
++  } catch (error) {
++    console.error('Error fetching study session:', error);
++    return NextResponse.json(
++      {
++        success: false,
++        ...createErrorResponse(error),
++      },
++      { status: 500 }
++    );
++  }
++}
++
++/**
++ * PUT /api/sessions/[id]
++ * Update a study session
++ */
++export async function PUT(
++  request: NextRequest,
++  { params }: RouteParams
++): Promise<NextResponse<ApiResponse>> {
++  try {
++    const { id } = params;
++
++    if (!isValidObjectId(id)) {
++      return NextResponse.json(
++        {
++          success: false,
++          error: 'Invalid session ID format',
++        },
++        { status: 400 }
++      );
++    }
++
++    const body = await request.json();
++    const session = await updateStudySession(id, body);
++
++    return NextResponse.json({
++      success: true,
++      data: session,
++      message: 'Study session updated successfully',
++    });
++  } catch (error) {
++    console.error('Error updating study session:', error);
++
++    if (error instanceof ZodError) {
++      return NextResponse.json(
++        {
++          success: false,
++          error: 'Validation failed',
++          details: error.flatten().fieldErrors as Record<string, string[]>,
++        },
++        { status: 400 }
++      );
++    }
++
++    if (error instanceof Error && error.message === 'Study session not found') {
++      return NextResponse.json(
++        {
++          success: false,
++          error: error.message,
++        },
++        { status: 404 }
++      );
++    }
++
++    return NextResponse.json(
++      {
++        success: false,
++        ...createErrorResponse(error),
++      },
++      { status: 500 }
++    );
++  }
++}
++
++/**
++ * DELETE /api/sessions/[id]
++ * Delete a study session
++ */
++export async function DELETE(
++  request: NextRequest,
++  { params }: RouteParams
++): Promise<NextResponse<ApiResponse>> {
++  try {
++    const { id } = params;
++
++    if (!isValidObjectId(id)) {
++      return NextResponse.json(
++        {
++          success: false,
++          error: 'Invalid session ID format',
++        },
++        { status: 400 }
++      );
++    }
++
++    const deleted = await deleteStudySession(id);
++
++    if (!deleted) {
++      return NextResponse.json(
++        {
++          success: false,
++          error: 'Study session not found',
++        },
++        { status: 404 }
++      );
++    }
++
++    return NextResponse.json({
++      success: true,
++      data: { id },
++      message: 'Study session deleted successfully',
++    });
++  } catch (error) {
++    console.error('Error deleting study session:', error);
++    return NextResponse.json(
++      {
++        success: false,
++        ...createErrorResponse(error),
++      },
++      { status: 500 }
++    );
++  }
++}
+diff --git a/repository_after/src/app/api/sessions/route.ts b/repository_after/src/app/api/sessions/route.ts
+new file mode 100644
+index 000000000..4a6e082e9
+--- /dev/null
++++ b/repository_after/src/app/api/sessions/route.ts
+@@ -0,0 +1,120 @@
++/**
++ * Study Sessions API Route
++ * 
++ * GET /api/sessions - List all study sessions
++ * POST /api/sessions - Create a new study session
++ */
++
++import { NextRequest, NextResponse } from 'next/server';
++import { ZodError } from 'zod';
++import { createStudySession, getAllStudySessions } from '@/services/studySessionService';
++import { ApiResponse } from '@/types';
++import { createErrorResponse } from '@/lib/utils';
++
++/**
++ * GET /api/sessions
++ * List all study sessions with optional filters
++ */
++export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse>> {
++  try {
++    const searchParams = request.nextUrl.searchParams;
++    const subjectId = searchParams.get('subjectId') || undefined;
++    const startDate = searchParams.get('startDate') 
++      ? new Date(searchParams.get('startDate')!) 
++      : undefined;
++    const endDate = searchParams.get('endDate') 
++      ? new Date(searchParams.get('endDate')!) 
++      : undefined;
++    const page = parseInt(searchParams.get('page') || '1', 10);
++    const limit = parseInt(searchParams.get('limit') || '100', 10);
++    const sortBy = (searchParams.get('sortBy') as 'timestamp' | 'duration' | 'createdAt') || 'timestamp';
++    const sortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc';
++
++    const sessions = await getAllStudySessions({
++      subjectId,
++      startDate,
++      endDate,
++      page,
++      limit,
++      sortBy,
++      sortOrder,
++    });
++
++    return NextResponse.json({
++      success: true,
++      data: sessions,
++    });
++  } catch (error) {
++    console.error('Error fetching study sessions:', error);
++    return NextResponse.json(
++      {
++        success: false,
++        ...createErrorResponse(error),
++      },
++      { status: 500 }
++    );
++  }
++}
++
++/**
++ * POST /api/sessions
++ * Create a new study session
++ */
++export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse>> {
++  try {
++    const body = await request.json();
++    const session = await createStudySession(body);
++
++    return NextResponse.json(
++      {
++        success: true,
++        data: session,
++        message: 'Study session created successfully',
++      },
++      { status: 201 }
++    );
++  } catch (error) {
++    console.error('Error creating study session:', error);
++
++    if (error instanceof ZodError) {
++      return NextResponse.json(
++        {
++          success: false,
++          error: 'Validation failed',
++          details: error.flatten().fieldErrors as Record<string, string[]>,
++        },
++        { status: 400 }
++      );
++    }
++
++    if (error instanceof Error) {
++      if (error.message === 'Subject not found') {
++        return NextResponse.json(
++          {
++            success: false,
++            error: error.message,
++          },
++          { status: 404 }
++        );
++      }
++
++      if (error.message.includes('Duplicate session submission')) {
++        return NextResponse.json(
++          {
++            success: false,
++            error: error.message,
++          },
++          { status: 429 }
++        );
++      }
++    }
++
++    return NextResponse.json(
++      {
++        success: false,
++        ...createErrorResponse(error),
++      },
++      { status: 500 }
++    );
++  }
++}
+diff --git a/repository_after/src/app/api/subjects/[id]/route.ts b/repository_after/src/app/api/subjects/[id]/route.ts
+new file mode 100644
+index 000000000..558effb67
+--- /dev/null
++++ b/repository_after/src/app/api/subjects/[id]/route.ts
+@@ -0,0 +1,197 @@
++/**
++ * Individual Subject API Route
++ * 
++ * GET /api/subjects/[id] - Get a specific subject
++ * PUT /api/subjects/[id] - Update a subject
++ * DELETE /api/subjects/[id] - Delete a subject
++ */
++
++import { NextRequest, NextResponse } from 'next/server';
++import { ZodError } from 'zod';
++import {
++  getSubjectById,
++  updateSubject,
++  deleteSubject,
++} from '@/services/subjectService';
++import { ApiResponse } from '@/types';
++import { createErrorResponse, isValidObjectId } from '@/lib/utils';
++
++interface RouteParams {
++  params: {
++    id: string;
++  };
++}
++
++/**
++ * GET /api/subjects/[id]
++ * Get a specific subject by ID
++ */
++export async function GET(
++  request: NextRequest,
++  { params }: RouteParams
++): Promise<NextResponse<ApiResponse>> {
++  try {
++    const { id } = params;
++
++    if (!isValidObjectId(id)) {
++      return NextResponse.json(
++        {
++          success: false,
++          error: 'Invalid subject ID format',
++        },
++        { status: 400 }
++      );
++    }
++
++    const subject = await getSubjectById(id);
++
++    if (!subject) {
++      return NextResponse.json(
++        {
++          success: false,
++          error: 'Subject not found',
++        },
++        { status: 404 }
++      );
++    }
++
++    return NextResponse.json({
++      success: true,
++      data: subject,
++    });
++  } catch (error) {
++    console.error('Error fetching subject:', error);
++    return NextResponse.json(
++      {
++        success: false,
++        ...createErrorResponse(error),
++      },
++      { status: 500 }
++    );
++  }
++}
++
++/**
++ * PUT /api/subjects/[id]
++ * Update a subject
++ */
++export async function PUT(
++  request: NextRequest,
++  { params }: RouteParams
++): Promise<NextResponse<ApiResponse>> {
++  try {
++    const { id } = params;
++
++    if (!isValidObjectId(id)) {
++      return NextResponse.json(
++        {
++          success: false,
++          error: 'Invalid subject ID format',
++        },
++        { status: 400 }
++      );
++    }
++
++    const body = await request.json();
++    const subject = await updateSubject(id, body);
++
++    return NextResponse.json({
++      success: true,
++      data: subject,
++      message: 'Subject updated successfully',
++    });
++  } catch (error) {
++    console.error('Error updating subject:', error);
++
++    if (error instanceof ZodError) {
++      return NextResponse.json(
++        {
++          success: false,
++          error: 'Validation failed',
++          details: error.flatten().fieldErrors as Record<string, string[]>,
++        },
++        { status: 400 }
++      );
++    }
++
++    if (error instanceof Error) {
++      if (error.message === 'Subject not found') {
++        return NextResponse.json(
++          {
++            success: false,
++            error: error.message,
++          },
++          { status: 404 }
++        );
++      }
++
++      if (error.message.includes('already exists')) {
++        return NextResponse.json(
++          {
++            success: false,
++            error: error.message,
++          },
++          { status: 409 }
++        );
++      }
++    }
++
++    return NextResponse.json(
++      {
++        success: false,
++        ...createErrorResponse(error),
++      },
++      { status: 500 }
++    );
++  }
++}
++
++/**
++ * DELETE /api/subjects/[id]
++ * Delete a subject
++ */
++export async function DELETE(
++  request: NextRequest,
++  { params }: RouteParams
++): Promise<NextResponse<ApiResponse>> {
++  try {
++    const { id } = params;
++
++    if (!isValidObjectId(id)) {
++      return NextResponse.json(
++        {
++          success: false,
++          error: 'Invalid subject ID format',
++        },
++        { status: 400 }
++      );
++    }
++
++    const deleted = await deleteSubject(id);
++
++    if (!deleted) {
++      return NextResponse.json(
++        {
++          success: false,
++          error: 'Subject not found',
++        },
++        { status: 404 }
++      );
++    }
++
++    return NextResponse.json({
++      success: true,
++      data: { id },
++      message: 'Subject deleted successfully',
++    });
++  } catch (error) {
++    console.error('Error deleting subject:', error);
++    return NextResponse.json(
++      {
++        success: false,
++        ...createErrorResponse(error),
++      },
++      { status: 500 }
++    );
++  }
++}
+diff --git a/repository_after/src/app/api/subjects/route.ts b/repository_after/src/app/api/subjects/route.ts
+new file mode 100644
+index 000000000..7316bb2b8
+--- /dev/null
++++ b/repository_after/src/app/api/subjects/route.ts
+@@ -0,0 +1,93 @@
++/**
++ * Subjects API Route
++ * 
++ * GET /api/subjects - List all subjects
++ * POST /api/subjects - Create a new subject
++ */
++
++import { NextRequest, NextResponse } from 'next/server';
++import { ZodError } from 'zod';
++import { createSubject, getAllSubjects } from '@/services/subjectService';
++import { ApiResponse } from '@/types';
++import { createErrorResponse } from '@/lib/utils';
++
++/**
++ * GET /api/subjects
++ * List all subjects with optional pagination and sorting
++ */
++export async function GET(request: NextRequest): Promise<NextResponse<ApiResponse>> {
++  try {
++    const searchParams = request.nextUrl.searchParams;
++    const page = parseInt(searchParams.get('page') || '1', 10);
++    const limit = parseInt(searchParams.get('limit') || '100', 10);
++    const sortBy = (searchParams.get('sortBy') as 'name' | 'createdAt' | 'updatedAt') || 'createdAt';
++    const sortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc';
++
++    const subjects = await getAllSubjects({ page, limit, sortBy, sortOrder });
++
++    return NextResponse.json({
++      success: true,
++      data: subjects,
++    });
++  } catch (error) {
++    console.error('Error fetching subjects:', error);
++    return NextResponse.json(
++      {
++        success: false,
++        ...createErrorResponse(error),
++      },
++      { status: 500 }
++    );
++  }
++}
++
++/**
++ * POST /api/subjects
++ * Create a new subject
++ */
++export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse>> {
++  try {
++    const body = await request.json();
++    const subject = await createSubject(body);
++
++    return NextResponse.json(
++      {
++        success: true,
++        data: subject,
++        message: 'Subject created successfully',
++      },
++      { status: 201 }
++    );
++  } catch (error) {
++    console.error('Error creating subject:', error);
++
++    if (error instanceof ZodError) {
++      return NextResponse.json(
++        {
++          success: false,
++          error: 'Validation failed',
++          details: error.flatten().fieldErrors as Record<string, string[]>,
++        },
++        { status: 400 }
++      );
++    }
++
++    if (error instanceof Error && error.message.includes('already exists')) {
++      return NextResponse.json(
++        {
++          success: false,
++          error: error.message,
++        },
++        { status: 409 }
++      );
++    }
++
++    return NextResponse.json(
++      {
++        success: false,
++        ...createErrorResponse(error),
++      },
++      { status: 500 }
++    );
++  }
++}
+diff --git a/repository_after/src/app/globals.css b/repository_after/src/app/globals.css
+new file mode 100644
+index 000000000..6584efe3c
+--- /dev/null
++++ b/repository_after/src/app/globals.css
+@@ -0,0 +1,247 @@
++@tailwind base;
++@tailwind components;
++@tailwind utilities;
++
++:root {
++  --background: #0f172a;
++  --foreground: #f1f5f9;
++  --card: #1e293b;
++  --card-hover: #334155;
++  --border: #334155;
++  --primary: #0ea5e9;
++  --primary-hover: #0284c7;
++  --success: #10b981;
++  --warning: #f59e0b;
++  --error: #ef4444;
++}
++
++* {
++  box-sizing: border-box;
++  padding: 0;
++  margin: 0;
++}
++
++html,
++body {
++  max-width: 100vw;
++  overflow-x: hidden;
++  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
++    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
++    sans-serif;
++  -webkit-font-smoothing: antialiased;
++  -moz-osx-font-smoothing: grayscale;
++}
++
++body {
++  color: var(--foreground);
++  background: var(--background);
++  min-height: 100vh;
++}
++
++a {
++  color: inherit;
++  text-decoration: none;
++}
++
++button {
++  font-family: inherit;
++}
++
++/* Custom scrollbar */
++::-webkit-scrollbar {
++  width: 8px;
++  height: 8px;
++}
++
++::-webkit-scrollbar-track {
++  background: var(--background);
++}
++
++::-webkit-scrollbar-thumb {
++  background: var(--border);
++  border-radius: 4px;
++}
++
++::-webkit-scrollbar-thumb:hover {
++  background: var(--card-hover);
++}
++
++/* Animations */
++@keyframes fadeIn {
++  from {
++    opacity: 0;
++  }
++  to {
++    opacity: 1;
++  }
++}
++
++@keyframes slideUp {
++  from {
++    transform: translateY(10px);
++    opacity: 0;
++  }
++  to {
++    transform: translateY(0);
++    opacity: 1;
++  }
++}
++
++@keyframes pulse {
++  0%, 100% {
++    opacity: 1;
++  }
++  50% {
++    opacity: 0.5;
++  }
++}
++
++.animate-fade-in {
++  animation: fadeIn 0.3s ease-in-out;
++}
++
++.animate-slide-up {
++  animation: slideUp 0.3s ease-out;
++}
++
++.animate-pulse {
++  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
++}
++
++/* Utility classes */
++.card {
++  background: var(--card);
++  border: 1px solid var(--border);
++  border-radius: 12px;
++  padding: 1.5rem;
++  transition: all 0.2s ease;
++}
++
++.card:hover {
++  background: var(--card-hover);
++  transform: translateY(-2px);
++  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
++}
++
++.btn {
++  padding: 0.75rem 1.5rem;
++  border-radius: 8px;
++  font-weight: 500;
++  transition: all 0.2s ease;
++  cursor: pointer;
++  border: none;
++  font-size: 0.875rem;
++}
++
++.btn-primary {
++  background: var(--primary);
++  color: white;
++}
++
++.btn-primary:hover {
++  background: var(--primary-hover);
++  transform: translateY(-1px);
++  box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
++}
++
++.btn-secondary {
++  background: var(--card);
++  color: var(--foreground);
++  border: 1px solid var(--border);
++}
++
++.btn-secondary:hover {
++  background: var(--card-hover);
++}
++
++.btn-danger {
++  background: var(--error);
++  color: white;
++}
++
++.btn-danger:hover {
++  background: #dc2626;
++}
++
++.input {
++  width: 100%;
++  padding: 0.75rem 1rem;
++  background: var(--card);
++  border: 1px solid var(--border);
++  border-radius: 8px;
++  color: var(--foreground);
++  font-size: 0.875rem;
++  transition: all 0.2s ease;
++}
++
++.input:focus {
++  outline: none;
++  border-color: var(--primary);
++  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
++}
++
++.input::placeholder {
++  color: #64748b;
++}
++
++.label {
++  display: block;
++  margin-bottom: 0.5rem;
++  font-weight: 500;
++  font-size: 0.875rem;
++  color: #cbd5e1;
++}
++
++.error-message {
++  color: var(--error);
++  font-size: 0.75rem;
++  margin-top: 0.25rem;
++}
++
++.success-message {
++  color: var(--success);
++  font-size: 0.75rem;
++  margin-top: 0.25rem;
++}
++
++/* Loading spinner */
++.spinner {
++  border: 2px solid var(--border);
++  border-top: 2px solid var(--primary);
++  border-radius: 50%;
++  width: 20px;
++  height: 20px;
++  animation: spin 0.8s linear infinite;
++}
++
++@keyframes spin {
++  0% {
++    transform: rotate(0deg);
++  }
++  100% {
++    transform: rotate(360deg);
++  }
++}
++
++/* Empty state */
++.empty-state {
++  text-align: center;
++  padding: 3rem 1rem;
++  color: #64748b;
++}
++
++.empty-state-icon {
++  font-size: 3rem;
++  margin-bottom: 1rem;
++  opacity: 0.5;
++}
++
++.empty-state-text {
++  font-size: 1rem;
++  margin-bottom: 0.5rem;
++}
++
++.empty-state-subtext {
++  font-size: 0.875rem;
++  color: #475569;
++}
+diff --git a/repository_after/src/app/layout.tsx b/repository_after/src/app/layout.tsx
+new file mode 100644
+index 000000000..22f57474d
+--- /dev/null
++++ b/repository_after/src/app/layout.tsx
+@@ -0,0 +1,26 @@
++import type { Metadata } from 'next';
++import './globals.css';
++
++export const metadata: Metadata = {
++  title: 'Study Planner - Offline-First Learning Tracker',
++  description: 'Track your study sessions, manage subjects, and maintain study streaks with a fully offline-first study planner.',
++  keywords: ['study planner', 'learning tracker', 'offline-first', 'productivity'],
++  authors: [{ name: 'Study Planner Team' }],
++  viewport: 'width=device-width, initial-scale=1',
++  themeColor: '#0ea5e9',
++};
++
++export default function RootLayout({
++  children,
++}: {
++  children: React.ReactNode;
++}) {
++  return (
++    <html lang="en">
++      <head>
++        <meta charSet="utf-8" />
++      </head>
++      <body>{children}</body>
++    </html>
++  );
++}
+diff --git a/repository_after/src/app/page.tsx b/repository_after/src/app/page.tsx
+new file mode 100644
+index 000000000..49715ec72
+--- /dev/null
++++ b/repository_after/src/app/page.tsx
+@@ -0,0 +1,430 @@
++'use client';
++
++import { useEffect, useState } from 'react';
++import { DashboardStats, SubjectResponse, CreateStudySessionInput, CreateSubjectInput } from '@/types';
++import { OfflineManager } from '@/lib/offline-manager';
++
++export default function HomePage() {
++  const [stats, setStats] = useState<DashboardStats | null>(null);
++  const [subjects, setSubjects] = useState<SubjectResponse[]>([]);
++  const [loading, setLoading] = useState(true);
++  const [error, setError] = useState<string | null>(null);
++  const [isOffline, setIsOffline] = useState(false);
++  
++  // UI States
++  const [showSessionModal, setShowSessionModal] = useState(false);
++  const [showSubjectModal, setShowSubjectModal] = useState(false);
++  const [isSubmitting, setIsSubmitting] = useState(false);
++  const [syncCount, setSyncCount] = useState(0);
++
++  useEffect(() => {
++    fetchDashboardStats();
++    fetchSubjects();
++    
++    const handleOnline = () => {
++      setIsOffline(false);
++      OfflineManager.processSyncQueue().then(() => {
++        fetchDashboardStats();
++        fetchSubjects();
++      });
++    };
++    const handleOffline = () => setIsOffline(true);
++
++    window.addEventListener('online', handleOnline);
++    window.addEventListener('offline', handleOffline);
++    setIsOffline(!navigator.onLine);
++
++    // Initial sync attempt if online
++    if (navigator.onLine) {
++      OfflineManager.processSyncQueue();
++    }
++
++    return () => {
++      window.removeEventListener('online', handleOnline);
++      window.removeEventListener('offline', handleOffline);
++    };
++  }, []);
++
++  const fetchSubjects = async () => {
++    try {
++      const response = await fetch('/api/subjects');
++      const data = await response.json();
++      if (data.success) {
++        setSubjects(data.data);
++        OfflineManager.cacheData(OfflineManager.KEYS.CACHED_SUBJECTS, data.data);
++      }
++    } catch (err) {
++      const cached = OfflineManager.getCachedData<SubjectResponse[]>(OfflineManager.KEYS.CACHED_SUBJECTS);
++      if (cached) setSubjects(cached);
++    }
++  };
++
++  const fetchDashboardStats = async () => {
++    try {
++      setLoading(stats ? false : true);
++      const response = await fetch('/api/analytics');
++      const data = await response.json();
++
++      if (data.success) {
++        setStats(data.data);
++        OfflineManager.cacheData(OfflineManager.KEYS.CACHED_STATS, data.data);
++      } else {
++        if (!stats) setError(data.error || 'Failed to load dashboard');
++      }
++    } catch (err) {
++      const cached = OfflineManager.getCachedData<DashboardStats>(OfflineManager.KEYS.CACHED_STATS);
++      if (cached) {
++        setStats(cached);
++      } else if (!stats) {
++        setError('Failed to connect to server');
++      }
++    } finally {
++      setLoading(false);
++    }
++  };
++
++  const handleLogSession = async (e: React.FormEvent<HTMLFormElement>) => {
++    e.preventDefault();
++    const formData = new FormData(e.currentTarget);
++    const payload: CreateStudySessionInput = {
++      subjectId: formData.get('subjectId') as string,
++      duration: parseInt(formData.get('duration') as string) * 60, // UI is in minutes
++      timestamp: new Date(),
++      notes: formData.get('notes') as string || undefined,
++    };
++
++    setIsSubmitting(true);
++    try {
++      if (!navigator.onLine) {
++        OfflineManager.addToSyncQueue(OfflineManager.KEYS.PENDING_SESSIONS, payload);
++        alert('Saved locally. Will sync when online.');
++        setShowSessionModal(false);
++        return;
++      }
++
++      const response = await fetch('/api/sessions', {
++        method: 'POST',
++        headers: { 'Content-Type': 'application/json' },
++        body: JSON.stringify(payload),
++      });
++      const data = await response.json();
++      if (data.success) {
++        fetchDashboardStats();
++        setShowSessionModal(false);
++      } else {
++        alert(data.error || 'Failed to log session');
++      }
++    } catch (error) {
++      OfflineManager.addToSyncQueue(OfflineManager.KEYS.PENDING_SESSIONS, payload);
++      alert('Network error. Saved locally for later sync.');
++      setShowSessionModal(false);
++    } finally {
++      setIsSubmitting(false);
++    }
++  };
++
++  const handleAddSubject = async (e: React.FormEvent<HTMLFormElement>) => {
++    e.preventDefault();
++    const formData = new FormData(e.currentTarget);
++    const payload: CreateSubjectInput = {
++      name: formData.get('name') as string,
++      description: formData.get('description') as string || undefined,
++    };
++
++    setIsSubmitting(true);
++    try {
++      if (!navigator.onLine) {
++        OfflineManager.addToSyncQueue(OfflineManager.KEYS.PENDING_SUBJECTS, payload);
++        alert('Subject saved locally.');
++        setShowSubjectModal(false);
++        return;
++      }
++
++      const response = await fetch('/api/subjects', {
++        method: 'POST',
++        headers: { 'Content-Type': 'application/json' },
++        body: JSON.stringify(payload),
++      });
++      const data = await response.json();
++      if (data.success) {
++        fetchSubjects();
++        setShowSubjectModal(false);
++      } else {
++        alert(data.error || 'Failed to add subject');
++      }
++    } catch (error) {
++      OfflineManager.addToSyncQueue(OfflineManager.KEYS.PENDING_SUBJECTS, payload);
++      alert('Saved locally.');
++      setShowSubjectModal(false);
++    } finally {
++      setIsSubmitting(false);
++    }
++  };
++
++  const formatDuration = (seconds: number): string => {
++    const hours = Math.floor(seconds / 3600);
++    const minutes = Math.floor((seconds % 3600) / 60);
++    
++    if (hours > 0) {
++      return `${hours}h ${minutes}m`;
++    }
++    return `${minutes}m`;
++  };
++
++  if (loading) {
++    return (
++      <div className="min-h-screen flex items-center justify-center">
++        <div className="text-center">
++          <div className="spinner mx-auto mb-4" style={{ width: '40px', height: '40px' }}></div>
++          <p className="text-slate-400">Loading your study dashboard...</p>
++        </div>
++      </div>
++    );
++  }
++
++  if (error) {
++    return (
++      <div className="min-h-screen flex items-center justify-center">
++        <div className="card max-w-md text-center">
++          <h2 className="text-xl font-bold text-red-400 mb-2">Error</h2>
++          <p className="text-slate-400 mb-4">{error}</p>
++          <button onClick={fetchDashboardStats} className="btn btn-primary">
++            Retry
++          </button>
++        </div>
++      </div>
++    );
++  }
++
++  return (
++    <main className="min-h-screen p-4 md:p-8">
++      <div className="max-w-7xl mx-auto">
++        {/* Header */}
++        <header className="mb-8 animate-fade-in flex flex-col md:flex-row md:items-end justify-between gap-4">
++          <div>
++            <div className="flex items-center gap-3 mb-2">
++              <h1 className="text-4xl font-bold bg-gradient-to-r from-primary-400 to-primary-600 bg-clip-text text-transparent">
++                Study Planner
++              </h1>
++              {isOffline && (
++                <span className="px-2 py-1 rounded bg-slate-800 text-orange-400 text-xs font-bold border border-orange-400/30 animate-pulse">
++                  OFFLINE MODE
++                </span>
++              )}
++            </div>
++            <p className="text-slate-400">Track your learning journey, maintain streaks, and achieve your goals</p>
++          </div>
++          <div className="flex gap-2">
++            <button onClick={() => setShowSubjectModal(true)} className="btn btn-secondary flex items-center gap-2">
++              <span>＋</span> Subject
++            </button>
++            <button onClick={() => setShowSessionModal(true)} className="btn btn-primary flex items-center gap-2">
++              <span>⏱</span> Log Session
++            </button>
++          </div>
++        </header>
++
++        {/* Sync Status Banner */}
++        {isOffline && (
++          <div className="mb-6 p-4 rounded-xl bg-orange-400/10 border border-orange-400/20 text-orange-400 text-sm animate-slide-up flex items-center gap-3">
++            <span className="text-lg">📡</span>
++            <div>
++              <strong>Working Offline:</strong> Your progress is being saved to your device. 
++              We'll sync everything automatically when you're back online.
++            </div>
++          </div>
++        )}
++
++        {/* Stats Grid */}
++        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 animate-slide-up">
++          {/* Total Study Time */}
++          <div className="card">
++            <div className="text-sm text-slate-400 mb-1">Total Study Time</div>
++            <div className="text-3xl font-bold text-primary-400">
++              {stats ? formatDuration(stats.totalStudyTime) : '0m'}
++            </div>
++            <div className="text-xs text-slate-500 mt-1">
++              {stats?.totalSessions || 0} sessions
++            </div>
++          </div>
++
++          {/* Current Streak */}
++          <div className="card">
++            <div className="text-sm text-slate-400 mb-1">Current Streak</div>
++            <div className="text-3xl font-bold text-orange-400">
++              {stats?.streak.currentStreak || 0} days
++            </div>
++            <div className="text-xs text-slate-500 mt-1">
++              Longest: {stats?.streak.longestStreak || 0} days
++            </div>
++          </div>
++
++          {/* Today's Progress */}
++          <div className="card">
++            <div className="text-sm text-slate-400 mb-1">Today</div>
++            <div className="text-3xl font-bold text-green-400">
++              {stats ? formatDuration(stats.todayStudyTime) : '0m'}
++            </div>
++            <div className="text-xs text-slate-500 mt-1">
++              {stats?.todaySessions || 0} sessions
++            </div>
++          </div>
++
++          {/* Total Subjects */}
++          <div className="card">
++            <div className="text-sm text-slate-400 mb-1">Active Subjects</div>
++            <div className="text-3xl font-bold text-purple-400">
++              {stats?.totalSubjects || 0}
++            </div>
++            <div className="text-xs text-slate-500 mt-1">
++              Learning areas
++            </div>
++          </div>
++        </div>
++
++        {/* Recent Sessions */}
++        <div className="card mb-8 animate-slide-up" style={{ animationDelay: '0.1s' }}>
++          <h2 className="text-xl font-bold mb-4">Recent Sessions</h2>
++          {stats && stats.recentSessions.length > 0 ? (
++            <div className="space-y-3">
++              {stats.recentSessions.slice(0, 5).map((session: any) => (
++                <div
++                  key={session.id}
++                  className="flex items-center justify-between p-3 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
++                >
++                  <div className="flex-1">
++                    <div className="font-medium text-slate-200">
++                      {session.subjectName || 'Unknown Subject'}
++                    </div>
++                    <div className="text-sm text-slate-400">
++                      {new Date(session.timestamp).toLocaleDateString()} at{' '}
++                      {new Date(session.timestamp).toLocaleTimeString([], {
++                        hour: '2-digit',
++                        minute: '2-digit',
++                      })}
++                    </div>
++                  </div>
++                  <div className="text-right">
++                    <div className="font-bold text-primary-400">
++                      {formatDuration(session.duration)}
++                    </div>
++                  </div>
++                </div>
++              ))}
++            </div>
++          ) : (
++            <div className="empty-state">
++              <div className="empty-state-icon">📚</div>
++              <div className="empty-state-text">No study sessions yet</div>
++              <div className="empty-state-subtext">Start logging your study time to see your progress</div>
++            </div>
++          )}
++        </div>
++
++        {/* Top Subjects */}
++        <div className="card animate-slide-up" style={{ animationDelay: '0.2s' }}>
++          <h2 className="text-xl font-bold mb-4">Top Subjects</h2>
++          {stats && stats.topSubjects.length > 0 ? (
++            <div className="space-y-3">
++              {stats.topSubjects.map((subject: any, index: number) => (
++                <div key={subject.subjectId} className="flex items-center gap-4">
++                  <div className="w-8 h-8 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-400 font-bold">
++                    {index + 1}
++                  </div>
++                  <div className="flex-1">
++                    <div className="font-medium text-slate-200">{subject.subjectName}</div>
++                    <div className="text-sm text-slate-400">
++                      {subject.sessionCount} sessions
++                    </div>
++                  </div>
++                  <div className="text-right">
++                    <div className="font-bold text-primary-400">
++                      {formatDuration(subject.totalTime)}
++                    </div>
++                    <div className="text-xs text-slate-500">
++                      {subject.percentage.toFixed(1)}%
++                    </div>
++                  </div>
++                </div>
++              ))}
++            </div>
++          ) : (
++            <div className="empty-state">
++              <div className="empty-state-icon">🎯</div>
++              <div className="empty-state-text">No subjects yet</div>
++              <div className="empty-state-subtext">Create subjects to organize your study sessions</div>
++            </div>
++          )}
++        </div>
++
++        {/* Footer */}
++        <footer className="mt-8 text-center text-sm text-slate-500">
++          <p>Offline-First Study Planner • Data automatically syncs when online</p>
++        </footer>
++      </div>
++
++      {/* Log Session Modal */}
++      {showSessionModal && (
++        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
++          <div className="card w-full max-w-md animate-slide-up">
++            <h2 className="text-2xl font-bold mb-6 text-primary-400">Log Study Session</h2>
++            <form onSubmit={handleLogSession} className="space-y-4">
++              <div>
++                <label className="label">Subject</label>
++                <select name="subjectId" className="input" required defaultValue="">
++                  <option value="" disabled>Select a subject</option>
++                  {subjects.map((s: any) => (
++                    <option key={s.id} value={s.id}>{s.name}</option>
++                  ))}
++                </select>
++              </div>
++              <div>
++                <label className="label">Duration (minutes)</label>
++                <input name="duration" type="number" min="1" max="1440" className="input" placeholder="e.g. 60" required />
++              </div>
++              <div>
++                <label className="label">Notes (optional)</label>
++                <textarea name="notes" className="input min-h-[100px]" placeholder="What did you study?"></textarea>
++              </div>
++              <div className="flex gap-3 pt-4">
++                <button type="button" onClick={() => setShowSessionModal(false)} className="btn btn-secondary flex-1" disabled={isSubmitting}>
++                  Cancel
++                </button>
++                <button type="submit" className="btn btn-primary flex-1" disabled={isSubmitting}>
++                  {isSubmitting ? 'Saving...' : 'Save Session'}
++                </button>
++              </div>
++            </form>
++          </div>
++        </div>
++      )}
++
++      {/* Add Subject Modal */}
++      {showSubjectModal && (
++        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-fade-in">
++          <div className="card w-full max-w-md animate-slide-up">
++            <h2 className="text-2xl font-bold mb-6 text-purple-400">Add New Subject</h2>
++            <form onSubmit={handleAddSubject} className="space-y-4">
++              <div>
++                <label className="label">Subject Name</label>
++                <input name="name" type="text" maxLength={100} className="input" placeholder="e.g. Mathematics" required />
++              </div>
++              <div>
++                <label className="label">Description (optional)</label>
++                <textarea name="description" className="input min-h-[100px]" placeholder="Brief context about what you're learning"></textarea>
++              </div>
++              <div className="flex gap-3 pt-4">
++                <button type="button" onClick={() => setShowSubjectModal(false)} className="btn btn-secondary flex-1" disabled={isSubmitting}>
++                  Cancel
++                </button>
++                <button type="submit" className="btn btn-primary flex-1" style={{ background: '#a855f7' }} disabled={isSubmitting}>
++                  {isSubmitting ? 'Saving...' : 'Add Subject'}
++                </button>
++              </div>
++            </form>
++          </div>
++        </div>
++      )}
++    </main>
++  );
++}
+diff --git a/repository_after/src/lib/db.ts b/repository_after/src/lib/db.ts
+new file mode 100644
+index 000000000..22a7677ff
+--- /dev/null
++++ b/repository_after/src/lib/db.ts
+@@ -0,0 +1,126 @@
++// db.ts / mongo.ts
++import { MongoClient, Db } from 'mongodb';
++
++const DEFAULT_MONGODB_URI = 'mongodb://localhost:27017';
++const DEFAULT_DB_NAME = 'study_planner';
++
++const CLIENT_OPTIONS = {
++  maxPoolSize: 10,
++  minPoolSize: 2,
++  maxIdleTimeMS: 30000,
++  serverSelectionTimeoutMS: 15000,
++  socketTimeoutMS: 15000,
++  retryWrites: true,
++  retryReads: true,
++};
++
++// Use a promise-based singleton (most popular pattern today)
++let _clientPromise: Promise<MongoClient> | null = null;
++
++function getMongoClientPromise(): Promise<MongoClient> {
++  if (_clientPromise) return _clientPromise;
++
++  const uri = process.env.MONGODB_URI || DEFAULT_MONGODB_URI;
++  const client = new MongoClient(uri, CLIENT_OPTIONS);
++
++  _clientPromise = client
++    .connect()
++    .then((connectedClient) => {
++      console.log('MongoDB connected successfully');
++      // Optional: add process hooks for graceful shutdown
++      process.on('SIGINT', () => closeDatabase());
++      process.on('SIGTERM', () => closeDatabase());
++      return connectedClient;
++    })
++    .catch((err) => {
++      console.error('MongoDB initial connection failed:', err);
++      _clientPromise = null; // allow retry on next call
++      throw err;
++    });
++
++  return _clientPromise;
++}
++
++export async function getMongoClient(): Promise<MongoClient> {
++  return getMongoClientPromise();
++}
++
++export async function getDatabase(): Promise<Db> {
++  const client = await getMongoClientPromise();
++  const dbName = process.env.DB_NAME || DEFAULT_DB_NAME;
++  const db = client.db(dbName);
++
++  // Run index creation only once (or on first access)
++  // You can also move this to an init function called at startup
++  await createIndexes(db).catch((err) => {
++    console.warn('Index creation failed (non-critical):', err);
++  });
++
++  return db;
++}
++
++// Rest of your code remains almost the same...
++
++async function createIndexes(database: Db): Promise<void> {
++  try {
++    // Subjects collection indexes
++    await database.collection('subjects').createIndex(
++      { name: 1 },
++      { unique: true, name: 'unique_subject_name' }
++    );
++    await database.collection('subjects').createIndex(
++      { createdAt: -1 },
++      { name: 'subject_created_desc' }
++    );
++
++    // Study sessions collection indexes
++    await database.collection('study_sessions').createIndex(
++      { subjectId: 1, timestamp: -1 },
++      { name: 'sessions_by_subject_time' }
++    );
++    await database.collection('study_sessions').createIndex(
++      { timestamp: -1 },
++      { name: 'sessions_by_time_desc' }
++    );
++    await database.collection('study_sessions').createIndex(
++      { subjectId: 1 },
++      { name: 'sessions_by_subject' }
++    );
++
++    // Reminders collection indexes
++    await database.collection('reminders').createIndex(
++      { triggerTime: 1 },
++      { name: 'reminders_by_trigger_time' }
++    );
++    await database.collection('reminders').createIndex(
++      { isActive: 1, triggerTime: 1 },
++      { name: 'active_reminders_by_time' }
++    );
++
++    console.log('Database indexes created successfully');
++  } catch (error) {
++    console.error('Error creating indexes:', error);
++  }
++}
++
++export async function closeDatabase(): Promise<void> {
++  if (_clientPromise) {
++    const client = await _clientPromise.catch(() => null);
++    if (client) {
++      await client.close().catch(console.error);
++      console.log('MongoDB connection closed');
++    }
++    _clientPromise = null;
++  }
++}
++
++export async function isDatabaseHealthy(): Promise<boolean> {
++  try {
++    const db = await getDatabase();
++    await db.command({ ping: 1 });
++    return true;
++  } catch (error) {
++    console.error('Database health check failed:', error);
++    return false;
++  }
++}
+\ No newline at end of file
+diff --git a/repository_after/src/lib/offline-manager.ts b/repository_after/src/lib/offline-manager.ts
+new file mode 100644
+index 000000000..3c35d454b
+--- /dev/null
++++ b/repository_after/src/lib/offline-manager.ts
+@@ -0,0 +1,128 @@
++/**
++ * Offline Synchronization Manager
++ * 
++ * Handles client-side persistence, request queuing, and background synchronization.
++ * Ensures the application remains functional without internet access.
++ */
++
++const STORAGE_KEYS = {
++  PENDING_SESSIONS: 'study_planner_pending_sessions',
++  PENDING_SUBJECTS: 'study_planner_pending_subjects',
++  CACHED_STATS: 'study_planner_cached_stats',
++  CACHED_SUBJECTS: 'study_planner_cached_subjects',
++};
++
++export interface SyncQueueItem<T> {
++  id: string;
++  data: T;
++  timestamp: number;
++}
++
++/**
++ * Save data to local storage for offline access
++ */
++export function cacheData(key: string, data: any): void {
++  if (typeof window === 'undefined') return;
++  try {
++    localStorage.setItem(key, JSON.stringify(data));
++  } catch (error) {
++    console.error('Error caching data:', error);
++  }
++}
++
++/**
++ * Retrieve cached data from local storage
++ */
++export function getCachedData<T>(key: string): T | null {
++  if (typeof window === 'undefined') return null;
++  try {
++    const data = localStorage.getItem(key);
++    return data ? JSON.parse(data) : null;
++  } catch (error) {
++    console.error('Error retrieving cached data:', error);
++    return null;
++  }
++}
++
++/**
++ * Add a request to the sync queue
++ */
++export function addToSyncQueue<T>(key: string, data: T): void {
++  const queue = getCachedData<SyncQueueItem<T>[]>(key) || [];
++  const newItem: SyncQueueItem<T> = {
++    id: Math.random().toString(36).substring(2, 11),
++    data,
++    timestamp: Date.now(),
++  };
++  queue.push(newItem);
++  cacheData(key, queue);
++}
++
++/**
++ * Process the sync queue
++ */
++export async function processSyncQueue(): Promise<void> {
++  if (typeof window === 'undefined' || !navigator.onLine) return;
++
++  // Sync subjects first (sessions might depend on newer subjects)
++  await syncSubjects();
++  await syncSessions();
++}
++
++async function syncSubjects(): Promise<void> {
++  const queue = getCachedData<SyncQueueItem<any>[]>(STORAGE_KEYS.PENDING_SUBJECTS) || [];
++  if (queue.length === 0) return;
++
++  const remaining: SyncQueueItem<any>[] = [];
++
++  for (const item of queue) {
++    try {
++      const response = await fetch('/api/subjects', {
++        method: 'POST',
++        headers: { 'Content-Type': 'application/json' },
++        body: JSON.stringify(item.data),
++      });
++
++      if (!response.ok) {
++        remaining.push(item);
++      }
++    } catch (error) {
++      remaining.push(item);
++    }
++  }
++
++  cacheData(STORAGE_KEYS.PENDING_SUBJECTS, remaining);
++}
++
++async function syncSessions(): Promise<void> {
++  const queue = getCachedData<SyncQueueItem<any>[]>(STORAGE_KEYS.PENDING_SESSIONS) || [];
++  if (queue.length === 0) return;
++
++  const remaining: SyncQueueItem<any>[] = [];
++
++  for (const item of queue) {
++    try {
++      const response = await fetch('/api/sessions', {
++        method: 'POST',
++        headers: { 'Content-Type': 'application/json' },
++        body: JSON.stringify(item.data),
++      });
++
++      if (!response.ok) {
++        remaining.push(item);
++      }
++    } catch (error) {
++      remaining.push(item);
++    }
++  }
++
++  cacheData(STORAGE_KEYS.PENDING_SESSIONS, remaining);
++}
++
++export const OfflineManager = {
++  KEYS: STORAGE_KEYS,
++  cacheData,
++  getCachedData,
++  addToSyncQueue,
++  processSyncQueue,
++};
+diff --git a/repository_after/src/lib/utils.ts b/repository_after/src/lib/utils.ts
+new file mode 100644
+index 000000000..a61cb08ca
+--- /dev/null
++++ b/repository_after/src/lib/utils.ts
+@@ -0,0 +1,310 @@
++/**
++ * Utility Functions
++ * 
++ * Helper functions for data transformation, formatting, and common operations.
++ */
++
++import { ObjectId } from 'mongodb';
++import {
++  Subject,
++  SubjectResponse,
++  StudySession,
++  StudySessionResponse,
++  Reminder,
++  ReminderResponse,
++} from '@/types';
++
++// ============================================================================
++// Data Transformation Functions
++// ============================================================================
++
++/**
++ * Convert MongoDB Subject document to API response format
++ */
++export function subjectToResponse(subject: Subject): SubjectResponse {
++  return {
++    id: subject._id.toString(),
++    name: subject.name,
++    description: subject.description ?? undefined,
++    createdAt: subject.createdAt.toISOString(),
++    updatedAt: subject.updatedAt.toISOString(),
++  };
++}
++
++/**
++ * Convert MongoDB StudySession document to API response format
++ */
++export function sessionToResponse(session: StudySession, subjectName?: string): StudySessionResponse {
++  return {
++    id: session._id.toString(),
++    subjectId: session.subjectId.toString(),
++    subjectName,
++    duration: session.duration,
++    timestamp: session.timestamp.toISOString(),
++    notes: session.notes ?? undefined,
++    createdAt: session.createdAt.toISOString(),
++    updatedAt: session.updatedAt.toISOString(),
++  };
++}
++
++/**
++ * Convert MongoDB Reminder document to API response format
++ */
++export function reminderToResponse(reminder: Reminder, subjectName?: string): ReminderResponse {
++  return {
++    id: reminder._id.toString(),
++    label: reminder.label,
++    triggerTime: reminder.triggerTime.toISOString(),
++    recurrence: reminder.recurrence,
++    subjectId: reminder.subjectId?.toString(),
++    subjectName,
++    isActive: reminder.isActive,
++    lastTriggered: reminder.lastTriggered?.toISOString(),
++    createdAt: reminder.createdAt.toISOString(),
++    updatedAt: reminder.updatedAt.toISOString(),
++  };
++}
++
++// ============================================================================
++// ObjectId Validation and Conversion
++// ============================================================================
++
++/**
++ * Check if a string is a valid MongoDB ObjectId
++ */
++export function isValidObjectId(id: string): boolean {
++  return ObjectId.isValid(id) && /^[0-9a-fA-F]{24}$/.test(id);
++}
++
++/**
++ * Convert string to ObjectId with validation
++ * Throws error if invalid
++ */
++export function toObjectId(id: string): ObjectId {
++  if (!isValidObjectId(id)) {
++    throw new Error(`Invalid ObjectId format: ${id}`);
++  }
++  return new ObjectId(id);
++}
++
++/**
++ * Safely convert string to ObjectId
++ * Returns null if invalid
++ */
++export function toObjectIdSafe(id: string): ObjectId | null {
++  try {
++    return toObjectId(id);
++  } catch {
++    return null;
++  }
++}
++
++// ============================================================================
++// Time and Date Utilities
++// ============================================================================
++
++/**
++ * Format duration in seconds to human-readable string
++ * Examples: "2h 30m", "45m", "1h 15m 30s"
++ */
++export function formatDuration(seconds: number): string {
++  if (seconds < 0) return '0s';
++  
++  const hours = Math.floor(seconds / 3600);
++  const minutes = Math.floor((seconds % 3600) / 60);
++  const secs = seconds % 60;
++
++  const parts: string[] = [];
++  if (hours > 0) parts.push(`${hours}h`);
++  if (minutes > 0) parts.push(`${minutes}m`);
++  if (secs > 0 || parts.length === 0) parts.push(`${secs}s`);
++
++  return parts.join(' ');
++}
++
++/**
++ * Get start of day in UTC
++ */
++export function getStartOfDay(date: Date): Date {
++  const result = new Date(date);
++  result.setUTCHours(0, 0, 0, 0);
++  return result;
++}
++
++/**
++ * Get end of day in UTC
++ */
++export function getEndOfDay(date: Date): Date {
++  const result = new Date(date);
++  result.setUTCHours(23, 59, 59, 999);
++  return result;
++}
++
++/**
++ * Get start of week (Monday) in UTC
++ */
++export function getStartOfWeek(date: Date): Date {
++  const result = new Date(date);
++  const day = result.getUTCDay();
++  const diff = day === 0 ? -6 : 1 - day; // Adjust to Monday
++  result.setUTCDate(result.getUTCDate() + diff);
++  result.setUTCHours(0, 0, 0, 0);
++  return result;
++}
++
++/**
++ * Get start of month in UTC
++ */
++export function getStartOfMonth(date: Date): Date {
++  const result = new Date(date);
++  result.setUTCDate(1);
++  result.setUTCHours(0, 0, 0, 0);
++  return result;
++}
++
++/**
++ * Get date string in YYYY-MM-DD format (UTC)
++ */
++export function getDateString(date: Date): string {
++  return date.toISOString().split('T')[0];
++}
++
++/**
++ * Calculate difference in days between two dates
++ */
++export function getDaysDifference(date1: Date, date2: Date): number {
++  const start = getStartOfDay(date1);
++  const end = getStartOfDay(date2);
++  const diffMs = end.getTime() - start.getTime();
++  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
++}
++
++/**
++ * Check if two dates are on the same day (UTC)
++ */
++export function isSameDay(date1: Date, date2: Date): boolean {
++  return getDateString(date1) === getDateString(date2);
++}
++
++/**
++ * Check if date is today (UTC)
++ */
++export function isToday(date: Date): boolean {
++  return isSameDay(date, new Date());
++}
++
++/**
++ * Get array of dates between start and end (inclusive)
++ */
++export function getDateRange(start: Date, end: Date): Date[] {
++  const dates: Date[] = [];
++  const current = new Date(start);
++  
++  while (current <= end) {
++    dates.push(new Date(current));
++    current.setUTCDate(current.getUTCDate() + 1);
++  }
++  
++  return dates;
++}
++
++// ============================================================================
++// Array and Object Utilities
++// ============================================================================
++
++/**
++ * Group array of items by a key function
++ */
++export function groupBy<T, K extends string | number>(
++  items: T[],
++  keyFn: (item: T) => K
++): Record<K, T[]> {
++  return items.reduce((acc, item) => {
++    const key = keyFn(item);
++    if (!acc[key]) {
++      acc[key] = [];
++    }
++    acc[key].push(item);
++    return acc;
++  }, {} as Record<K, T[]>);
++}
++
++/**
++ * Sum array of numbers
++ */
++export function sum(numbers: number[]): number {
++  return numbers.reduce((total, num) => total + num, 0);
++}
++
++/**
++ * Calculate average of array of numbers
++ */
++export function average(numbers: number[]): number {
++  if (numbers.length === 0) return 0;
++  return sum(numbers) / numbers.length;
++}
++
++/**
++ * Sort array by key in descending order
++ */
++export function sortByDesc<T>(items: T[], keyFn: (item: T) => number): T[] {
++  return [...items].sort((a, b) => keyFn(b) - keyFn(a));
++}
++
++// ============================================================================
++// Validation Utilities
++// ============================================================================
++
++/**
++ * Check if duration is valid (between 1 minute and 24 hours)
++ */
++export function isValidDuration(seconds: number): boolean {
++  return Number.isInteger(seconds) && seconds >= 60 && seconds <= 86400;
++}
++
++/**
++ * Check if timestamp is valid (not in future, after year 2000)
++ */
++export function isValidTimestamp(date: Date): boolean {
++  const now = new Date();
++  const minDate = new Date('2000-01-01');
++  return date <= now && date >= minDate;
++}
++
++/**
++ * Sanitize string input (trim and limit length)
++ */
++export function sanitizeString(input: string, maxLength: number): string {
++  return input.trim().substring(0, maxLength);
++}
++
++// ============================================================================
++// Error Handling Utilities
++// ============================================================================
++
++/**
++ * Create standardized error response
++ */
++export function createErrorResponse(error: unknown): { error: string; details?: Record<string, string[]> } {
++  if (error instanceof Error) {
++    return { error: error.message };
++  }
++  
++  if (typeof error === 'string') {
++    return { error };
++  }
++  
++  return { error: 'An unexpected error occurred' };
++}
++
++/**
++ * Check if error is a MongoDB duplicate key error
++ */
++export function isDuplicateKeyError(error: unknown): boolean {
++  return (
++    typeof error === 'object' &&
++    error !== null &&
++    'code' in error &&
++    error.code === 11000
++  );
++}
+diff --git a/repository_after/src/lib/validations.ts b/repository_after/src/lib/validations.ts
+new file mode 100644
+index 000000000..7ad464799
+--- /dev/null
++++ b/repository_after/src/lib/validations.ts
+@@ -0,0 +1,242 @@
++/**
++ * Zod Validation Schemas
++ * 
++ * Defines strict type-safe validation schemas for all data models.
++ * Enforces data integrity at both client and server boundaries.
++ */
++
++import { z } from 'zod';
++
++// ============================================================================
++// Subject Schemas
++// ============================================================================
++
++/**
++ * Subject creation schema
++ * Validates new subject input with strict constraints
++ */
++export const createSubjectSchema = z.object({
++  name: z.string()
++    .trim()
++    .min(1, 'Subject name cannot be empty')
++    .max(100, 'Subject name must be 100 characters or less')
++    .refine(
++      (name) => name.length > 0,
++      'Subject name cannot be only whitespace'
++    ),
++  description: z.string()
++    .max(500, 'Description must be 500 characters or less')
++    .optional()
++    .transform((val) => val?.trim() || undefined),
++});
++
++/**
++ * Subject update schema
++ * Allows partial updates with same validation rules
++ */
++export const updateSubjectSchema = z.object({
++  name: z.string()
++    .trim()
++    .min(1, 'Subject name cannot be empty')
++    .max(100, 'Subject name must be 100 characters or less')
++    .optional(),
++  description: z.string()
++    .max(500, 'Description must be 500 characters or less')
++    .optional()
++    .transform((val) => val?.trim() || undefined),
++}).refine(
++  (data) => data.name !== undefined || data.description !== undefined,
++  'At least one field must be provided for update'
++);
++
++/**
++ * Subject ID validation schema
++ */
++export const subjectIdSchema = z.string()
++  .regex(/^[0-9a-fA-F]{24}$/, 'Invalid subject ID format');
++
++// ============================================================================
++// Study Session Schemas
++// ============================================================================
++
++/**
++ * Study session creation schema
++ * Validates session data with duration and timestamp constraints
++ */
++export const createStudySessionSchema = z.object({
++  subjectId: z.string()
++    .regex(/^[0-9a-fA-F]{24}$/, 'Invalid subject ID format'),
++  duration: z.number()
++    .int('Duration must be an integer')
++    .positive('Duration must be positive')
++    .max(86400, 'Duration cannot exceed 24 hours (86400 seconds)')
++    .refine(
++      (duration) => duration >= 60,
++      'Duration must be at least 60 seconds (1 minute)'
++    ),
++  timestamp: z.string()
++    .datetime('Invalid timestamp format')
++    .or(z.date())
++    .transform((val) => typeof val === 'string' ? new Date(val) : val)
++    .refine(
++      (date) => date.getTime() <= Date.now() + 300000,
++      'Timestamp cannot be in the future'
++    )
++    .refine(
++      (date) => date >= new Date('2000-01-01'),
++      'Timestamp must be after year 2000'
++    ),
++  notes: z.string()
++    .max(1000, 'Notes must be 1000 characters or less')
++    .optional()
++    .transform((val) => val?.trim() || undefined),
++});
++
++/**
++ * Study session update schema
++ * Allows partial updates with validation
++ */
++export const updateStudySessionSchema = z.object({
++  duration: z.number()
++    .int('Duration must be an integer')
++    .positive('Duration must be positive')
++    .max(86400, 'Duration cannot exceed 24 hours (86400 seconds)')
++    .refine(
++      (duration) => duration >= 60,
++      'Duration must be at least 60 seconds (1 minute)'
++    )
++    .optional(),
++  timestamp: z.string()
++    .datetime('Invalid timestamp format')
++    .or(z.date())
++    .transform((val) => typeof val === 'string' ? new Date(val) : val)
++    .refine(
++      (date) => date.getTime() <= Date.now() + 300000,
++      'Timestamp cannot be in the future'
++    )
++    .optional(),
++  notes: z.string()
++    .max(1000, 'Notes must be 1000 characters or less')
++    .optional()
++    .transform((val) => val?.trim() || undefined),
++}).refine(
++  (data) => data.duration !== undefined || data.timestamp !== undefined || data.notes !== undefined,
++  'At least one field must be provided for update'
++);
++
++/**
++ * Session ID validation schema
++ */
++export const sessionIdSchema = z.string()
++  .regex(/^[0-9a-fA-F]{24}$/, 'Invalid session ID format');
++
++// ============================================================================
++// Reminder Schemas
++// ============================================================================
++
++/**
++ * Reminder recurrence pattern schema
++ */
++export const recurrenceSchema = z.enum([
++  'none',
++  'daily',
++  'weekly',
++  'monthly',
++]).default('none');
++
++/**
++ * Reminder creation schema
++ * Validates reminder data with trigger time and recurrence
++ */
++export const createReminderSchema = z.object({
++  label: z.string()
++    .trim()
++    .min(1, 'Reminder label cannot be empty')
++    .max(200, 'Reminder label must be 200 characters or less'),
++  triggerTime: z.string()
++    .datetime('Invalid trigger time format')
++    .or(z.date())
++    .transform((val) => typeof val === 'string' ? new Date(val) : val),
++  recurrence: recurrenceSchema,
++  subjectId: z.string()
++    .regex(/^[0-9a-fA-F]{24}$/, 'Invalid subject ID format')
++    .optional(),
++  isActive: z.boolean().default(true),
++});
++
++/**
++ * Reminder update schema
++ * Allows partial updates
++ */
++export const updateReminderSchema = z.object({
++  label: z.string()
++    .trim()
++    .min(1, 'Reminder label cannot be empty')
++    .max(200, 'Reminder label must be 200 characters or less')
++    .optional(),
++  triggerTime: z.string()
++    .datetime('Invalid trigger time format')
++    .or(z.date())
++    .transform((val) => typeof val === 'string' ? new Date(val) : val)
++    .optional(),
++  recurrence: recurrenceSchema.optional(),
++  isActive: z.boolean().optional(),
++}).refine(
++  (data) => Object.keys(data).length > 0,
++  'At least one field must be provided for update'
++);
++
++/**
++ * Reminder ID validation schema
++ */
++export const reminderIdSchema = z.string()
++  .regex(/^[0-9a-fA-F]{24}$/, 'Invalid reminder ID format');
++
++// ============================================================================
++// Query Parameter Schemas
++// ============================================================================
++
++/**
++ * Date range query schema for analytics
++ */
++export const dateRangeSchema = z.object({
++  startDate: z.string()
++    .datetime('Invalid start date format')
++    .or(z.date())
++    .transform((val) => typeof val === 'string' ? new Date(val) : val)
++    .optional(),
++  endDate: z.string()
++    .datetime('Invalid end date format')
++    .or(z.date())
++    .transform((val) => typeof val === 'string' ? new Date(val) : val)
++    .optional(),
++}).refine(
++  (data) => {
++    if (data.startDate && data.endDate) {
++      return data.startDate <= data.endDate;
++    }
++    return true;
++  },
++  'Start date must be before or equal to end date'
++);
++
++/**
++ * Pagination schema
++ */
++export const paginationSchema = z.object({
++  page: z.number().int().positive().default(1),
++  limit: z.number().int().positive().max(100).default(20),
++});
++
++// ============================================================================
++// Type Exports
++// ============================================================================
++
++export type CreateSubjectInput = z.infer<typeof createSubjectSchema>;
++export type UpdateSubjectInput = z.infer<typeof updateSubjectSchema>;
++export type CreateStudySessionInput = z.infer<typeof createStudySessionSchema>;
++export type UpdateStudySessionInput = z.infer<typeof updateStudySessionSchema>;
++export type CreateReminderInput = z.infer<typeof createReminderSchema>;
++export type UpdateReminderInput = z.infer<typeof updateReminderSchema>;
++export type DateRangeQuery = z.infer<typeof dateRangeSchema>;
++export type PaginationQuery = z.infer<typeof paginationSchema>;
+diff --git a/repository_after/src/services/analyticsService.ts b/repository_after/src/services/analyticsService.ts
+new file mode 100644
+index 000000000..903f4ecbd
+--- /dev/null
++++ b/repository_after/src/services/analyticsService.ts
+@@ -0,0 +1,376 @@
++/**
++ * Analytics Service
++ * 
++ * Business logic for calculating study statistics, streaks, and progress analytics.
++ * Handles complex aggregations and time-based calculations.
++ */
++
++import { getDatabase } from '@/lib/db';
++import { StudySession } from '@/types';
++import {
++  StudyStatistics,
++  SubjectStudyBreakdown,
++  DailyStudySummary,
++  WeeklyStudySummary,
++  MonthlyStudySummary,
++  StudyStreak,
++  StreakPeriod,
++  DashboardStats,
++} from '@/types';
++import {
++  getDateString,
++  getStartOfDay,
++  getEndOfDay,
++  getStartOfWeek,
++  getStartOfMonth,
++  getDaysDifference,
++  isSameDay,
++  getDateRange,
++  sum,
++  average,
++  sortByDesc,
++} from '@/lib/utils';
++import { getAllStudySessions, getStudyTimeBySubject } from './studySessionService';
++import { getAllSubjects } from './subjectService';
++
++const COLLECTION_NAME = 'study_sessions';
++
++// ============================================================================
++// Study Statistics
++// ============================================================================
++
++/**
++ * Get study statistics for a date range
++ * 
++ * @param startDate - Start date (optional)
++ * @param endDate - End date (optional)
++ * @returns Study statistics with subject breakdown
++ */
++export async function getStudyStatistics(
++  startDate?: Date,
++  endDate?: Date
++): Promise<StudyStatistics> {
++  const db = await getDatabase();
++  const collection = db.collection<StudySession>(COLLECTION_NAME);
++
++  // Build query filter
++  const filter: Record<string, unknown> = {};
++  if (startDate || endDate) {
++    filter.timestamp = {};
++    if (startDate) {
++      (filter.timestamp as Record<string, unknown>).$gte = startDate;
++    }
++    if (endDate) {
++      (filter.timestamp as Record<string, unknown>).$lte = endDate;
++    }
++  }
++
++  // Aggregate by subject
++  const result = await collection.aggregate([
++    { $match: filter },
++    {
++      $group: {
++        _id: '$subjectId',
++        totalTime: { $sum: '$duration' },
++        sessionCount: { $sum: 1 },
++      },
++    },
++  ]).toArray();
++
++  const totalStudyTime = sum(result.map(r => r.totalTime));
++  const sessionCount = sum(result.map(r => r.sessionCount));
++  const averageSessionDuration = sessionCount > 0 ? totalStudyTime / sessionCount : 0;
++
++  // Get subject names
++  const subjectIds = result.map(r => r._id.toString());
++  const subjects = await getAllSubjects();
++  const subjectMap = new Map(subjects.map(s => [s.id, s.name]));
++
++  // Build subject breakdown
++  const subjectBreakdown: SubjectStudyBreakdown[] = result.map(item => ({
++    subjectId: item._id.toString(),
++    subjectName: subjectMap.get(item._id.toString()) || 'Unknown Subject',
++    totalTime: item.totalTime,
++    sessionCount: item.sessionCount,
++    percentage: totalStudyTime > 0 ? (item.totalTime / totalStudyTime) * 100 : 0,
++  }));
++
++  // Sort by total time descending
++  subjectBreakdown.sort((a, b) => b.totalTime - a.totalTime);
++
++  return {
++    totalStudyTime,
++    sessionCount,
++    averageSessionDuration: Math.round(averageSessionDuration),
++    subjectBreakdown,
++  };
++}
++
++// ============================================================================
++// Daily, Weekly, Monthly Summaries
++// ============================================================================
++
++/**
++ * Get daily study summary for a specific date
++ * 
++ * @param date - Date to get summary for
++ * @returns Daily study summary
++ */
++export async function getDailySummary(date: Date): Promise<DailyStudySummary> {
++  const startOfDay = getStartOfDay(date);
++  const endOfDay = getEndOfDay(date);
++
++  const sessions = await getAllStudySessions({
++    startDate: startOfDay,
++    endDate: endOfDay,
++    limit: 10000, // High limit to get all sessions for the day
++  });
++
++  const totalStudyTime = sum(sessions.map(s => s.duration));
++  const sessionCount = sessions.length;
++  const subjectsStudied = [...new Set(sessions.map(s => s.subjectId))];
++
++  return {
++    date: getDateString(date),
++    totalStudyTime,
++    sessionCount,
++    subjectsStudied,
++  };
++}
++
++/**
++ * Get weekly study summary
++ * 
++ * @param date - Any date within the week
++ * @returns Weekly study summary with daily breakdowns
++ */
++export async function getWeeklySummary(date: Date): Promise<WeeklyStudySummary> {
++  const weekStart = getStartOfWeek(date);
++  const weekEnd = new Date(weekStart);
++  weekEnd.setUTCDate(weekEnd.getUTCDate() + 6);
++  weekEnd.setUTCHours(23, 59, 59, 999);
++
++  // Get all days in the week
++  const days = getDateRange(weekStart, weekEnd);
++  const dailySummaries = await Promise.all(
++    days.map(day => getDailySummary(day))
++  );
++
++  const totalStudyTime = sum(dailySummaries.map(d => d.totalStudyTime));
++  const sessionCount = sum(dailySummaries.map(d => d.sessionCount));
++
++  return {
++    weekStart: getDateString(weekStart),
++    weekEnd: getDateString(weekEnd),
++    totalStudyTime,
++    sessionCount,
++    dailySummaries,
++  };
++}
++
++/**
++ * Get monthly study summary
++ * 
++ * @param year - Year
++ * @param month - Month (1-12)
++ * @returns Monthly study summary with weekly breakdowns
++ */
++export async function getMonthlySummary(year: number, month: number): Promise<MonthlyStudySummary> {
++  const monthStart = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
++  const monthEnd = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
++
++  // Get all weeks in the month
++  const weeks: Date[] = [];
++  let currentWeekStart = getStartOfWeek(monthStart);
++  
++  while (currentWeekStart <= monthEnd) {
++    weeks.push(new Date(currentWeekStart));
++    currentWeekStart.setUTCDate(currentWeekStart.getUTCDate() + 7);
++  }
++
++  const weeklySummaries = await Promise.all(
++    weeks.map(week => getWeeklySummary(week))
++  );
++
++  const totalStudyTime = sum(weeklySummaries.map(w => w.totalStudyTime));
++  const sessionCount = sum(weeklySummaries.map(w => w.sessionCount));
++
++  return {
++    month: `${year}-${String(month).padStart(2, '0')}`,
++    totalStudyTime,
++    sessionCount,
++    weeklySummaries,
++  };
++}
++
++// ============================================================================
++// Study Streaks
++// ============================================================================
++
++/**
++ * Calculate study streaks based on consecutive days with sessions
++ * 
++ * @returns Study streak information
++ */
++export async function calculateStudyStreak(): Promise<StudyStreak> {
++  const db = await getDatabase();
++  const collection = db.collection<StudySession>(COLLECTION_NAME);
++
++  // Get all sessions sorted by timestamp
++  const sessions = await collection
++    .find({})
++    .sort({ timestamp: 1 })
++    .toArray();
++
++  if (sessions.length === 0) {
++    return {
++      currentStreak: 0,
++      longestStreak: 0,
++      lastStudyDate: null,
++      streakHistory: [],
++    };
++  }
++
++  // Get unique study dates
++  const studyDates = [...new Set(sessions.map(s => getDateString(s.timestamp)))];
++  studyDates.sort();
++
++  // Convert to Date objects
++  const studyDateObjects = studyDates.map(dateStr => new Date(dateStr + 'T00:00:00.000Z'));
++
++  // Calculate streaks
++  const streakPeriods: StreakPeriod[] = [];
++  let currentStreakStart = studyDateObjects[0];
++  let currentStreakEnd = studyDateObjects[0];
++
++  for (let i = 1; i < studyDateObjects.length; i++) {
++    const prevDate = studyDateObjects[i - 1];
++    const currDate = studyDateObjects[i];
++    const daysDiff = getDaysDifference(prevDate, currDate);
++
++    if (daysDiff === 1) {
++      // Consecutive day - extend current streak
++      currentStreakEnd = currDate;
++    } else {
++      // Gap detected - save current streak and start new one
++      const streakLength = getDaysDifference(currentStreakStart, currentStreakEnd) + 1;
++      streakPeriods.push({
++        startDate: getDateString(currentStreakStart),
++        endDate: getDateString(currentStreakEnd),
++        length: streakLength,
++      });
++      currentStreakStart = currDate;
++      currentStreakEnd = currDate;
++    }
++  }
++
++  // Add the last streak
++  const lastStreakLength = getDaysDifference(currentStreakStart, currentStreakEnd) + 1;
++  streakPeriods.push({
++    startDate: getDateString(currentStreakStart),
++    endDate: getDateString(currentStreakEnd),
++    length: lastStreakLength,
++  });
++
++  // Find longest streak
++  const longestStreak = Math.max(...streakPeriods.map(p => p.length));
++
++  // Calculate current streak
++  const today = new Date();
++  const yesterday = new Date(today);
++  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
++
++  const lastStudyDate = studyDateObjects[studyDateObjects.length - 1];
++  const lastStudyDateStr = getDateString(lastStudyDate);
++
++  let currentStreak = 0;
++  if (isSameDay(lastStudyDate, today) || isSameDay(lastStudyDate, yesterday)) {
++    // Current streak is active
++    currentStreak = streakPeriods[streakPeriods.length - 1].length;
++  }
++
++  return {
++    currentStreak,
++    longestStreak,
++    lastStudyDate: lastStudyDateStr,
++    streakHistory: streakPeriods,
++  };
++}
++
++// ============================================================================
++// Dashboard Statistics
++// ============================================================================
++
++/**
++ * Get comprehensive dashboard statistics
++ * 
++ * @returns Dashboard stats with all key metrics
++ */
++export async function getDashboardStats(): Promise<DashboardStats> {
++  const now = new Date();
++  const today = getStartOfDay(now);
++  const todayEnd = getEndOfDay(now);
++  
++  const weekStart = getStartOfWeek(now);
++  const weekEnd = new Date(weekStart);
++  weekEnd.setUTCDate(weekEnd.getUTCDate() + 6);
++  weekEnd.setUTCHours(23, 59, 59, 999);
++  
++  const monthStart = getStartOfMonth(now);
++  const monthEnd = new Date(monthStart);
++  monthEnd.setUTCMonth(monthEnd.getUTCMonth() + 1);
++  monthEnd.setUTCDate(0);
++  monthEnd.setUTCHours(23, 59, 59, 999);
++
++  // Get all subjects
++  const subjects = await getAllSubjects();
++  const totalSubjects = subjects.length;
++
++  // Get overall statistics
++  const overallStats = await getStudyStatistics();
++  const totalStudyTime = overallStats.totalStudyTime;
++  const totalSessions = overallStats.sessionCount;
++
++  // Get today's statistics
++  const todayStats = await getStudyStatistics(today, todayEnd);
++  const todayStudyTime = todayStats.totalStudyTime;
++  const todaySessions = todayStats.sessionCount;
++
++  // Get week's statistics
++  const weekStats = await getStudyStatistics(weekStart, weekEnd);
++  const weekStudyTime = weekStats.totalStudyTime;
++  const weekSessions = weekStats.sessionCount;
++
++  // Get month's statistics
++  const monthStats = await getStudyStatistics(monthStart, monthEnd);
++  const monthStudyTime = monthStats.totalStudyTime;
++  const monthSessions = monthStats.sessionCount;
++
++  // Get streak information
++  const streak = await calculateStudyStreak();
++
++  // Get recent sessions (last 10)
++  const recentSessions = await getAllStudySessions({
++    limit: 10,
++    sortBy: 'timestamp',
++    sortOrder: 'desc',
++  });
++
++  // Get top subjects (by study time)
++  const topSubjects = overallStats.subjectBreakdown.slice(0, 5);
++
++  return {
++    totalSubjects,
++    totalStudyTime,
++    totalSessions,
++    todayStudyTime,
++    todaySessions,
++    weekStudyTime,
++    weekSessions,
++    monthStudyTime,
++    monthSessions,
++    streak,
++    recentSessions,
++    topSubjects,
++  };
++}
+diff --git a/repository_after/src/services/reminderService.ts b/repository_after/src/services/reminderService.ts
+new file mode 100644
+index 000000000..8e0a3dcb3
+--- /dev/null
++++ b/repository_after/src/services/reminderService.ts
+@@ -0,0 +1,387 @@
++/**
++ * Reminder Service
++ * 
++ * Business logic for managing study reminders.
++ * Handles reminder CRUD operations and scheduling logic.
++ */
++
++import { ObjectId } from 'mongodb';
++import { getDatabase } from '@/lib/db';
++import { Reminder, ReminderResponse } from '@/types';
++import { reminderToResponse, toObjectId } from '@/lib/utils';
++import { subjectExists, getSubjectsByIds } from './subjectService';
++import {
++  createReminderSchema,
++  updateReminderSchema,
++  CreateReminderInput,
++  UpdateReminderInput,
++} from '@/lib/validations';
++
++const COLLECTION_NAME = 'reminders';
++
++// ============================================================================
++// Create Reminder
++// ============================================================================
++
++/**
++ * Create a new reminder
++ * 
++ * @param input - Reminder creation data
++ * @returns Created reminder response
++ * @throws Error if subject doesn't exist (when subjectId provided)
++ */
++export async function createReminder(input: CreateReminderInput): Promise<ReminderResponse> {
++  // Validate input
++  const validated = createReminderSchema.parse(input);
++
++  // Check if subject exists (if subjectId provided)
++  if (validated.subjectId) {
++    const subjectExistsResult = await subjectExists(validated.subjectId);
++    if (!subjectExistsResult) {
++      throw new Error('Subject not found');
++    }
++  }
++
++  const db = await getDatabase();
++  const collection = db.collection<Reminder>(COLLECTION_NAME);
++
++  // Create reminder document
++  const now = new Date();
++  const reminder: Omit<Reminder, '_id'> = {
++    label: validated.label,
++    triggerTime: validated.triggerTime,
++    recurrence: validated.recurrence,
++    subjectId: validated.subjectId ? toObjectId(validated.subjectId) : undefined,
++    isActive: validated.isActive,
++    createdAt: now,
++    updatedAt: now,
++  };
++
++  const result = await collection.insertOne(reminder as Reminder);
++  
++  const createdReminder = await collection.findOne({ _id: result.insertedId });
++  if (!createdReminder) {
++    throw new Error('Failed to retrieve created reminder');
++  }
++
++  // Get subject name if applicable
++  let subjectName: string | undefined;
++  if (createdReminder.subjectId) {
++    const subjectMap = await getSubjectsByIds([createdReminder.subjectId.toString()]);
++    const subject = subjectMap.get(createdReminder.subjectId.toString());
++    subjectName = subject?.name;
++  }
++
++  return reminderToResponse(createdReminder, subjectName);
++}
++
++// ============================================================================
++// Get Reminder
++// ============================================================================
++
++/**
++ * Get a reminder by ID
++ * 
++ * @param id - Reminder ID
++ * @returns Reminder response or null if not found
++ */
++export async function getReminderById(id: string): Promise<ReminderResponse | null> {
++  const db = await getDatabase();
++  const collection = db.collection<Reminder>(COLLECTION_NAME);
++
++  const reminder = await collection.findOne({ _id: toObjectId(id) });
++  
++  if (!reminder) {
++    return null;
++  }
++
++  // Get subject name if applicable
++  let subjectName: string | undefined;
++  if (reminder.subjectId) {
++    const subjectMap = await getSubjectsByIds([reminder.subjectId.toString()]);
++    const subject = subjectMap.get(reminder.subjectId.toString());
++    subjectName = subject?.name;
++  }
++
++  return reminderToResponse(reminder, subjectName);
++}
++
++/**
++ * Get all reminders with optional filters
++ * 
++ * @param options - Query options (filters, pagination, sorting)
++ * @returns Array of reminder responses
++ */
++export async function getAllReminders(options?: {
++  isActive?: boolean;
++  subjectId?: string;
++  upcoming?: boolean; // Only future reminders
++  page?: number;
++  limit?: number;
++  sortBy?: 'triggerTime' | 'createdAt';
++  sortOrder?: 'asc' | 'desc';
++}): Promise<ReminderResponse[]> {
++  const db = await getDatabase();
++  const collection = db.collection<Reminder>(COLLECTION_NAME);
++
++  const {
++    isActive,
++    subjectId,
++    upcoming,
++    page = 1,
++    limit = 100,
++    sortBy = 'triggerTime',
++    sortOrder = 'asc',
++  } = options || {};
++
++  // Build query filter
++  const filter: Record<string, unknown> = {};
++  
++  if (isActive !== undefined) {
++    filter.isActive = isActive;
++  }
++  
++  if (subjectId) {
++    filter.subjectId = toObjectId(subjectId);
++  }
++  
++  if (upcoming) {
++    filter.triggerTime = { $gte: new Date() };
++  }
++
++  const skip = (page - 1) * limit;
++  const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
++
++  const reminders = await collection
++    .find(filter)
++    .sort(sort)
++    .skip(skip)
++    .limit(limit)
++    .toArray();
++
++  // Get all unique subject IDs
++  const subjectIds = reminders
++    .filter(r => r.subjectId)
++    .map(r => r.subjectId!.toString());
++  const uniqueSubjectIds = [...new Set(subjectIds)];
++  const subjectMap = await getSubjectsByIds(uniqueSubjectIds);
++
++  return reminders.map(reminder => {
++    let subjectName: string | undefined;
++    if (reminder.subjectId) {
++      const subject = subjectMap.get(reminder.subjectId.toString());
++      subjectName = subject?.name;
++    }
++    return reminderToResponse(reminder, subjectName);
++  });
++}
++
++/**
++ * Get total count of reminders
++ */
++export async function getReminderCount(isActive?: boolean): Promise<number> {
++  const db = await getDatabase();
++  const collection = db.collection<Reminder>(COLLECTION_NAME);
++  
++  const filter = isActive !== undefined ? { isActive } : {};
++  return collection.countDocuments(filter);
++}
++
++// ============================================================================
++// Update Reminder
++// ============================================================================
++
++/**
++ * Update a reminder by ID
++ * 
++ * @param id - Reminder ID
++ * @param input - Update data
++ * @returns Updated reminder response
++ * @throws Error if reminder not found or validation fails
++ */
++export async function updateReminder(
++  id: string,
++  input: UpdateReminderInput
++): Promise<ReminderResponse> {
++  // Validate input
++  const validated = updateReminderSchema.parse(input);
++
++  const db = await getDatabase();
++  const collection = db.collection<Reminder>(COLLECTION_NAME);
++
++  const objectId = toObjectId(id);
++
++  // Check if reminder exists
++  const existingReminder = await collection.findOne({ _id: objectId });
++  if (!existingReminder) {
++    throw new Error('Reminder not found');
++  }
++
++  // Update reminder
++  const updateData: Partial<Reminder> = {
++    ...validated,
++    updatedAt: new Date(),
++  };
++
++  const result = await collection.findOneAndUpdate(
++    { _id: objectId },
++    { $set: updateData },
++    { returnDocument: 'after' }
++  );
++
++  if (!result) {
++    throw new Error('Failed to update reminder');
++  }
++
++  // Get subject name if applicable
++  let subjectName: string | undefined;
++  if (result.subjectId) {
++    const subjectMap = await getSubjectsByIds([result.subjectId.toString()]);
++    const subject = subjectMap.get(result.subjectId.toString());
++    subjectName = subject?.name;
++  }
++
++  return reminderToResponse(result, subjectName);
++}
++
++// ============================================================================
++// Delete Reminder
++// ============================================================================
++
++/**
++ * Delete a reminder by ID
++ * 
++ * @param id - Reminder ID
++ * @returns True if deleted, false if not found
++ */
++export async function deleteReminder(id: string): Promise<boolean> {
++  const db = await getDatabase();
++  const collection = db.collection<Reminder>(COLLECTION_NAME);
++
++  const result = await collection.deleteOne({ _id: toObjectId(id) });
++  
++  return result.deletedCount > 0;
++}
++
++// ============================================================================
++// Reminder Scheduling Functions
++// ============================================================================
++
++/**
++ * Mark a reminder as triggered
++ * Updates lastTriggered timestamp
++ * 
++ * @param id - Reminder ID
++ */
++export async function markReminderTriggered(id: string): Promise<void> {
++  const db = await getDatabase();
++  const collection = db.collection<Reminder>(COLLECTION_NAME);
++
++  await collection.updateOne(
++    { _id: toObjectId(id) },
++    {
++      $set: {
++        lastTriggered: new Date(),
++        updatedAt: new Date(),
++      },
++    }
++  );
++}
++
++/**
++ * Get due reminders (trigger time has passed and not yet triggered)
++ * 
++ * @returns Array of due reminders
++ */
++export async function getDueReminders(): Promise<ReminderResponse[]> {
++  const db = await getDatabase();
++  const collection = db.collection<Reminder>(COLLECTION_NAME);
++
++  const now = new Date();
++
++  const reminders = await collection
++    .find({
++      isActive: true,
++      triggerTime: { $lte: now },
++    })
++    .sort({ triggerTime: 1 })
++    .toArray();
++
++  // Get all unique subject IDs
++  const subjectIds = reminders
++    .filter(r => r.subjectId)
++    .map(r => r.subjectId!.toString());
++  const uniqueSubjectIds = [...new Set(subjectIds)];
++  const subjectMap = await getSubjectsByIds(uniqueSubjectIds);
++
++  return reminders.map(reminder => {
++    let subjectName: string | undefined;
++    if (reminder.subjectId) {
++      const subject = subjectMap.get(reminder.subjectId.toString());
++      subjectName = subject?.name;
++    }
++    return reminderToResponse(reminder, subjectName);
++  });
++}
++
++/**
++ * Calculate next trigger time for recurring reminder
++ * 
++ * @param currentTriggerTime - Current trigger time
++ * @param recurrence - Recurrence pattern
++ * @returns Next trigger time
++ */
++export function calculateNextTriggerTime(
++  currentTriggerTime: Date,
++  recurrence: 'none' | 'daily' | 'weekly' | 'monthly'
++): Date | null {
++  if (recurrence === 'none') {
++    return null;
++  }
++
++  const next = new Date(currentTriggerTime);
++
++  switch (recurrence) {
++    case 'daily':
++      next.setUTCDate(next.getUTCDate() + 1);
++      break;
++    case 'weekly':
++      next.setUTCDate(next.getUTCDate() + 7);
++      break;
++    case 'monthly':
++      next.setUTCMonth(next.getUTCMonth() + 1);
++      break;
++  }
++
++  return next;
++}
++
++/**
++ * Reschedule recurring reminder to next occurrence
++ * 
++ * @param id - Reminder ID
++ */
++export async function rescheduleRecurringReminder(id: string): Promise<void> {
++  const db = await getDatabase();
++  const collection = db.collection<Reminder>(COLLECTION_NAME);
++
++  const reminder = await collection.findOne({ _id: toObjectId(id) });
++  
++  if (!reminder || reminder.recurrence === 'none') {
++    return;
++  }
++
++  const nextTriggerTime = calculateNextTriggerTime(reminder.triggerTime, reminder.recurrence);
++  
++  if (nextTriggerTime) {
++    await collection.updateOne(
++      { _id: toObjectId(id) },
++      {
++        $set: {
++          triggerTime: nextTriggerTime,
++          updatedAt: new Date(),
++        },
++      }
++    );
++  }
++}
+diff --git a/repository_after/src/services/studySessionService.ts b/repository_after/src/services/studySessionService.ts
+new file mode 100644
+index 000000000..009c8949a
+--- /dev/null
++++ b/repository_after/src/services/studySessionService.ts
+@@ -0,0 +1,358 @@
++/**
++ * Study Session Service
++ * 
++ * Business logic for managing study sessions.
++ * Handles session logging, updates, and prevents invalid operations.
++ */
++
++import { ObjectId } from 'mongodb';
++import { getDatabase } from '@/lib/db';
++import { StudySession, StudySessionResponse } from '@/types';
++import { sessionToResponse, toObjectId, getDateString } from '@/lib/utils';
++import { subjectExists, getSubjectsByIds } from './subjectService';
++import {
++  createStudySessionSchema,
++  updateStudySessionSchema,
++  CreateStudySessionInput,
++  UpdateStudySessionInput,
++} from '@/lib/validations';
++
++const COLLECTION_NAME = 'study_sessions';
++const DUPLICATE_SUBMISSION_WINDOW_MS = 5000; // 5 seconds
++
++// ============================================================================
++// Create Study Session
++// ============================================================================
++
++/**
++ * Create a new study session
++ * 
++ * @param input - Session creation data
++ * @returns Created session response
++ * @throws Error if subject doesn't exist, duration invalid, or duplicate submission
++ */
++export async function createStudySession(
++  input: CreateStudySessionInput
++): Promise<StudySessionResponse> {
++  // Validate input
++  const validated = createStudySessionSchema.parse(input);
++
++  // Check if subject exists
++  const subjectExistsResult = await subjectExists(validated.subjectId);
++  if (!subjectExistsResult) {
++    throw new Error('Subject not found');
++  }
++
++  const db = await getDatabase();
++  const collection = db.collection<StudySession>(COLLECTION_NAME);
++
++  // Check for duplicate rapid submissions
++  // Prevent same subject, duration, and timestamp within 5 seconds (strictly less than 5s)
++  const recentCutoff = new Date(Date.now() - DUPLICATE_SUBMISSION_WINDOW_MS);
++  const duplicateSession = await collection.findOne({
++    subjectId: toObjectId(validated.subjectId),
++    duration: validated.duration,
++    timestamp: validated.timestamp,
++    createdAt: { $gt: recentCutoff },
++  });
++
++  if (duplicateSession) {
++    throw new Error('Duplicate session submission detected. Please wait before submitting again.');
++  }
++
++  // Create session document
++  const now = new Date();
++  const session: Omit<StudySession, '_id'> = {
++    subjectId: toObjectId(validated.subjectId),
++    duration: validated.duration,
++    timestamp: validated.timestamp,
++    notes: validated.notes,
++    createdAt: now,
++    updatedAt: now,
++  };
++
++  const result = await collection.insertOne(session as StudySession);
++  
++  const createdSession = await collection.findOne({ _id: result.insertedId });
++  if (!createdSession) {
++    throw new Error('Failed to retrieve created session');
++  }
++
++  // Get subject name for response
++  const subjectMap = await getSubjectsByIds([validated.subjectId]);
++  const subject = subjectMap.get(validated.subjectId);
++
++  return sessionToResponse(createdSession, subject?.name);
++}
++
++// ============================================================================
++// Get Study Session
++// ============================================================================
++
++/**
++ * Get a study session by ID
++ * 
++ * @param id - Session ID
++ * @returns Session response or null if not found
++ */
++export async function getStudySessionById(id: string): Promise<StudySessionResponse | null> {
++  const db = await getDatabase();
++  const collection = db.collection<StudySession>(COLLECTION_NAME);
++
++  const session = await collection.findOne({ _id: toObjectId(id) });
++  
++  if (!session) {
++    return null;
++  }
++
++  // Get subject name
++  const subjectMap = await getSubjectsByIds([session.subjectId.toString()]);
++  const subject = subjectMap.get(session.subjectId.toString());
++
++  return sessionToResponse(session, subject?.name);
++}
++
++/**
++ * Get all study sessions with optional filters
++ * 
++ * @param options - Query options (filters, pagination, sorting)
++ * @returns Array of session responses
++ */
++export async function getAllStudySessions(options?: {
++  subjectId?: string;
++  startDate?: Date;
++  endDate?: Date;
++  page?: number;
++  limit?: number;
++  sortBy?: 'timestamp' | 'duration' | 'createdAt';
++  sortOrder?: 'asc' | 'desc';
++}): Promise<StudySessionResponse[]> {
++  const db = await getDatabase();
++  const collection = db.collection<StudySession>(COLLECTION_NAME);
++
++  const {
++    subjectId,
++    startDate,
++    endDate,
++    page = 1,
++    limit = 100,
++    sortBy = 'timestamp',
++    sortOrder = 'desc',
++  } = options || {};
++
++  // Build query filter
++  const filter: Record<string, unknown> = {};
++  
++  if (subjectId) {
++    filter.subjectId = toObjectId(subjectId);
++  }
++  
++  if (startDate || endDate) {
++    filter.timestamp = {};
++    if (startDate) {
++      (filter.timestamp as Record<string, unknown>).$gte = startDate;
++    }
++    if (endDate) {
++      (filter.timestamp as Record<string, unknown>).$lte = endDate;
++    }
++  }
++
++  const skip = (page - 1) * limit;
++  const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
++
++  const sessions = await collection
++    .find(filter)
++    .sort(sort)
++    .skip(skip)
++    .limit(limit)
++    .toArray();
++
++  // Get all unique subject IDs
++  const subjectIds = [...new Set(sessions.map(s => s.subjectId.toString()))];
++  const subjectMap = await getSubjectsByIds(subjectIds);
++
++  return sessions.map(session => {
++    const subject = subjectMap.get(session.subjectId.toString());
++    return sessionToResponse(session, subject?.name);
++  });
++}
++
++/**
++ * Get total count of study sessions
++ */
++export async function getStudySessionCount(subjectId?: string): Promise<number> {
++  const db = await getDatabase();
++  const collection = db.collection<StudySession>(COLLECTION_NAME);
++  
++  const filter = subjectId ? { subjectId: toObjectId(subjectId) } : {};
++  return collection.countDocuments(filter);
++}
++
++// ============================================================================
++// Update Study Session
++// ============================================================================
++
++/**
++ * Update a study session by ID
++ * 
++ * @param id - Session ID
++ * @param input - Update data
++ * @returns Updated session response
++ * @throws Error if session not found or validation fails
++ */
++export async function updateStudySession(
++  id: string,
++  input: UpdateStudySessionInput
++): Promise<StudySessionResponse> {
++  // Validate input
++  const validated = updateStudySessionSchema.parse(input);
++
++  const db = await getDatabase();
++  const collection = db.collection<StudySession>(COLLECTION_NAME);
++
++  const objectId = toObjectId(id);
++
++  // Check if session exists
++  const existingSession = await collection.findOne({ _id: objectId });
++  if (!existingSession) {
++    throw new Error('Study session not found');
++  }
++
++  // Update session
++  const updateData: Partial<StudySession> = {
++    ...validated,
++    updatedAt: new Date(),
++  };
++
++  const result = await collection.findOneAndUpdate(
++    { _id: objectId },
++    { $set: updateData },
++    { returnDocument: 'after' }
++  );
++
++  if (!result) {
++    throw new Error('Failed to update study session');
++  }
++
++  // Get subject name
++  const subjectMap = await getSubjectsByIds([result.subjectId.toString()]);
++  const subject = subjectMap.get(result.subjectId.toString());
++
++  return sessionToResponse(result, subject?.name);
++}
++
++// ============================================================================
++// Delete Study Session
++// ============================================================================
++
++/**
++ * Delete a study session by ID
++ * 
++ * @param id - Session ID
++ * @returns True if deleted, false if not found
++ */
++export async function deleteStudySession(id: string): Promise<boolean> {
++  const db = await getDatabase();
++  const collection = db.collection<StudySession>(COLLECTION_NAME);
++
++  const result = await collection.deleteOne({ _id: toObjectId(id) });
++  
++  return result.deletedCount > 0;
++}
++
++// ============================================================================
++// Aggregation Functions
++// ============================================================================
++
++/**
++ * Calculate total study time for a subject
++ * 
++ * @param subjectId - Subject ID
++ * @returns Total time in seconds
++ */
++export async function getTotalStudyTime(subjectId?: string): Promise<number> {
++  const db = await getDatabase();
++  const collection = db.collection<StudySession>(COLLECTION_NAME);
++
++  const matchStage = subjectId ? { $match: { subjectId: toObjectId(subjectId) } } : { $match: {} };
++
++  const result = await collection.aggregate([
++    matchStage,
++    {
++      $group: {
++        _id: null,
++        totalTime: { $sum: '$duration' },
++      },
++    },
++  ]).toArray();
++
++  return result.length > 0 ? result[0].totalTime : 0;
++}
++
++/**
++ * Get study time breakdown by subject
++ * 
++ * @returns Array of subject IDs with their total study time
++ */
++export async function getStudyTimeBySubject(): Promise<Array<{ subjectId: string; totalTime: number; sessionCount: number }>> {
++  const db = await getDatabase();
++  const collection = db.collection<StudySession>(COLLECTION_NAME);
++
++  const result = await collection.aggregate([
++    {
++      $group: {
++        _id: '$subjectId',
++        totalTime: { $sum: '$duration' },
++        sessionCount: { $sum: 1 },
++      },
++    },
++    {
++      $sort: { totalTime: -1 },
++    },
++  ]).toArray();
++
++  return result.map(item => ({
++    subjectId: item._id.toString(),
++    totalTime: item.totalTime,
++    sessionCount: item.sessionCount,
++  }));
++}
++
++/**
++ * Get sessions grouped by date
++ * 
++ * @param startDate - Start date (optional)
++ * @param endDate - End date (optional)
++ * @returns Map of date string to sessions
++ */
++export async function getSessionsByDate(
++  startDate?: Date,
++  endDate?: Date
++): Promise<Map<string, StudySession[]>> {
++  const db = await getDatabase();
++  const collection = db.collection<StudySession>(COLLECTION_NAME);
++
++  const filter: Record<string, unknown> = {};
++  if (startDate || endDate) {
++    filter.timestamp = {};
++    if (startDate) {
++      (filter.timestamp as Record<string, unknown>).$gte = startDate;
++    }
++    if (endDate) {
++      (filter.timestamp as Record<string, unknown>).$lte = endDate;
++    }
++  }
++
++  const sessions = await collection.find(filter).sort({ timestamp: 1 }).toArray();
++
++  const sessionsByDate = new Map<string, StudySession[]>();
++  sessions.forEach(session => {
++    const dateKey = getDateString(session.timestamp);
++    if (!sessionsByDate.has(dateKey)) {
++      sessionsByDate.set(dateKey, []);
++    }
++    sessionsByDate.get(dateKey)!.push(session);
++  });
++
++  return sessionsByDate;
++}
+diff --git a/repository_after/src/services/subjectService.ts b/repository_after/src/services/subjectService.ts
+new file mode 100644
+index 000000000..942764fef
+--- /dev/null
++++ b/repository_after/src/services/subjectService.ts
+@@ -0,0 +1,265 @@
++/**
++ * Subject Service
++ * 
++ * Business logic for managing study subjects.
++ * Handles CRUD operations with validation and error handling.
++ */
++
++import { ObjectId } from 'mongodb';
++import { getDatabase } from '@/lib/db';
++import { Subject, SubjectResponse } from '@/types';
++import { subjectToResponse, toObjectId, isDuplicateKeyError } from '@/lib/utils';
++import {
++  createSubjectSchema,
++  updateSubjectSchema,
++  CreateSubjectInput,
++  UpdateSubjectInput,
++} from '@/lib/validations';
++
++const COLLECTION_NAME = 'subjects';
++
++// ============================================================================
++// Create Subject
++// ============================================================================
++
++/**
++ * Create a new study subject
++ * 
++ * @param input - Subject creation data
++ * @returns Created subject response
++ * @throws Error if subject name already exists or validation fails
++ */
++export async function createSubject(input: CreateSubjectInput): Promise<SubjectResponse> {
++  // Validate input
++  const validated = createSubjectSchema.parse(input);
++
++  const db = await getDatabase();
++  const collection = db.collection<Subject>(COLLECTION_NAME);
++
++  // Check for duplicate name (case-insensitive)
++  const existingSubject = await collection.findOne({
++    name: { $regex: new RegExp(`^${validated.name}$`, 'i') },
++  });
++
++  if (existingSubject) {
++    throw new Error(`Subject with name "${validated.name}" already exists`);
++  }
++
++  // Create subject document
++  const now = new Date();
++  const subject: Omit<Subject, '_id'> = {
++    name: validated.name,
++    description: validated.description,
++    createdAt: now,
++    updatedAt: now,
++  };
++
++  try {
++    const result = await collection.insertOne(subject as Subject);
++    
++    const createdSubject = await collection.findOne({ _id: result.insertedId });
++    if (!createdSubject) {
++      throw new Error('Failed to retrieve created subject');
++    }
++
++    return subjectToResponse(createdSubject);
++  } catch (error) {
++    if (isDuplicateKeyError(error)) {
++      throw new Error(`Subject with name "${validated.name}" already exists`);
++    }
++    throw error;
++  }
++}
++
++// ============================================================================
++// Get Subject
++// ============================================================================
++
++/**
++ * Get a subject by ID
++ * 
++ * @param id - Subject ID
++ * @returns Subject response or null if not found
++ */
++export async function getSubjectById(id: string): Promise<SubjectResponse | null> {
++  const db = await getDatabase();
++  const collection = db.collection<Subject>(COLLECTION_NAME);
++
++  const subject = await collection.findOne({ _id: toObjectId(id) });
++  
++  if (!subject) {
++    return null;
++  }
++
++  return subjectToResponse(subject);
++}
++
++/**
++ * Get all subjects with optional pagination
++ * 
++ * @param options - Query options (pagination, sorting)
++ * @returns Array of subject responses
++ */
++export async function getAllSubjects(options?: {
++  page?: number;
++  limit?: number;
++  sortBy?: 'name' | 'createdAt' | 'updatedAt';
++  sortOrder?: 'asc' | 'desc';
++}): Promise<SubjectResponse[]> {
++  const db = await getDatabase();
++  const collection = db.collection<Subject>(COLLECTION_NAME);
++
++  const {
++    page = 1,
++    limit = 100,
++    sortBy = 'createdAt',
++    sortOrder = 'desc',
++  } = options || {};
++
++  const skip = (page - 1) * limit;
++  const sort = { [sortBy]: sortOrder === 'asc' ? 1 : -1 };
++
++  const subjects = await collection
++    .find({})
++    .sort(sort)
++    .skip(skip)
++    .limit(limit)
++    .toArray();
++
++  return subjects.map(subjectToResponse);
++}
++
++/**
++ * Get total count of subjects
++ */
++export async function getSubjectCount(): Promise<number> {
++  const db = await getDatabase();
++  const collection = db.collection<Subject>(COLLECTION_NAME);
++  return collection.countDocuments({});
++}
++
++// ============================================================================
++// Update Subject
++// ============================================================================
++
++/**
++ * Update a subject by ID
++ * 
++ * @param id - Subject ID
++ * @param input - Update data
++ * @returns Updated subject response
++ * @throws Error if subject not found or validation fails
++ */
++export async function updateSubject(
++  id: string,
++  input: UpdateSubjectInput
++): Promise<SubjectResponse> {
++  // Validate input
++  const validated = updateSubjectSchema.parse(input);
++
++  const db = await getDatabase();
++  const collection = db.collection<Subject>(COLLECTION_NAME);
++
++  const objectId = toObjectId(id);
++
++  // Check if subject exists
++  const existingSubject = await collection.findOne({ _id: objectId });
++  if (!existingSubject) {
++    throw new Error('Subject not found');
++  }
++
++  // Check for duplicate name if name is being updated
++  if (validated.name && validated.name !== existingSubject.name) {
++    const duplicateSubject = await collection.findOne({
++      _id: { $ne: objectId },
++      name: { $regex: new RegExp(`^${validated.name}$`, 'i') },
++    });
++
++    if (duplicateSubject) {
++      throw new Error(`Subject with name "${validated.name}" already exists`);
++    }
++  }
++
++  // Update subject
++  const updateData: Partial<Subject> = {
++    ...validated,
++    updatedAt: new Date(),
++  };
++
++  try {
++    const result = await collection.findOneAndUpdate(
++      { _id: objectId },
++      { $set: updateData },
++      { returnDocument: 'after' }
++    );
++
++    if (!result) {
++      throw new Error('Failed to update subject');
++    }
++
++    return subjectToResponse(result);
++  } catch (error) {
++    if (isDuplicateKeyError(error)) {
++      throw new Error(`Subject with name "${validated.name}" already exists`);
++    }
++    throw error;
++  }
++}
++
++// ============================================================================
++// Delete Subject
++// ============================================================================
++
++/**
++ * Delete a subject by ID
++ * 
++ * Note: This does not delete associated study sessions.
++ * Sessions will still reference the deleted subject ID.
++ * 
++ * @param id - Subject ID
++ * @returns True if deleted, false if not found
++ */
++export async function deleteSubject(id: string): Promise<boolean> {
++  const db = await getDatabase();
++  const collection = db.collection<Subject>(COLLECTION_NAME);
++
++  const result = await collection.deleteOne({ _id: toObjectId(id) });
++  
++  return result.deletedCount > 0;
++}
++
++/**
++ * Check if a subject exists
++ * 
++ * @param id - Subject ID
++ * @returns True if subject exists
++ */
++export async function subjectExists(id: string): Promise<boolean> {
++  const db = await getDatabase();
++  const collection = db.collection<Subject>(COLLECTION_NAME);
++
++  const count = await collection.countDocuments({ _id: toObjectId(id) });
++  
++  return count > 0;
++}
++
++/**
++ * Get subjects by IDs
++ * 
++ * @param ids - Array of subject IDs
++ * @returns Map of subject ID to subject response
++ */
++export async function getSubjectsByIds(ids: string[]): Promise<Map<string, SubjectResponse>> {
++  const db = await getDatabase();
++  const collection = db.collection<Subject>(COLLECTION_NAME);
++
++  const objectIds = ids.map(toObjectId);
++  const subjects = await collection.find({ _id: { $in: objectIds } }).toArray();
++
++  const subjectMap = new Map<string, SubjectResponse>();
++  subjects.forEach((subject) => {
++    subjectMap.set(subject._id.toString(), subjectToResponse(subject));
++  });
++
++  return subjectMap;
++}
+diff --git a/repository_after/src/types/index.ts b/repository_after/src/types/index.ts
+new file mode 100644
+index 000000000..19cc23146
+--- /dev/null
++++ b/repository_after/src/types/index.ts
+@@ -0,0 +1,270 @@
++/**
++ * TypeScript Type Definitions
++ * 
++ * Defines all data models and types for the study planner application.
++ * Ensures type safety across the entire codebase.
++ */
++
++import { ObjectId } from 'mongodb';
++
++// ============================================================================
++// Subject Types
++// ============================================================================
++
++/**
++ * Subject document stored in MongoDB
++ */
++export interface Subject {
++  _id: ObjectId;
++  name: string;
++  description?: string;
++  createdAt: Date;
++  updatedAt: Date;
++}
++
++/**
++ * Subject response for API
++ */
++export interface SubjectResponse {
++  id: string;
++  name: string;
++  description?: string;
++  createdAt: string;
++  updatedAt: string;
++  totalStudyTime?: number; // Total study time in seconds
++  sessionCount?: number; // Number of study sessions
++}
++
++// ============================================================================
++// Study Session Types
++// ============================================================================
++
++/**
++ * Study session document stored in MongoDB
++ */
++export interface StudySession {
++  _id: ObjectId;
++  subjectId: ObjectId;
++  duration: number; // Duration in seconds
++  timestamp: Date;
++  notes?: string;
++  createdAt: Date;
++  updatedAt: Date;
++}
++
++/**
++ * Study session response for API
++ */
++export interface StudySessionResponse {
++  id: string;
++  subjectId: string;
++  subjectName?: string;
++  duration: number;
++  timestamp: string;
++  notes?: string;
++  createdAt: string;
++  updatedAt: string;
++}
++
++// ============================================================================
++// Reminder Types
++// ============================================================================
++
++/**
++ * Reminder recurrence pattern
++ */
++export type RecurrencePattern = 'none' | 'daily' | 'weekly' | 'monthly';
++
++/**
++ * Reminder document stored in MongoDB
++ */
++export interface Reminder {
++  _id: ObjectId;
++  label: string;
++  triggerTime: Date;
++  recurrence: RecurrencePattern;
++  subjectId?: ObjectId;
++  isActive: boolean;
++  lastTriggered?: Date;
++  createdAt: Date;
++  updatedAt: Date;
++}
++
++/**
++ * Reminder response for API
++ */
++export interface ReminderResponse {
++  id: string;
++  label: string;
++  triggerTime: string;
++  recurrence: RecurrencePattern;
++  subjectId?: string;
++  subjectName?: string;
++  isActive: boolean;
++  lastTriggered?: string;
++  createdAt: string;
++  updatedAt: string;
++}
++
++// ============================================================================
++// Analytics Types
++// ============================================================================
++
++/**
++ * Study statistics for a specific time period
++ */
++export interface StudyStatistics {
++  totalStudyTime: number; // Total time in seconds
++  sessionCount: number;
++  averageSessionDuration: number;
++  subjectBreakdown: SubjectStudyBreakdown[];
++}
++
++/**
++ * Per-subject study breakdown
++ */
++export interface SubjectStudyBreakdown {
++  subjectId: string;
++  subjectName: string;
++  totalTime: number;
++  sessionCount: number;
++  percentage: number; // Percentage of total study time
++}
++
++/**
++ * Daily study summary
++ */
++export interface DailyStudySummary {
++  date: string; // ISO date string (YYYY-MM-DD)
++  totalStudyTime: number;
++  sessionCount: number;
++  subjectsStudied: string[]; // Array of subject IDs
++}
++
++/**
++ * Weekly study summary
++ */
++export interface WeeklyStudySummary {
++  weekStart: string; // ISO date string
++  weekEnd: string;
++  totalStudyTime: number;
++  sessionCount: number;
++  dailySummaries: DailyStudySummary[];
++}
++
++/**
++ * Monthly study summary
++ */
++export interface MonthlyStudySummary {
++  month: string; // Format: YYYY-MM
++  totalStudyTime: number;
++  sessionCount: number;
++  weeklySummaries: WeeklyStudySummary[];
++}
++
++/**
++ * Study streak information
++ */
++export interface StudyStreak {
++  currentStreak: number; // Days
++  longestStreak: number; // Days
++  lastStudyDate: string | null; // ISO date string
++  streakHistory: StreakPeriod[];
++}
++
++/**
++ * Individual streak period
++ */
++export interface StreakPeriod {
++  startDate: string;
++  endDate: string;
++  length: number; // Days
++}
++
++/**
++ * Dashboard statistics
++ */
++export interface DashboardStats {
++  totalSubjects: number;
++  totalStudyTime: number;
++  totalSessions: number;
++  todayStudyTime: number;
++  todaySessions: number;
++  weekStudyTime: number;
++  weekSessions: number;
++  monthStudyTime: number;
++  monthSessions: number;
++  streak: StudyStreak;
++  recentSessions: StudySessionResponse[];
++  topSubjects: SubjectStudyBreakdown[];
++}
++
++// ============================================================================
++// API Response Types
++// ============================================================================
++
++/**
++ * Generic API success response
++ */
++export interface ApiSuccessResponse<T = unknown> {
++  success: true;
++  data: T;
++  message?: string;
++}
++
++/**
++ * Generic API error response
++ */
++export interface ApiErrorResponse {
++  success: false;
++  error: string;
++  details?: Record<string, string[]>; // Validation errors
++}
++
++/**
++ * API response type (success or error)
++ */
++export type ApiResponse<T = unknown> = ApiSuccessResponse<T> | ApiErrorResponse;
++
++/**
++ * Paginated response
++ */
++export interface PaginatedResponse<T> {
++  items: T[];
++  total: number;
++  page: number;
++  limit: number;
++  totalPages: number;
++}
++
++// ============================================================================
++// Utility Types
++// ============================================================================
++
++/**
++ * Type guard to check if response is successful
++ */
++export function isApiSuccess<T>(
++  response: ApiResponse<T>
++): response is ApiSuccessResponse<T> {
++  return response.success === true;
++}
++
++/**
++ * Type guard to check if response is an error
++ */
++export function isApiError(
++  response: ApiResponse
++): response is ApiErrorResponse {
++  return response.success === false;
++}
++// ============================================================================
++// Input Types (proxying from validations)
++// ============================================================================
++
++export type {
++  CreateSubjectInput,
++  UpdateSubjectInput,
++  CreateStudySessionInput,
++  UpdateStudySessionInput,
++} from '@/lib/validations';
+diff --git a/repository_after/tailwind.config.js b/repository_after/tailwind.config.js
+new file mode 100644
+index 000000000..f1a2b0b7e
+--- /dev/null
++++ b/repository_after/tailwind.config.js
+@@ -0,0 +1,41 @@
++/** @type {import('tailwindcss').Config} */
++module.exports = {
++  content: [
++    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
++    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
++    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
++  ],
++  theme: {
++    extend: {
++      colors: {
++        primary: {
++          50: '#f0f9ff',
++          100: '#e0f2fe',
++          200: '#bae6fd',
++          300: '#7dd3fc',
++          400: '#38bdf8',
++          500: '#0ea5e9',
++          600: '#0284c7',
++          700: '#0369a1',
++          800: '#075985',
++          900: '#0c4a6e',
++        },
++      },
++      animation: {
++        'fade-in': 'fadeIn 0.3s ease-in-out',
++        'slide-up': 'slideUp 0.3s ease-out',
++      },
++      keyframes: {
++        fadeIn: {
++          '0%': { opacity: '0' },
++          '100%': { opacity: '1' },
++        },
++        slideUp: {
++          '0%': { transform: 'translateY(10px)', opacity: '0' },
++          '100%': { transform: 'translateY(0)', opacity: '1' },
++        },
++      },
++    },
++  },
++  plugins: [],
++}
+diff --git a/repository_after/tsconfig.json b/repository_after/tsconfig.json
+new file mode 100644
+index 000000000..404b4a565
+--- /dev/null
++++ b/repository_after/tsconfig.json
+@@ -0,0 +1,28 @@
++{
++  "compilerOptions": {
++    "target": "ES2020",
++    "lib": ["dom", "dom.iterable", "esnext"],
++    "allowJs": true,
++    "skipLibCheck": true,
++    "strict": true,
++    "forceConsistentCasingInFileNames": true,
++    "noEmit": true,
++    "esModuleInterop": true,
++    "module": "esnext",
++    "moduleResolution": "bundler",
++    "resolveJsonModule": true,
++    "isolatedModules": true,
++    "jsx": "preserve",
++    "incremental": true,
++    "plugins": [
++      {
++        "name": "next"
++      }
++    ],
++    "paths": {
++      "@/*": ["./src/*"]
++    }
++  },
++  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
++  "exclude": ["node_modules"]
++}

@@ -1,0 +1,18 @@
+{
+  "name": "auth-service",
+  "version": "1.0.0",
+  "description": "Authentication service with security vulnerabilities",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "express-session": "^1.17.3",
+    "jsonwebtoken": "^9.0.0"
+  },
+  "devDependencies": {
+    "jest": "^30.2.0"
+  }
+}

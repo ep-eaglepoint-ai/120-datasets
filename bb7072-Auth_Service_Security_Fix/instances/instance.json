@@ -1,0 +1,10 @@
+{
+  "categories": ["Security Fix"],
+  "languages": ["JavaScript", "Node.js"],
+  "project_type": "nodejs",
+  "difficulty": "medium",
+  "platform": "linux",
+  "created_at": "2024-01-15T12:00:00Z",
+  "tags": ["security", "authentication", "jwt", "bcrypt", "session-management", "rate-limiting"]
+}
+

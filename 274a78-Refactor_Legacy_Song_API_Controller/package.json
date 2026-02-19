@@ -1,0 +1,21 @@
+{
+  "name": "274a78-refactor_legacy_song_api_controller",
+  "version": "1.0.0",
+  "description": "Starter scaffold for bd dataset task.",
+  "main": "index.js",
+  "scripts": {
+    "test": "node tests/comprehensive-requirement-validation.test.js",
+    "test:legacy": "node tests/refactoring.test.js",
+    "test:before": "node tests/test.js repository_before",
+    "test:after": "node tests/test.js repository_after",
+    "evaluate": "node evaluation/evaluation.js --comprehensive",
+    "evaluate:standard": "node evaluation/evaluation.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "jest": "^30.2.0"
+  }
+}

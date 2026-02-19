@@ -1,0 +1,11 @@
+{
+            "instance_id": "UD7D4K",
+            "problem_statement": "Build a deterministic, cross-platform pytest suite that verifies a Python package correctly applies Yeo–Johnson and Box–Cox power transforms, enforces method constraints, remains numerically stable, and demonstrates measurable distribution-shape improvement on skewed data while avoiding flaky statistical assertions that break in CI.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/ud7d4k-adversarial-ci-stable-test-suite-for-power-transformer-structural-scaling",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

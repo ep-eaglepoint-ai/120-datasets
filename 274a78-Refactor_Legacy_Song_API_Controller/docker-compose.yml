@@ -1,0 +1,28 @@
+services:
+  app:
+    build: .
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm test
+
+  test-before:
+    build: .
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: node tests/test.js repository_before
+
+  test-after:
+    build: .
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: node tests/test.js repository_after
+
+  evaluate:
+    build: .
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: node evaluation/evaluation.js

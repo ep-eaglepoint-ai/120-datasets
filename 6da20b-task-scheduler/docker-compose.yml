@@ -1,0 +1,29 @@
+services:
+  # Run tests on the BEFORE version (minimal output - just pass/fail)
+  test-before:
+    build: .
+    command: pytest -v --tb=no tests
+    environment:
+      - PYTHONPATH=/app/repository_before
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./evaluation/reports:/app/evaluation/reports
+
+  # Run tests on the AFTER version
+  test-after:
+    build: .
+    command: pytest -v tests
+    environment:
+      - PYTHONPATH=/app/repository_after
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./evaluation/reports:/app/evaluation/reports
+
+  # Run the evaluation (compares before and after)
+  evaluation:
+    build: .
+    command: python3 evaluation/evaluation.py
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./evaluation/reports:/app/evaluation/reports

@@ -1,0 +1,15 @@
+{
+  "name": "auth-service",
+  "version": "1.0.0",
+  "description": "Authentication service with security vulnerabilities",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node test.js"
+  },
+  "dependencies": {
+    "jsonwebtoken": "^9.0.0",
+    "express-session": "^1.17.3"
+  }
+}
+

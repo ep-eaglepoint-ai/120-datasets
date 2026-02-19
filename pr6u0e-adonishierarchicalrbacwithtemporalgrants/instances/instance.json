@@ -1,0 +1,11 @@
+{
+            "instance_id": "PR6U0E",
+            "problem_statement": "We need an application requires a sophisticated authorization layer that supports complex nested role structures and time-bound permission grants. The challenge lies in efficiently resolving a flattened list of effective permissions across a recursive hierarchy while ensuring tenant isolation and handling the automatic expiration of temporary roles in a high-concurrency environment using adonis.js.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/pr6u0e-adonishierarchicalrbacwithtemporalgrants",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

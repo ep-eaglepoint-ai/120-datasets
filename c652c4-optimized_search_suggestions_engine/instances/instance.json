@@ -1,0 +1,9 @@
+{
+    "instance_id": "c652c4",
+    "problem_statement": "The existing search suggestions engine relies on an O(n²) multi-pass algorithm that scans the entire product catalog on every keystroke.As the catalog scales, this causes catastrophic latency, UI freezes, and Core Web Vitals failures. Despite the performance issues, all relevance logic, scoring, ordering, and features must remain unchanged. The system must be optimized to an O(n log n) solution with zero behavioral regression.",
+    "base_commit": "repository_before",
+    "test_patch": "tests/",
+    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main",
+    "environment_setup": "Dockerfile"
+  }
+  

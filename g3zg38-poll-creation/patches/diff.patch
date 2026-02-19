@@ -1,0 +1,1136 @@
+diff -ruN repository_before/client/index.html repository_after/client/index.html
+--- repository_before/client/index.html	1970-01-01 03:00:00
++++ repository_after/client/index.html	2026-02-14 13:05:41
+@@ -0,0 +1,12 @@
++<!DOCTYPE html>
++<html lang="en">
++  <head>
++    <meta charset="UTF-8" />
++    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
++    <title>Poll Creation & Voting</title>
++  </head>
++  <body>
++    <div id="root"></div>
++    <script type="module" src="/src/main.tsx"></script>
++  </body>
++</html>
+diff -ruN repository_before/client/package.json repository_after/client/package.json
+--- repository_before/client/package.json	1970-01-01 03:00:00
++++ repository_after/client/package.json	2026-02-14 13:05:41
+@@ -0,0 +1,28 @@
++{
++  "name": "poll-creation-client",
++  "private": true,
++  "version": "1.0.0",
++  "type": "module",
++  "scripts": {
++    "dev": "vite",
++    "build": "tsc && vite build",
++    "preview": "vite preview"
++  },
++  "dependencies": {
++    "react": "^18.2.0",
++    "react-dom": "^18.2.0",
++    "react-router-dom": "^6.21.1",
++    "socket.io-client": "^4.6.1",
++    "zustand": "^4.4.7"
++  },
++  "devDependencies": {
++    "@types/react": "^18.2.48",
++    "@types/react-dom": "^18.2.18",
++    "@vitejs/plugin-react": "^4.2.1",
++    "autoprefixer": "^10.4.17",
++    "postcss": "^8.4.33",
++    "tailwindcss": "^3.4.1",
++    "typescript": "^5.3.3",
++    "vite": "^5.0.10"
++  }
++}
+diff -ruN repository_before/client/postcss.config.js repository_after/client/postcss.config.js
+--- repository_before/client/postcss.config.js	1970-01-01 03:00:00
++++ repository_after/client/postcss.config.js	2026-02-14 13:05:41
+@@ -0,0 +1,6 @@
++export default {
++  plugins: {
++    tailwindcss: {},
++    autoprefixer: {},
++  },
++};
+diff -ruN repository_before/client/src/App.tsx repository_after/client/src/App.tsx
+--- repository_before/client/src/App.tsx	1970-01-01 03:00:00
++++ repository_after/client/src/App.tsx	2026-02-14 13:05:41
+@@ -0,0 +1,24 @@
++import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
++import { CreatePoll } from './pages/CreatePoll';
++import { VotePoll } from './pages/VotePoll';
++import { Dashboard } from './pages/Dashboard';
++
++export default function App() {
++  return (
++    <BrowserRouter>
++      <nav className="border-b bg-white px-4 py-3 flex gap-4">
++        <Link to="/" className="text-indigo-600 font-medium">Home</Link>
++        <Link to="/create" className="text-gray-600 hover:text-indigo-600">Create poll</Link>
++        <Link to="/dashboard" className="text-gray-600 hover:text-indigo-600">Dashboard</Link>
++      </nav>
++      <main className="min-h-screen bg-gray-50 py-6">
++        <Routes>
++          <Route path="/" element={<div className="max-w-lg mx-auto p-6 text-center"><p className="text-gray-600">Create a poll or open a shared link to vote.</p><Link to="/create" className="text-indigo-600 hover:underline">Create poll</Link></div>} />
++          <Route path="/create" element={<CreatePoll />} />
++          <Route path="/poll/:pollId" element={<VotePoll />} />
++          <Route path="/dashboard" element={<Dashboard />} />
++        </Routes>
++      </main>
++    </BrowserRouter>
++  );
++}
+diff -ruN repository_before/client/src/api/polls.ts repository_after/client/src/api/polls.ts
+--- repository_before/client/src/api/polls.ts	1970-01-01 03:00:00
++++ repository_after/client/src/api/polls.ts	2026-02-14 13:05:41
+@@ -0,0 +1,50 @@
++import type { Poll, CreatePollInput } from '../types';
++
++const API_BASE = '/api';
++
++export async function createPoll(input: CreatePollInput): Promise<Poll> {
++  const res = await fetch(`${API_BASE}/polls`, {
++    method: 'POST',
++    headers: { 'Content-Type': 'application/json' },
++    body: JSON.stringify(input),
++  });
++  if (!res.ok) {
++    const err = await res.json().catch(() => ({}));
++    throw new Error(err.error || 'Failed to create poll');
++  }
++  return res.json();
++}
++
++export async function getPoll(pollId: string): Promise<Poll> {
++  const res = await fetch(`${API_BASE}/polls/${pollId}`);
++  if (!res.ok) {
++    const err = await res.json().catch(() => ({}));
++    throw new Error(err.error || 'Failed to fetch poll');
++  }
++  return res.json();
++}
++
++export async function vote(pollId: string, optionId: string, voteToken: string): Promise<Poll> {
++  const res = await fetch(`${API_BASE}/polls/${pollId}/vote`, {
++    method: 'POST',
++    headers: {
++      'Content-Type': 'application/json',
++      'X-Vote-Token': voteToken,
++    },
++    body: JSON.stringify({ optionId, voteToken }),
++  });
++  if (!res.ok) {
++    const err = await res.json().catch(() => ({}));
++    throw new Error(err.error || 'Failed to vote');
++  }
++  return res.json();
++}
++
++export async function closePoll(pollId: string): Promise<Poll> {
++  const res = await fetch(`${API_BASE}/polls/${pollId}/close`, { method: 'PATCH' });
++  if (!res.ok) {
++    const err = await res.json().catch(() => ({}));
++    throw new Error(err.error || 'Failed to close poll');
++  }
++  return res.json();
++}
+diff -ruN repository_before/client/src/components/CopyLinkButton.tsx repository_after/client/src/components/CopyLinkButton.tsx
+--- repository_before/client/src/components/CopyLinkButton.tsx	1970-01-01 03:00:00
++++ repository_after/client/src/components/CopyLinkButton.tsx	2026-02-14 13:05:41
+@@ -0,0 +1,31 @@
++import { useState } from 'react';
++
++interface CopyLinkButtonProps {
++  url: string;
++  className?: string;
++}
++
++/** Req 2: copy-to-clipboard for shareable poll link */
++export function CopyLinkButton({ url, className = '' }: CopyLinkButtonProps) {
++  const [copied, setCopied] = useState(false);
++
++  const copy = async () => {
++    try {
++      await navigator.clipboard.writeText(url);
++      setCopied(true);
++      setTimeout(() => setCopied(false), 2000);
++    } catch {
++      setCopied(false);
++    }
++  }
++
++  return (
++    <button
++      type="button"
++      onClick={copy}
++      className={`px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 transition ${className}`}
++    >
++      {copied ? 'Copied!' : 'Copy link'}
++    </button>
++  );
++}
+diff -ruN repository_before/client/src/components/ResultsBar.tsx repository_after/client/src/components/ResultsBar.tsx
+--- repository_before/client/src/components/ResultsBar.tsx	1970-01-01 03:00:00
++++ repository_after/client/src/components/ResultsBar.tsx	2026-02-14 13:05:41
+@@ -0,0 +1,32 @@
++import type { PollOption } from '../types';
++
++interface ResultsBarProps {
++  option: PollOption;
++  totalVotes: number;
++  isLeading: boolean;
++}
++
++/** Req 4 & 6: horizontal bar chart, percentage, leading highlight, animated progress */
++export function ResultsBar({ option, totalVotes, isLeading }: ResultsBarProps) {
++  const percentage = totalVotes > 0 ? (option.votes / totalVotes) * 100 : 0;
++
++  return (
++    <div className="mb-4">
++      <div className="flex justify-between text-sm mb-1">
++        <span className={isLeading ? 'font-semibold text-indigo-600' : ''}>{option.text}</span>
++        <span>
++          {option.votes} vote{option.votes !== 1 ? 's' : ''} ({percentage.toFixed(1)}%)
++        </span>
++      </div>
++      <div className="h-6 bg-gray-200 rounded-full overflow-hidden">
++        <div
++          className="h-full rounded-full transition-all duration-500 ease-out bg-indigo-500"
++          style={{
++            width: `${percentage}%`,
++            backgroundColor: isLeading ? '#4f46e5' : '#6366f1',
++          }}
++        />
++      </div>
++    </div>
++  );
++}
+diff -ruN repository_before/client/src/components/ResultsSummary.tsx repository_after/client/src/components/ResultsSummary.tsx
+--- repository_before/client/src/components/ResultsSummary.tsx	1970-01-01 03:00:00
++++ repository_after/client/src/components/ResultsSummary.tsx	2026-02-14 13:05:41
+@@ -0,0 +1,31 @@
++import type { Poll } from '../types';
++import { ResultsBar } from './ResultsBar';
++
++interface ResultsSummaryProps {
++  poll: Poll;
++}
++
++/** Req 4 & 6: vote counts, percentages, horizontal bars, total participants, leading highlight */
++export function ResultsSummary({ poll }: ResultsSummaryProps) {
++  const total = poll.totalVotes;
++  const maxVotes = Math.max(...poll.options.map((o) => o.votes), 0);
++  const leadingIds = total > 0 ? poll.options.filter((o) => o.votes === maxVotes).map((o) => o.id) : [];
++
++  return (
++    <div className="space-y-4">
++      <p className="text-gray-600 text-sm">
++        Total participants: <strong>{total}</strong>
++      </p>
++      <div className="space-y-2">
++        {poll.options.map((opt) => (
++          <ResultsBar
++            key={opt.id}
++            option={opt}
++            totalVotes={total}
++            isLeading={leadingIds.includes(opt.id)}
++          />
++        ))}
++      </div>
++    </div>
++  );
++}
+diff -ruN repository_before/client/src/index.css repository_after/client/src/index.css
+--- repository_before/client/src/index.css	1970-01-01 03:00:00
++++ repository_after/client/src/index.css	2026-02-14 13:05:41
+@@ -0,0 +1,8 @@
++@tailwind base;
++@tailwind components;
++@tailwind utilities;
++
++body {
++  margin: 0;
++  font-family: system-ui, -apple-system, sans-serif;
++}
+diff -ruN repository_before/client/src/main.tsx repository_after/client/src/main.tsx
+--- repository_before/client/src/main.tsx	1970-01-01 03:00:00
++++ repository_after/client/src/main.tsx	2026-02-14 13:05:41
+@@ -0,0 +1,10 @@
++import React from 'react';
++import ReactDOM from 'react-dom/client';
++import App from './App';
++import './index.css';
++
++ReactDOM.createRoot(document.getElementById('root')!).render(
++  <React.StrictMode>
++    <App />
++  </React.StrictMode>
++);
+diff -ruN repository_before/client/src/pages/CreatePoll.tsx repository_after/client/src/pages/CreatePoll.tsx
+--- repository_before/client/src/pages/CreatePoll.tsx	1970-01-01 03:00:00
++++ repository_after/client/src/pages/CreatePoll.tsx	2026-02-14 13:05:41
+@@ -0,0 +1,137 @@
++import { useState } from 'react';
++import { useNavigate } from 'react-router-dom';
++import { createPoll } from '../api/polls';
++import { usePollStore } from '../store/pollStore';
++import { CopyLinkButton } from '../components/CopyLinkButton';
++import type { CreatePollInput } from '../types';
++
++const MIN_OPTIONS = 2;
++const MAX_OPTIONS = 10;
++
++/** Req 1: Form with question, 2-10 options (add/remove), optional expiration, show results before/after toggle */
++export function CreatePoll() {
++  const navigate = useNavigate();
++  const addCreatedPoll = usePollStore((s) => s.addCreatedPoll);
++  const [question, setQuestion] = useState('');
++  const [options, setOptions] = useState(['', '']);
++  const [showResultsBeforeVote, setShowResultsBeforeVote] = useState(false);
++  const [expiresAt, setExpiresAt] = useState('');
++  const [error, setError] = useState('');
++  const [loading, setLoading] = useState(false);
++  const [createdPollId, setCreatedPollId] = useState<string | null>(null);
++
++  const addOption = () => {
++    if (options.length >= MAX_OPTIONS) return;
++    setOptions([...options, '']);
++  };
++
++  const removeOption = (index: number) => {
++    if (options.length <= MIN_OPTIONS) return;
++    setOptions(options.filter((_, i) => i !== index));
++  };
++
++  const updateOption = (index: number, value: string) => {
++    const next = [...options];
++    next[index] = value;
++    setOptions(next);
++  };
++
++  const handleSubmit = async (e: React.FormEvent) => {
++    e.preventDefault();
++    setError('');
++    const trimmed = options.map((o) => o.trim()).filter(Boolean);
++    if (!question.trim()) {
++      setError('Question is required');
++      return;
++    }
++    if (trimmed.length < MIN_OPTIONS) {
++      setError('At least 2 options are required');
++      return;
++    }
++    if (trimmed.length > MAX_OPTIONS) {
++      setError('Maximum ' + MAX_OPTIONS + ' options allowed');
++      return;
++    }
++    setLoading(true);
++    try {
++      const input: CreatePollInput = {
++        question: question.trim(),
++        options: trimmed,
++        showResultsBeforeVote,
++        expiresAt: expiresAt.trim() || undefined,
++      };
++      const poll = await createPoll(input);
++      addCreatedPoll(poll.pollId);
++      setCreatedPollId(poll.pollId);
++    } catch (err) {
++      setError(err instanceof Error ? err.message : 'Failed to create poll');
++    } finally {
++      setLoading(false);
++    }
++  };
++
++  const shareUrl = createdPollId
++    ? window.location.origin + '/poll/' + createdPollId
++    : '';
++
++  if (createdPollId) {
++    return (
++      <div className="max-w-lg mx-auto p-6 space-y-4">
++        <h2 className="text-xl font-semibold">Poll created</h2>
++        <p className="text-gray-600">Share this link:</p>
++        <div className="flex gap-2 items-center flex-wrap">
++          <input readOnly value={shareUrl} className="flex-1 min-w-0 px-3 py-2 border rounded-lg bg-gray-50 text-sm" />
++          <CopyLinkButton url={shareUrl} />
++        </div>
++        <div className="flex gap-2">
++          <button type="button" onClick={() => navigate('/poll/' + createdPollId)} className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
++            View poll
++          </button>
++          <button type="button" onClick={() => navigate('/dashboard')} className="px-4 py-2 border rounded-lg hover:bg-gray-50">
++            Dashboard
++          </button>
++        </div>
++      </div>
++    );
++  }
++
++  return (
++    <div className="max-w-lg mx-auto p-6">
++      <h1 className="text-2xl font-bold mb-6">Create a poll</h1>
++      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
++        <div>
++          <label className="block text-sm font-medium text-gray-700 mb-1">Question</label>
++          <input type="text" value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Your poll question" className="w-full px-3 py-2 border rounded-lg" required />
++        </div>
++        <div>
++          <div className="flex justify-between items-center mb-1">
++            <label className="block text-sm font-medium text-gray-700">Options (2 to 10)</label>
++            <button type="button" onClick={addOption} disabled={options.length >= MAX_OPTIONS} className="text-sm text-indigo-600 hover:underline">
++              + Add
++            </button>
++          </div>
++          {options.map((opt, i) => (
++            <div key={i} className="flex gap-2 mb-2">
++              <input type="text" value={opt} onChange={(e) => updateOption(i, e.target.value)} placeholder={'Option ' + (i + 1)} className="flex-1 px-3 py-2 border rounded-lg" />
++              <button type="button" onClick={() => removeOption(i)} disabled={options.length <= MIN_OPTIONS} className="px-3 py-2 border rounded-lg text-red-600 hover:bg-red-50 disabled:opacity-50">
++                Remove
++              </button>
++            </div>
++          ))}
++        </div>
++        <div>
++          <label htmlFor="expiration" className="block text-sm font-medium text-gray-700 mb-1">Expiration (optional)</label>
++          <input id="expiration" type="datetime-local" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} className="w-full px-3 py-2 border rounded-lg" />
++        </div>
++        <div className="flex items-center gap-2">
++          <input type="checkbox" id="showBefore" checked={showResultsBeforeVote} onChange={(e) => setShowResultsBeforeVote(e.target.checked)} className="rounded" />
++          <label htmlFor="showBefore" className="text-sm text-gray-700">Show results before voting</label>
++        </div>
++        {error && <p className="text-red-600 text-sm">{error}</p>}
++        <button type="submit" disabled={loading} className="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50">
++          {loading ? 'Creating…' : 'Create poll'}
++        </button>
++      </form>
++    </div>
++  );
++}
+diff -ruN repository_before/client/src/pages/Dashboard.tsx repository_after/client/src/pages/Dashboard.tsx
+--- repository_before/client/src/pages/Dashboard.tsx	1970-01-01 03:00:00
++++ repository_after/client/src/pages/Dashboard.tsx	2026-02-14 13:05:41
+@@ -0,0 +1,102 @@
++import { useEffect, useState } from 'react';
++import { Link } from 'react-router-dom';
++import { usePollStore } from '../store/pollStore';
++import { getPoll, closePoll } from '../api/polls';
++import type { Poll } from '../types';
++
++/** Req 5: Dashboard with created polls (localStorage), detailed results, close poll */
++export function Dashboard() {
++  const { createdPollIds, loadCreatedPollIds } = usePollStore();
++  const [polls, setPolls] = useState<Record<string, Poll | null>>({});
++  const [loading, setLoading] = useState(true);
++
++  useEffect(() => {
++    loadCreatedPollIds();
++  }, [loadCreatedPollIds]);
++
++  useEffect(() => {
++    const ids = createdPollIds;
++    if (ids.length === 0) {
++      setLoading(false);
++      return;
++    }
++    let done = 0;
++    const next: Record<string, Poll | null> = {};
++    ids.forEach((id) => {
++      getPoll(id)
++        .then((p) => { next[id] = p; })
++        .catch(() => { next[id] = null; })
++        .finally(() => {
++          done++;
++          if (done === ids.length) {
++            setPolls(next);
++            setLoading(false);
++          }
++        });
++    });
++  }, [createdPollIds.join(',')]);
++
++  const handleClose = async (pollId: string) => {
++    try {
++      const updated = await closePoll(pollId);
++      setPolls((prev) => ({ ...prev, [pollId]: updated }));
++    } catch {
++      // keep UI as is
++    }
++  };
++
++  const status = (p: Poll | null): string => {
++    if (!p) return 'Unknown';
++    if (p.isClosed) return 'Closed';
++    if (p.expiresAt && new Date(p.expiresAt) < new Date()) return 'Expired';
++    return 'Open';
++  };
++
++  if (loading) return <div className="max-w-2xl mx-auto p-6">Loading…</div>;
++
++  return (
++    <div className="max-w-2xl mx-auto p-6">
++      <h1 className="text-2xl font-bold mb-6">My polls</h1>
++      {createdPollIds.length === 0 ? (
++        <p className="text-gray-600">You have not created any polls yet. <Link to="/create" className="text-indigo-600 hover:underline">Create one</Link>.</p>
++      ) : (
++        <ul className="space-y-4">
++          {createdPollIds.map((id) => {
++            const poll = polls[id];
++            const st = status(poll);
++            return (
++              <li key={id} className="border rounded-lg p-4">
++                <div className="flex justify-between items-start gap-2">
++                  <div className="min-w-0 flex-1">
++                    <p className="font-medium truncate">{poll?.question ?? id}</p>
++                    <p className="text-sm text-gray-500">Status: {st} · Total votes: {poll?.totalVotes ?? '—'}</p>
++                  </div>
++                  <div className="flex gap-2 shrink-0">
++                    <Link
++                      to={`/poll/${id}`}
++                      className="px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-50"
++                    >
++                      View results
++                    </Link>
++                    {st === 'Open' && (
++                      <button
++                        type="button"
++                        onClick={() => handleClose(id)}
++                        className="px-3 py-1.5 text-sm border border-red-200 text-red-600 rounded-lg hover:bg-red-50"
++                      >
++                        Close poll
++                      </button>
++                    )}
++                  </div>
++                </div>
++              </li>
++            );
++          })}
++        </ul>
++      )}
++      <div className="mt-6">
++        <Link to="/create" className="text-indigo-600 hover:underline">Create new poll</Link>
++      </div>
++    </div>
++  );
++}
+diff -ruN repository_before/client/src/pages/VotePoll.tsx repository_after/client/src/pages/VotePoll.tsx
+--- repository_before/client/src/pages/VotePoll.tsx	1970-01-01 03:00:00
++++ repository_after/client/src/pages/VotePoll.tsx	2026-02-14 13:05:41
+@@ -0,0 +1,111 @@
++import { useEffect, useState } from 'react';
++import { useParams } from 'react-router-dom';
++import { io } from 'socket.io-client';
++import { getPoll, vote as voteApi } from '../api/polls';
++import { usePollStore, hasVoted, setVoted, getOrCreateVoteToken } from '../store/pollStore';
++import { ResultsSummary } from '../components/ResultsSummary';
++import { CopyLinkButton } from '../components/CopyLinkButton';
++
++/** Req 2 and 3: Voting page, question and options, select one and submit; localStorage duplicate prevention; confirmation */
++export function VotePoll() {
++  const { pollId } = useParams<{ pollId: string }>();
++  const { poll, setPoll, updatePoll } = usePollStore();
++  const [loading, setLoading] = useState(true);
++  const [error, setError] = useState('');
++  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
++  const [submitting, setSubmitting] = useState(false);
++  const [justVoted, setJustVoted] = useState(false);
++  const voted = pollId ? hasVoted(pollId) : false;
++
++  useEffect(() => {
++    if (!pollId) return;
++    getPoll(pollId)
++      .then((p) => {
++        setPoll(p);
++        setError('');
++      })
++      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load poll'))
++      .finally(() => setLoading(false));
++  }, [pollId, setPoll]);
++
++  useEffect(() => {
++    if (!pollId || !poll) return;
++    const socket = io(window.location.origin, { path: '/socket.io' });
++    socket.emit('join-poll', pollId);
++    socket.on('poll-updated', (updated: typeof poll) => {
++      updatePoll(updated);
++    });
++    return () => {
++      socket.off('poll-updated');
++      socket.close();
++    };
++  }, [pollId, poll?.pollId, updatePoll]);
++
++  const handleVote = async (e: React.FormEvent) => {
++    e.preventDefault();
++    if (!pollId || !selectedOptionId) return;
++    setSubmitting(true);
++    setError('');
++    try {
++      const token = getOrCreateVoteToken(pollId);
++      const updated = await voteApi(pollId, selectedOptionId, token);
++      setVoted(pollId);
++      setPoll(updated);
++      setJustVoted(true);
++    } catch (err) {
++      setError(err instanceof Error ? err.message : 'Failed to vote');
++    } finally {
++      setSubmitting(false);
++    }
++  };
++
++  const canShowResults = poll?.showResultsBeforeVote || voted || justVoted;
++  const basePath = window.location.pathname.replace(/\/poll\/.*/, '') || '';
++  const shareUrl = pollId ? window.location.origin + basePath + '/poll/' + pollId : '';
++
++  if (loading) return <div className="max-w-lg mx-auto p-6">Loading…</div>;
++  if (error && !poll) return <div className="max-w-lg mx-auto p-6 text-red-600">{error}</div>;
++  if (!poll) return null;
++
++  return (
++    <div className="max-w-lg mx-auto p-6 space-y-4">
++      <h1 className="text-2xl font-bold">{poll.question}</h1>
++      <div className="flex gap-2 items-center">
++        <span className="text-sm text-gray-500">Share:</span>
++        <CopyLinkButton url={shareUrl} />
++      </div>
++
++      {canShowResults ? (
++        <>
++          {justVoted && <p className="text-green-600 font-medium">Thanks! Your vote has been recorded.</p>}
++          {voted && !justVoted && <p className="text-gray-600">You have already voted.</p>}
++          <ResultsSummary poll={poll} />
++        </>
++      ) : (
++        <form onSubmit={handleVote} className="space-y-3">
++          {poll.options.map((opt) => (
++            <label key={opt.id} className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
++              <input
++                type="radio"
++                name="option"
++                value={opt.id}
++                checked={selectedOptionId === opt.id}
++                onChange={() => setSelectedOptionId(opt.id)}
++                className="w-4 h-4"
++              />
++              <span>{opt.text}</span>
++            </label>
++          ))}
++          {error && <p className="text-red-600 text-sm">{error}</p>}
++          <button
++            type="submit"
++            disabled={!selectedOptionId || submitting}
++            className="w-full py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
++          >
++            {submitting ? 'Submitting…' : 'Submit vote'}
++          </button>
++        </form>
++      )}
++    </div>
++  );
++}
+diff -ruN repository_before/client/src/store/pollStore.ts repository_after/client/src/store/pollStore.ts
+--- repository_before/client/src/store/pollStore.ts	1970-01-01 03:00:00
++++ repository_after/client/src/store/pollStore.ts	2026-02-14 13:05:41
+@@ -0,0 +1,58 @@
++import { create } from 'zustand';
++import type { Poll } from '../types';
++
++const CREATED_POLLS_KEY = 'poll_creation_created_polls';
++
++function getCreatedPollIds(): string[] {
++  try {
++    const raw = localStorage.getItem(CREATED_POLLS_KEY);
++    return raw ? JSON.parse(raw) : [];
++  } catch {
++    return [];
++  }
++}
++
++function addCreatedPollId(pollId: string): void {
++  const ids = getCreatedPollIds();
++  if (ids.includes(pollId)) return;
++  localStorage.setItem(CREATED_POLLS_KEY, JSON.stringify([...ids, pollId]));
++}
++
++export function hasVoted(pollId: string): boolean {
++  return localStorage.getItem(`voted_poll_${pollId}`) === '1';
++}
++
++export function setVoted(pollId: string): void {
++  localStorage.setItem(`voted_poll_${pollId}`, '1');
++}
++
++export function getOrCreateVoteToken(pollId: string): string {
++  const key = `vote_token_${pollId}`;
++  let token = localStorage.getItem(key);
++  if (!token) {
++    token = `vt_${Date.now()}_${Math.random().toString(36).slice(2)}`;
++    localStorage.setItem(key, token);
++  }
++  return token;
++}
++
++interface PollState {
++  poll: Poll | null;
++  setPoll: (p: Poll | null) => void;
++  updatePoll: (p: Poll) => void;
++  createdPollIds: string[];
++  addCreatedPoll: (pollId: string) => void;
++  loadCreatedPollIds: () => void;
++}
++
++export const usePollStore = create<PollState>((set) => ({
++  poll: null,
++  setPoll: (poll) => set({ poll }),
++  updatePoll: (poll) => set((s) => (s.poll?.pollId === poll.pollId ? { poll } : s)),
++  createdPollIds: getCreatedPollIds(),
++  addCreatedPoll: (pollId) => {
++    addCreatedPollId(pollId);
++    set({ createdPollIds: getCreatedPollIds() });
++  },
++  loadCreatedPollIds: () => set({ createdPollIds: getCreatedPollIds() }),
++}));
+diff -ruN repository_before/client/src/types.ts repository_after/client/src/types.ts
+--- repository_before/client/src/types.ts	1970-01-01 03:00:00
++++ repository_after/client/src/types.ts	2026-02-14 13:05:41
+@@ -0,0 +1,23 @@
++export interface PollOption {
++  id: string;
++  text: string;
++  votes: number;
++}
++
++export interface Poll {
++  pollId: string;
++  question: string;
++  options: PollOption[];
++  totalVotes: number;
++  showResultsBeforeVote: boolean;
++  expiresAt?: string;
++  isClosed: boolean;
++  createdAt: string;
++}
++
++export interface CreatePollInput {
++  question: string;
++  options: string[];
++  showResultsBeforeVote: boolean;
++  expiresAt?: string;
++}
+diff -ruN repository_before/client/tailwind.config.js repository_after/client/tailwind.config.js
+--- repository_before/client/tailwind.config.js	1970-01-01 03:00:00
++++ repository_after/client/tailwind.config.js	2026-02-14 13:05:41
+@@ -0,0 +1,12 @@
++/** @type {import('tailwindcss').Config} */
++export default {
++  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
++  theme: {
++    extend: {
++      transitionProperty: {
++        width: 'width',
++      },
++    },
++  },
++  plugins: [],
++};
+diff -ruN repository_before/client/tsconfig.json repository_after/client/tsconfig.json
+--- repository_before/client/tsconfig.json	1970-01-01 03:00:00
++++ repository_after/client/tsconfig.json	2026-02-14 13:05:41
+@@ -0,0 +1,23 @@
++{
++  "compilerOptions": {
++    "target": "ES2020",
++    "useDefineForClassFields": true,
++    "lib": ["ES2020", "DOM", "DOM.Iterable"],
++    "module": "ESNext",
++    "skipLibCheck": true,
++    "moduleResolution": "bundler",
++    "allowImportingTsExtensions": true,
++    "resolveJsonModule": true,
++    "isolatedModules": true,
++    "noEmit": true,
++    "jsx": "react-jsx",
++    "strict": true,
++    "noUnusedLocals": true,
++    "noUnusedParameters": true,
++    "noFallthroughCasesInSwitch": true,
++    "baseUrl": ".",
++    "paths": { "@/*": ["./src/*"] }
++  },
++  "include": ["src"],
++  "references": [{ "path": "./tsconfig.node.json" }]
++}
+diff -ruN repository_before/client/tsconfig.node.json repository_after/client/tsconfig.node.json
+--- repository_before/client/tsconfig.node.json	1970-01-01 03:00:00
++++ repository_after/client/tsconfig.node.json	2026-02-14 13:05:41
+@@ -0,0 +1,10 @@
++{
++  "compilerOptions": {
++    "composite": true,
++    "skipLibCheck": true,
++    "module": "ESNext",
++    "moduleResolution": "bundler",
++    "allowSyntheticDefaultImports": true
++  },
++  "include": ["vite.config.ts"]
++}
+diff -ruN repository_before/client/vite.config.ts repository_after/client/vite.config.ts
+--- repository_before/client/vite.config.ts	1970-01-01 03:00:00
++++ repository_after/client/vite.config.ts	2026-02-14 13:05:41
+@@ -0,0 +1,17 @@
++import { defineConfig } from 'vite';
++import react from '@vitejs/plugin-react';
++import path from 'path';
++
++export default defineConfig({
++  plugins: [react()],
++  resolve: {
++    alias: { '@': path.resolve(__dirname, './src') },
++  },
++  server: {
++    port: 5173,
++    proxy: {
++      '/api': { target: 'http://localhost:3001', changeOrigin: true },
++      '/socket.io': { target: 'http://localhost:3001', ws: true },
++    },
++  },
++});
+diff -ruN repository_before/package.json repository_after/package.json
+--- repository_before/package.json	1970-01-01 03:00:00
++++ repository_after/package.json	2026-02-14 13:05:41
+@@ -0,0 +1,25 @@
++{
++  "name": "poll-creation-app",
++  "version": "1.0.0",
++  "private": true,
++  "scripts": {
++    "build": "cd client && npm run build",
++    "start": "node server/dist/index.js",
++    "dev:server": "ts-node-dev --respawn server/src/index.ts",
++    "dev:client": "cd client && npm run dev"
++  },
++  "dependencies": {
++    "cors": "^2.8.5",
++    "express": "^4.18.2",
++    "mongoose": "^8.0.3",
++    "nanoid": "^5.0.4",
++    "socket.io": "^4.6.1"
++  },
++  "devDependencies": {
++    "@types/cors": "^2.8.17",
++    "@types/express": "^4.17.21",
++    "@types/node": "^20.11.5",
++    "ts-node-dev": "^2.0.0",
++    "typescript": "^5.3.3"
++  }
++}
+diff -ruN repository_before/server/src/index.ts repository_after/server/src/index.ts
+--- repository_before/server/src/index.ts	1970-01-01 03:00:00
++++ repository_after/server/src/index.ts	2026-02-14 13:05:41
+@@ -0,0 +1,37 @@
++import express from 'express';
++import cors from 'cors';
++import { createServer } from 'http';
++import mongoose from 'mongoose';
++import { attachSocket } from './socket';
++import pollsRouter from './routes/polls';
++
++const app = express();
++const httpServer = createServer(app);
++
++app.use(cors());
++app.use(express.json());
++
++const io = attachSocket(httpServer);
++app.set('io', io);
++
++app.use('/api/polls', (req, _res, next) => {
++  (req as express.Request & { io?: typeof io }).io = io;
++  next();
++}, pollsRouter);
++
++async function start() {
++  const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017';
++  const dbName = process.env.DB_NAME || 'poll_creation';
++  await mongoose.connect(mongoUri, { dbName });
++  const port = Number(process.env.PORT) || 3001;
++  httpServer.listen(port, () => {
++    console.log(`Server listening on port ${port}`);
++  });
++}
++
++start().catch((err) => {
++  console.error(err);
++  process.exit(1);
++});
++
++export { app, httpServer, io };
+diff -ruN repository_before/server/src/models/Poll.ts repository_after/server/src/models/Poll.ts
+--- repository_before/server/src/models/Poll.ts	1970-01-01 03:00:00
++++ repository_after/server/src/models/Poll.ts	2026-02-14 13:05:41
+@@ -0,0 +1,30 @@
++import mongoose from 'mongoose';
++import { nanoid } from 'nanoid';
++
++const optionSchema = new mongoose.Schema({
++  id: { type: String, required: true },
++  text: { type: String, required: true },
++  votes: { type: Number, default: 0 },
++});
++
++const pollSchema = new mongoose.Schema({
++  pollId: { type: String, required: true, unique: true },
++  question: { type: String, required: true },
++  options: [optionSchema],
++  totalVotes: { type: Number, default: 0 },
++  showResultsBeforeVote: { type: Boolean, default: false },
++  expiresAt: { type: Date, required: false },
++  isClosed: { type: Boolean, default: false },
++  votedTokens: { type: [String], default: [] },
++  createdAt: { type: Date, default: Date.now },
++});
++
++export const PollModel = mongoose.model('Poll', pollSchema);
++
++export function generatePollId(): string {
++  return nanoid(10);
++}
++
++export function createOptionId(): string {
++  return nanoid(8);
++}
+diff -ruN repository_before/server/src/routes/polls.ts repository_after/server/src/routes/polls.ts
+--- repository_before/server/src/routes/polls.ts	1970-01-01 03:00:00
++++ repository_after/server/src/routes/polls.ts	2026-02-14 13:21:45
+@@ -0,0 +1,151 @@
++import { Router, Request, Response } from 'express';
++import { PollModel, generatePollId, createOptionId } from '../models/Poll';
++
++const router = Router();
++
++// POST /api/polls - Create poll (Req 1, 2: short unique URL with nanoid)
++router.post('/', async (req: Request, res: Response) => {
++  try {
++    const { question, options, showResultsBeforeVote, expiresAt } = req.body;
++    if (!question || !Array.isArray(options)) {
++      return res.status(400).json({ error: 'question and options (array) required' });
++    }
++    if (options.length < 2 || options.length > 10) {
++      return res.status(400).json({ error: 'options must be between 2 and 10' });
++    }
++    const trimmed = options.map((o: string) => String(o).trim()).filter(Boolean);
++    if (trimmed.length < 2) {
++      return res.status(400).json({ error: 'at least 2 non-empty options required' });
++    }
++    const trimmedQuestion = String(question).trim();
++    if (!trimmedQuestion) {
++      return res.status(400).json({ error: 'question is required' });
++    }
++    const pollId = generatePollId();
++    const pollOptions = trimmed.map((text: string) => ({
++      id: createOptionId(),
++      text,
++      votes: 0,
++    }));
++    const doc = await PollModel.create({
++      pollId,
++      question: trimmedQuestion,
++      options: pollOptions,
++      totalVotes: 0,
++      showResultsBeforeVote: Boolean(showResultsBeforeVote),
++      expiresAt: expiresAt ? new Date(expiresAt) : undefined,
++      isClosed: false,
++    });
++    const poll = doc.toObject();
++    const serialized = {
++      ...poll,
++      _id: undefined,
++      __v: undefined,
++      votedTokens: undefined,
++      createdAt: poll.createdAt?.toISOString?.(),
++      expiresAt: poll.expiresAt?.toISOString?.(),
++    };
++    return res.status(201).json(serialized);
++  } catch {
++    return res.status(500).json({ error: 'Failed to create poll' });
++  }
++});
++
++// GET /api/polls/:pollId - Get poll (Req 2: voting page without auth)
++router.get('/:pollId', async (req: Request, res: Response) => {
++  try {
++    const { pollId } = req.params;
++    const doc = await PollModel.findOne({ pollId }).lean();
++    if (!doc) return res.status(404).json({ error: 'Poll not found' });
++    const poll = doc as Record<string, unknown>;
++    if (poll.expiresAt && new Date(poll.expiresAt as string) < new Date()) {
++      return res.status(410).json({ error: 'Poll expired' });
++    }
++    const serialized = {
++      pollId: poll.pollId,
++      question: poll.question,
++      options: poll.options,
++      totalVotes: poll.totalVotes,
++      showResultsBeforeVote: poll.showResultsBeforeVote,
++      expiresAt: poll.expiresAt ? new Date(poll.expiresAt as string).toISOString() : undefined,
++      isClosed: poll.isClosed,
++      createdAt: poll.createdAt ? new Date(poll.createdAt as Date).toISOString() : undefined,
++    };
++    return res.json(serialized);
++  } catch {
++    return res.status(500).json({ error: 'Failed to fetch poll' });
++  }
++});
++
++// POST /api/polls/:pollId/vote - Vote (Req 3: submit vote; duplicate prevention via voteToken)
++router.post('/:pollId/vote', async (req: Request, res: Response) => {
++  try {
++    const { pollId } = req.params;
++    const { optionId, voteToken } = req.body;
++    if (!optionId) return res.status(400).json({ error: 'optionId required' });
++    const doc = await PollModel.findOne({ pollId });
++    if (!doc) return res.status(404).json({ error: 'Poll not found' });
++    if (doc.isClosed) return res.status(410).json({ error: 'Poll is closed' });
++    if (doc.expiresAt && new Date(doc.expiresAt) < new Date()) {
++      return res.status(410).json({ error: 'Poll expired' });
++    }
++    const token = voteToken || req.headers['x-vote-token'];
++    if (token && doc.votedTokens?.includes(String(token))) {
++      return res.status(409).json({ error: 'Already voted' });
++    }
++    const option = doc.options.find((o: { id: string }) => o.id === optionId);
++    if (!option) return res.status(400).json({ error: 'Invalid optionId' });
++    option.votes += 1;
++    doc.totalVotes += 1;
++    if (token) {
++      doc.votedTokens = doc.votedTokens || [];
++      doc.votedTokens.push(String(token));
++    }
++    await doc.save();
++    const poll = doc.toObject();
++    const serialized = {
++      pollId: poll.pollId,
++      question: poll.question,
++      options: poll.options,
++      totalVotes: poll.totalVotes,
++      showResultsBeforeVote: poll.showResultsBeforeVote,
++      expiresAt: poll.expiresAt?.toISOString?.() ?? undefined,
++      isClosed: poll.isClosed,
++      createdAt: poll.createdAt?.toISOString?.() ?? undefined,
++    };
++    (req as Request & { io?: { to: (room: string) => { emit: (ev: string, data: unknown) => void } } }).io?.to(pollId).emit('poll-updated', serialized);
++    return res.json(serialized);
++  } catch {
++    return res.status(500).json({ error: 'Failed to record vote' });
++  }
++});
++
++// PATCH /api/polls/:pollId/close - Close poll (Req 5: close early)
++router.patch('/:pollId/close', async (req: Request, res: Response) => {
++  try {
++    const { pollId } = req.params;
++    const doc = await PollModel.findOneAndUpdate(
++      { pollId },
++      { isClosed: true },
++      { new: true }
++    ).lean();
++    if (!doc) return res.status(404).json({ error: 'Poll not found' });
++    const poll = doc as Record<string, unknown>;
++    const serialized = {
++      pollId: poll.pollId,
++      question: poll.question,
++      options: poll.options,
++      totalVotes: poll.totalVotes,
++      showResultsBeforeVote: poll.showResultsBeforeVote,
++      expiresAt: poll.expiresAt ? new Date(poll.expiresAt as string).toISOString() : undefined,
++      isClosed: true,
++      createdAt: poll.createdAt ? new Date(poll.createdAt as Date).toISOString() : undefined,
++    };
++    (req as Request & { io?: { to: (room: string) => { emit: (ev: string, data: unknown) => void } } }).io?.to(pollId).emit('poll-updated', serialized);
++    return res.json(serialized);
++  } catch {
++    return res.status(500).json({ error: 'Failed to close poll' });
++  }
++});
++
++export default router;
+diff -ruN repository_before/server/src/socket.ts repository_after/server/src/socket.ts
+--- repository_before/server/src/socket.ts	1970-01-01 03:00:00
++++ repository_after/server/src/socket.ts	2026-02-14 13:05:41
+@@ -0,0 +1,22 @@
++import { Server as HttpServer } from 'http';
++import { Server, Socket } from 'socket.io';
++
++export function attachSocket(httpServer: HttpServer): Server {
++  const io = new Server(httpServer, {
++    cors: { origin: '*' },
++    path: '/socket.io',
++  });
++
++  // Req 4: join-poll for real-time updates
++  io.on('connection', (socket: Socket) => {
++    socket.on('join-poll', (pollId: string) => {
++      if (pollId) socket.join(pollId);
++    });
++  });
++
++  return io;
++}
++
++export function getIoFromApp(app: { get?: (key: string) => unknown }): Server | undefined {
++  return app.get?.('io') as Server | undefined;
++}
+diff -ruN repository_before/server/tsconfig.json repository_after/server/tsconfig.json
+--- repository_before/server/tsconfig.json	1970-01-01 03:00:00
++++ repository_after/server/tsconfig.json	2026-02-14 13:05:41
+@@ -0,0 +1,14 @@
++{
++  "compilerOptions": {
++    "target": "ES2020",
++    "module": "CommonJS",
++    "moduleResolution": "Node",
++    "outDir": "./dist",
++    "rootDir": "./src",
++    "strict": true,
++    "esModuleInterop": true,
++    "skipLibCheck": true
++  },
++  "include": ["src/**/*"],
++  "exclude": ["node_modules"]
++}
+diff -ruN repository_before/shared/types.ts repository_after/shared/types.ts
+--- repository_before/shared/types.ts	1970-01-01 03:00:00
++++ repository_after/shared/types.ts	2026-02-14 13:05:41
+@@ -0,0 +1,28 @@
++export interface PollOption {
++  id: string;
++  text: string;
++  votes: number;
++}
++
++export interface Poll {
++  pollId: string;
++  question: string;
++  options: PollOption[];
++  totalVotes: number;
++  showResultsBeforeVote: boolean;
++  expiresAt?: string;
++  isClosed: boolean;
++  createdAt: string;
++}
++
++export interface CreatePollBody {
++  question: string;
++  options: string[];
++  showResultsBeforeVote: boolean;
++  expiresAt?: string;
++}
++
++export interface VoteBody {
++  optionId: string;
++  voteToken?: string;
++}

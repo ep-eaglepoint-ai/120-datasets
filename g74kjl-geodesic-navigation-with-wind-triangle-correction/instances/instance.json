@@ -1,0 +1,11 @@
+{
+            "instance_id": "G74KJL",
+            "problem_statement": "Long-range autonomous flight systems frequently suffer from significant navigational drift when relying on Euclidean geometry, as linear approximations fail to account for the Earth's curvature over global distances. Furthermore, uncorrected crosswinds cause aircraft to deviate physically from their intended ground track, leading to missed waypoints and potential loss of the airframe. The core engineering capability gap being tested is the transition from simple flat-plane mathematics to Spherical Trigonometry for pathfinding, combined with the application of vector physics to solve the "Wind Triangle." A robust system must mathematically compensate for both the geodetic shape of the planet and the aerodynamic influence of wind velocity to ensure precise arrival, requiring complex derivations that simple arithmetic cannot satisfy.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/g74kjl-geodesic-navigation-with-wind-triangle-correction",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

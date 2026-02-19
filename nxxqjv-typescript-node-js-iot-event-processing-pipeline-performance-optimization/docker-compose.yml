@@ -1,0 +1,15 @@
+services:
+  app:
+    build: .
+    container_name: iot-pipeline-app
+    environment:
+      NODE_ENV: test
+      REDIS_HOST: localhost
+      REDIS_PORT: "6379"
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: events
+    volumes:
+      - ./evaluation:/app/evaluation

@@ -1,0 +1,46 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "rootDir": "./",
+    "outDir": "./build",
+    "baseUrl": "./",
+    "paths": {
+      "#models/*": [
+        "./repository_after/app/models/*",
+        "./repository_before/app/models/*"
+      ],
+      "#services/*": [
+        "./repository_after/app/services/*",
+        "./repository_before/app/services/*"
+      ],
+      "#middleware/*": [
+        "./repository_after/app/middleware/*",
+        "./repository_before/app/middleware/*"
+      ],
+      "#policies/*": [
+        "./repository_after/app/policies/*",
+        "./repository_before/app/policies/*"
+      ],
+      "#controllers/*": [
+        "./repository_after/app/controllers/*",
+        "./repository_before/app/controllers/*"
+      ],
+      "#config/*": [
+        "./repository_after/config/*",
+        "./repository_before/config/*"
+      ]
+    }
+  },
+  "include": ["repository_before/**/*", "repository_after/**/*", "tests/**/*"],
+  "exclude": ["node_modules", "build"]
+}

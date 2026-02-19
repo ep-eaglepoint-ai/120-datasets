@@ -1,0 +1,29 @@
+services:
+  app:
+    build: .
+    volumes:
+      - .:/app
+      - ./evaluation/reports:/app/evaluation/reports
+
+  test-before:
+    build: .
+    environment:
+      - PYTHONPATH=/app/repository_before
+    command: pytest -q tests/test_equivalence.py tests/test_structure.py::test_helper_functions_exist tests/test_structure.py::test_iterative_base_conversion tests/test_structure.py::test_precomputed_powers tests/test_structure.py::test_struct_module_usage tests/test_structure.py::test_input_validation tests/test_structure.py::test_efficient_chunking tests/test_structure.py::test_reduced_string_operations tests/test_performance.py::test_encode_performance_improvement tests/test_performance.py::test_decode_performance_improvement tests/test_performance.py::test_memory_efficiency tests/test_performance.py::test_no_stack_overflow
+    volumes:
+      - .:/app
+
+  test-after:
+    build: .
+    environment:
+      - PYTHONPATH=/app/repository_after
+    command: pytest -q tests
+    volumes:
+      - .:/app
+
+  evaluation:
+    build: .
+    command: python evaluation/evaluation.py
+    volumes:
+      - .:/app
+      - ./evaluation/reports:/app/evaluation/reports

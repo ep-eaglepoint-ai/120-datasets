@@ -1,0 +1,11 @@
+{
+            "instance_id": "8BLF9R",
+            "problem_statement": "Legacy aggregation code for unique visitors per hour/page uses nested dicts + sets, leading to high memory churn and slow inserts/lookups on large lists (O(n) but with hash table overhead). Common LLM failures include keeping sets without early count conversion, using lists instead of sets (worse uniqueness), not handling unsorted events, or introducing O(n log n) sorts unnecessarily. Optimized solutions leverage defaultdict + set or Counter patterns with minimal allocations.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/8blf9r-optimizing-hourly-unique-visitor-aggregation-from-large-event-lists-in-python",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  schema-validator:
+    image: node:20-alpine
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace
+    command: /bin/sh -c "echo 'Schema Validator Task Environment Ready'"
+    stdin_open: true
+    tty: true
+

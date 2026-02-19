@@ -1,0 +1,412 @@
+diff --git a/repository_before/authService.js b/repository_after/authService.js
+index 4aebe5d..9e87ab8 100644
+--- a/repository_before/authService.js
++++ b/repository_after/authService.js
+@@ -1,128 +1,159 @@
+-const crypto = require('crypto');
+-const jwt = require('jsonwebtoken');
++// Implement your security fixes here
++const crypto = require("crypto");
++const bcrypt = require("bcrypt");
++const jwt = require("jsonwebtoken");
+ 
+ class AuthService {
+-    constructor(secret) {
+-        this.secret = secret;
+-        this.users = new Map();
+-        this.resetTokens = new Map();
++  constructor(secret) {
++    this.secret = secret;
++    this.users = new Map();
++    this.resetTokens = new Map();
++    this.failedLoginAttempts = new Map();
++  }
++
++  normalizeEmail(email) {
++    return email.trim().toLowerCase();
++  }
++
++  async register(email, password) {
++    email = this.normalizeEmail(email);
++    if (this.users.has(email)) {
++      return { error: "User already exists" };
+     }
+ 
+-    async register(email, password) {
+-        if (this.users.has(email)) {
+-            return { error: 'User already exists' };
+-        }
++    const hash = await bcrypt.hash(password, 12);
+ 
+-        const hash = crypto.createHash('md5').update(password).digest('hex');
+-        
+-        this.users.set(email, {
+-            email,
+-            password: hash,
+-            createdAt: new Date()
+-        });
++    this.users.set(email, {
++      email,
++      password: hash,
++      createdAt: new Date(),
++    });
+ 
+-        return { success: true, message: 'User registered' };
+-    }
++    return { success: true, message: "User registered" };
++  }
+ 
+-    async login(email, password, session) {
+-        const user = this.users.get(email);
+-        
+-        if (!user) {
+-            return { error: 'Invalid credentials' };
+-        }
+-
+-        const hash = crypto.createHash('md5').update(password).digest('hex');
+-        
+-        if (hash !== user.password) {
+-            return { error: 'Invalid credentials' };
+-        }
++  async login(email, password, session) {
++    email = this.normalizeEmail(email);
++    const user = this.users.get(email);
+ 
+-        session.userId = email;
+-        session.loggedInAt = Date.now();
++    // using the same error message for both cases to prevent user enumeration
++    const invalidMsg = { error: "Invalid email or password" };
+ 
+-        const token = jwt.sign(
+-            { email, iat: Math.floor(Date.now() / 1000) },
+-            this.secret,
+-            { expiresIn: '24h' }
+-        );
++    // Rate limiting / brute-force checks
++    const now = Date.now();
++    const attempt = this.failedLoginAttempts.get(email) || {
++      count: 0,
++      firstAttempt: now,
++      lockedUntil: null,
++    };
+ 
+-        return { success: true, token };
++    if (attempt.lockedUntil && attempt.lockedUntil > now) {
++      return { error: "Account locked. Try again later." };
+     }
+ 
+-    verifyToken(token) {
+-        try {
+-            const decoded = jwt.decode(token);
+-            
+-            if (!decoded) {
+-                return { valid: false, error: 'Invalid token' };
+-            }
+-
+-            if (decoded.exp && decoded.exp < Math.floor(Date.now() / 1000)) {
+-                return { valid: false, error: 'Token expired' };
+-            }
+-
+-            return { valid: true, user: decoded };
+-        } catch (error) {
+-            return { valid: false, error: 'Token verification failed' };
+-        }
++    if (!user) {
++      return invalidMsg;
+     }
+ 
+-    generateResetToken(email) {
+-        if (!this.users.has(email)) {
+-            return { error: 'User not found' };
++    const match = await bcrypt.compare(password, user.password);
++    if (!match) {
++      // increment failed attempts
++      if (now - attempt.firstAttempt > 15 * 60 * 1000) {
++        // reset after 15 minutes
++        attempt.count = 1;
++        attempt.firstAttempt = now;
++      } else {
++        attempt.count += 1;
++        if (attempt.count >= 5) {
++          attempt.lockedUntil = now + 15 * 60 * 1000; // lock 15 minutes
+         }
++      }
++      this.failedLoginAttempts.set(email, attempt);
++      return invalidMsg;
++    }
+ 
+-        const token = Buffer.from(email + '-' + Date.now()).toString('base64');
+-        
+-        this.resetTokens.set(token, {
+-            email,
+-            createdAt: Date.now(),
+-            expiresAt: Date.now() + 3600000
+-        });
++    this.failedLoginAttempts.delete(email);
+ 
+-        return { success: true, token };
++    // Session fixation prevention
++    if (typeof session.regenerate === "function") {
++      await new Promise((resolve) => session.regenerate(resolve));
+     }
+ 
+-    async resetPassword(token, newPassword) {
+-        const resetData = this.resetTokens.get(token);
+-        
+-        if (!resetData) {
+-            return { error: 'Invalid reset token' };
+-        }
++    session.userId = email;
++    session.loggedInAt = Date.now();
+ 
+-        if (Date.now() > resetData.expiresAt) {
+-            this.resetTokens.delete(token);
+-            return { error: 'Reset token expired' };
+-        }
++    const token = jwt.sign(
++      { email, iat: Math.floor(Date.now() / 1000) },
++      this.secret,
++      { expiresIn: "24h", algorithm: "HS256" },
++    );
+ 
+-        const hash = crypto.createHash('md5').update(newPassword).digest('hex');
+-        
+-        const user = this.users.get(resetData.email);
+-        if (user) {
+-            user.password = hash;
+-            this.resetTokens.delete(token);
+-            return { success: true, message: 'Password reset successful' };
+-        }
++    return { success: true, token };
++  }
+ 
+-        return { error: 'User not found' };
++  verifyToken(token) {
++    try {
++      const decoded = jwt.verify(token, this.secret, { algorithms: ["HS256"] });
++      return { valid: true, user: decoded };
++    } catch (error) {
++      return { valid: false, error: "Token verification failed" };
+     }
++  }
+ 
+-    logout(session) {
+-        session.userId = null;
+-        session.loggedInAt = null;
+-        return { success: true };
++  generateResetToken(email) {
++    email = this.normalizeEmail(email);
++    if (!this.users.has(email)) {
++      return { error: "Invalid email or password" }; // prevent enumeration
+     }
+ 
+-    getUser(email) {
+-        const user = this.users.get(email);
+-        if (!user) return null;
+-        
+-        return {
+-            email: user.email,
+-            createdAt: user.createdAt
+-        };
++    const token = crypto.randomBytes(32).toString("hex");
++
++    this.resetTokens.set(token, {
++      email,
++      createdAt: Date.now(),
++      expiresAt: Date.now() + 3600000, // 1 hour
++    });
++
++    return { success: true, token };
++  }
++
++  async resetPassword(token, newPassword) {
++    const resetData = this.resetTokens.get(token);
++
++    if (!resetData || Date.now() > resetData.expiresAt) {
++      this.resetTokens.delete(token);
++      return { error: "Invalid or expired reset token" };
+     }
++
++    const user = this.users.get(resetData.email);
++    if (!user) {
++      this.resetTokens.delete(token);
++      return { error: "Invalid or expired reset token" };
++    }
++
++    const hash = await bcrypt.hash(newPassword, 12);
++    user.password = hash;
++    this.resetTokens.delete(token);
++
++    return { success: true, message: "Password reset successful" };
++  }
++
++  logout(session) {
++    session.userId = null;
++    session.loggedInAt = null;
++    return { success: true };
++  }
++
++  getUser(email) {
++    email = this.normalizeEmail(email);
++    const user = this.users.get(email);
++    if (!user) return null;
++
++    return {
++      email: user.email,
++      createdAt: user.createdAt,
++    };
++  }
+ }
+ 
+ module.exports = AuthService;
+-
+diff --git a/repository_before/index.js b/repository_before/index.js
+deleted file mode 100644
+index ca409f5..0000000
+--- a/repository_before/index.js
++++ /dev/null
+@@ -1,22 +0,0 @@
+-const AuthService = require('./authService');
+-
+-const authService = new AuthService('my-secret-key');
+-
+-async function main() {
+-    const registerResult = await authService.register('test@example.com', 'password123');
+-    console.log('Register:', registerResult);
+-
+-    const mockSession = {};
+-    const loginResult = await authService.login('test@example.com', 'password123', mockSession);
+-    console.log('Login:', loginResult);
+-
+-    if (loginResult.token) {
+-        const verifyResult = authService.verifyToken(loginResult.token);
+-        console.log('Verify:', verifyResult);
+-    }
+-
+-    console.log('Auth service initialized successfully');
+-}
+-
+-main().catch(console.error);
+-
+diff --git a/repository_before/package.json b/repository_before/package.json
+deleted file mode 100644
+index f3a01e1..0000000
+--- a/repository_before/package.json
++++ /dev/null
+@@ -1,15 +0,0 @@
+-{
+-  "name": "auth-service",
+-  "version": "1.0.0",
+-  "description": "Authentication service with security vulnerabilities",
+-  "main": "index.js",
+-  "scripts": {
+-    "start": "node index.js",
+-    "test": "node test.js"
+-  },
+-  "dependencies": {
+-    "jsonwebtoken": "^9.0.0",
+-    "express-session": "^1.17.3"
+-  }
+-}
+-
+diff --git a/repository_before/test.js b/repository_before/test.js
+deleted file mode 100644
+index 3100879..0000000
+--- a/repository_before/test.js
++++ /dev/null
+@@ -1,95 +0,0 @@
+-const AuthService = require('./authService');
+-
+-async function runTests() {
+-    const auth = new AuthService('test-secret');
+-    let passed = 0;
+-    let failed = 0;
+-
+-    console.log('Running AuthService tests...\n');
+-
+-    // Test 1: Register user
+-    try {
+-        const result = await auth.register('user@test.com', 'password123');
+-        if (result.success) {
+-            console.log('✓ Test 1: Register user - PASSED');
+-            passed++;
+-        } else {
+-            console.log('✗ Test 1: Register user - FAILED');
+-            failed++;
+-        }
+-    } catch (e) {
+-        console.log('✗ Test 1: Register user - ERROR:', e.message);
+-        failed++;
+-    }
+-
+-    // Test 2: Login user
+-    try {
+-        const session = {};
+-        const result = await auth.login('user@test.com', 'password123', session);
+-        if (result.success && result.token) {
+-            console.log('✓ Test 2: Login user - PASSED');
+-            passed++;
+-        } else {
+-            console.log('✗ Test 2: Login user - FAILED');
+-            failed++;
+-        }
+-    } catch (e) {
+-        console.log('✗ Test 2: Login user - ERROR:', e.message);
+-        failed++;
+-    }
+-
+-    // Test 3: Verify token
+-    try {
+-        const session = {};
+-        const loginResult = await auth.login('user@test.com', 'password123', session);
+-        const verifyResult = auth.verifyToken(loginResult.token);
+-        if (verifyResult.valid) {
+-            console.log('✓ Test 3: Verify token - PASSED');
+-            passed++;
+-        } else {
+-            console.log('✗ Test 3: Verify token - FAILED');
+-            failed++;
+-        }
+-    } catch (e) {
+-        console.log('✗ Test 3: Verify token - ERROR:', e.message);
+-        failed++;
+-    }
+-
+-    // Test 4: Generate reset token
+-    try {
+-        const result = auth.generateResetToken('user@test.com');
+-        if (result.success && result.token) {
+-            console.log('✓ Test 4: Generate reset token - PASSED');
+-            passed++;
+-        } else {
+-            console.log('✗ Test 4: Generate reset token - FAILED');
+-            failed++;
+-        }
+-    } catch (e) {
+-        console.log('✗ Test 4: Generate reset token - ERROR:', e.message);
+-        failed++;
+-    }
+-
+-    // Test 5: Reset password
+-    try {
+-        const resetResult = auth.generateResetToken('user@test.com');
+-        const result = await auth.resetPassword(resetResult.token, 'newpassword456');
+-        if (result.success) {
+-            console.log('✓ Test 5: Reset password - PASSED');
+-            passed++;
+-        } else {
+-            console.log('✗ Test 5: Reset password - FAILED');
+-            failed++;
+-        }
+-    } catch (e) {
+-        console.log('✗ Test 5: Reset password - ERROR:', e.message);
+-        failed++;
+-    }
+-
+-    console.log(`\n========================================`);
+-    console.log(`Tests: ${passed + failed}, Passed: ${passed}, Failed: ${failed}`);
+-    console.log(`========================================`);
+-}
+-
+-runTests();
+-

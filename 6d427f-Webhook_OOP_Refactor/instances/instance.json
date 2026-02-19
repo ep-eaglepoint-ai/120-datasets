@@ -1,0 +1,8 @@
+{
+    "instance_id": "6d427f",
+    "problem_statement": "The current webhook implementation in api/webhook.py is written in a procedural style where request handling, signature verification, validation logic, and database persistence are all embedded directly inside a single Flask route function. This tightly coupled design violates fundamental Object-Oriented Programming (OOP) principles such as separation of concerns and single responsibility, making the code difficult to maintain, extend, and unit test in isolation. Any modification to one aspect of the logic—such as changing validation rules or signature handling—requires changes to the entire route function, increasing the risk of regressions. Similarly, the existing unit tests in tests/test_webhook.py are structured around the current procedural implementation and do not reflect a modular design. To improve long-term maintainability, testability, and code quality, both the webhook implementation and its corresponding tests need to be refactored into a clean, OOP-based architecture while preserving the exact existing functionality and behavior.",
+    "base_commit": "repository_before",
+    "test_patch": "tests/",
+    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/6d427f-Webhook_OOP_Refactor",
+    "environment_setup": "Dockerfile"
+} 

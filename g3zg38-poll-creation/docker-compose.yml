@@ -1,0 +1,46 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: poll-creation-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=poll_creation_test
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  test-after:
+    build: .
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=test
+      - MONGODB_URI=mongodb://mongodb:27017
+      - DB_NAME=poll_creation_test
+      - REPO_UNDER_TEST=repository_after
+    command: ["npm", "test"]
+    volumes:
+      - ./evaluation:/app/evaluation
+
+  evaluation:
+    build: .
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=test
+      - MONGODB_URI=mongodb://mongodb:27017
+      - DB_NAME=poll_creation_test
+    command: ["npx", "ts-node", "evaluation/evaluation.ts"]
+    volumes:
+      - ./evaluation:/app/evaluation
+
+volumes:
+  mongodb_data:

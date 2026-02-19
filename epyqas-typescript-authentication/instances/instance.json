@@ -1,0 +1,11 @@
+{
+            "instance_id": "EPYQAS",
+            "problem_statement": "This project requires a foundational authentication system built entirely from scratch to elucidate the underlying mechanics of credential-based authentication in a modern web framework. The system must implement all core primitives—including secure password handling, session management, and user validation—manually within a Next.js and TypeScript application, using only username/email and password without any external libraries or services. The implementation must prioritize educational clarity and minimalism, demonstrating secure, standard practices while explicitly excluding OAuth, third-party providers, and any features beyond the defined scope of manual registration, login, and session persistence.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/epyqas-typescript-authentication",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

@@ -1,0 +1,16 @@
+services:
+  before:
+    build: .
+    environment:
+      - TEST_TARGET=before
+
+  after:
+    build: .
+    environment:
+      - TEST_TARGET=after
+
+  evaluate:
+    build: .
+    entrypoint: [ "python", "evaluation/evaluation.py" ]
+    volumes:
+      - ./evaluation/reports:/app/evaluation/reports

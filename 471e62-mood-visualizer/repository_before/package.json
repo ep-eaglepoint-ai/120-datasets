@@ -1,0 +1,11 @@
+{
+  "name": "moodmorph-before",
+  "version": "0.1.0",
+  "description": "MoodMorph - Not Implemented",
+  "private": true,
+  "scripts": {
+    "test": "echo 'Error: No implementation' && exit 1",
+    "dev": "echo 'Not implemented' && exit 1",
+    "build": "echo 'Not implemented' && exit 1"
+  }
+}

@@ -1,0 +1,26 @@
+services:
+  # Run tests against the BEFORE implementation (should show failures)
+  before:
+    build:
+      context: .
+      target: test-before
+    environment:
+      - NODE_ENV=test
+
+  # Run tests against the AFTER implementation (should pass all)
+  after:
+    build:
+      context: .
+      target: test-after
+    environment:
+      - NODE_ENV=test
+
+  # Run full evaluation comparing before vs after
+  evaluation:
+    build:
+      context: .
+      target: evaluation
+    environment:
+      - NODE_ENV=test
+    volumes:
+      - ./evaluation/reports:/app/evaluation/reports

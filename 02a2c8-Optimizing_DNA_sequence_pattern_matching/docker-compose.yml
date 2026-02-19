@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  test-before:
+    build: .
+    volumes:
+      - ./repository_before:/app
+      - ./tests:/tests
+    working_dir: /app
+    command: >
+      bash -c "pytest -v -s /tests/test.py"
+
+  test-after:
+    build: .
+    volumes:
+      - ./repository_after:/app
+      - ./tests:/tests
+    working_dir: /app
+    command: >
+      bash -c "pytest -v -s /tests/test.py"
+
+  evaluation:
+    build: .
+    volumes:
+      - ./repository_before:/app/repository_before
+      - ./repository_after:/app/repository_after
+      - ./tests:/app/tests
+      - ./evaluation:/app/evaluation
+    working_dir: /app
+    command: >
+      bash -c "PYTHONPATH=/app/repository_before:/app/repository_after python evaluation/evaluation.py"

@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# File Transfer System Directories
+server_files/
+client_downloads/
+logs/
+
+# Evaluation reports - all evaluation reports should be ignored
+evaluation/20*/
+evaluation/*/report.json
+evaluation/reports/
+report.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.bak
+*.log
+
+# Test artifacts
+*.pcap
+test_output/

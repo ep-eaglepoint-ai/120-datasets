@@ -1,0 +1,50 @@
+services:
+  evaluation:
+    build: .
+    volumes:
+      - .:/app
+    working_dir: /app
+    network_mode: bridge
+    command: >
+      bash -c "
+      mkdir -p /tmp/classes &&
+      javac -cp .:/opt/junit-platform-console-standalone.jar evaluation/Evaluation.java -d /tmp/classes &&
+      java -cp /tmp/classes:/opt/junit-platform-console-standalone.jar Evaluation
+      "
+
+  test-before:
+    build: .
+    volumes:
+      - .:/app
+    working_dir: /app
+    network_mode: bridge
+    command: >
+      bash -c "
+      mkdir -p /tmp/before_wrapper &&
+      echo 'import java.util.*;' > /tmp/before_wrapper/FetchOptimization.java &&
+      echo 'public class FetchOptimization {' >> /tmp/before_wrapper/FetchOptimization.java &&
+      echo '    public static List<Object> fetchItems(List<Object> items) {' >> /tmp/before_wrapper/FetchOptimization.java &&
+      echo '        List<Object> result = new ArrayList<>();' >> /tmp/before_wrapper/FetchOptimization.java &&
+      echo '        for (Object i : items) if (!result.contains(i)) result.add(i);' >> /tmp/before_wrapper/FetchOptimization.java &&
+      echo '        return result;' >> /tmp/before_wrapper/FetchOptimization.java &&
+      echo '    }' >> /tmp/before_wrapper/FetchOptimization.java &&
+      echo '    public static List<Object> fetchItems(List<Object> items, Integer p, Integer s) {' >> /tmp/before_wrapper/FetchOptimization.java &&
+      echo '        throw new UnsupportedOperationException();' >> /tmp/before_wrapper/FetchOptimization.java &&
+      echo '    }' >> /tmp/before_wrapper/FetchOptimization.java &&
+      echo '}' >> /tmp/before_wrapper/FetchOptimization.java &&
+      javac -cp .:/opt/junit-platform-console-standalone.jar /tmp/before_wrapper/FetchOptimization.java tests/FetchOptimizationTest.java -d /tmp/classes &&
+      java -cp /tmp/classes:/opt/junit-platform-console-standalone.jar org.junit.platform.console.ConsoleLauncher --select-class FetchOptimizationTest
+      "
+
+  test-after:
+    build: .
+    volumes:
+      - .:/app
+    working_dir: /app
+    network_mode: bridge
+    command: >
+      bash -c "
+      mkdir -p /tmp/classes &&
+      javac -cp .:/opt/junit-platform-console-standalone.jar repository_after/fetchOptimization.java tests/FetchOptimizationTest.java -d /tmp/classes &&
+      java -cp /tmp/classes:/opt/junit-platform-console-standalone.jar org.junit.platform.console.ConsoleLauncher --select-class FetchOptimizationTest
+      "

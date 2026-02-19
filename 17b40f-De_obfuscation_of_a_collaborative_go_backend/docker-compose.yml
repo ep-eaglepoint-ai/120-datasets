@@ -1,0 +1,39 @@
+services:
+  db:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+
+  server:
+    build: .
+    depends_on:
+      - db
+    volumes:
+      - ./repository_after:/app/repository_after
+    environment:
+      - GO111MODULE=on
+      - DATABASE_URL=mongodb://db:27017
+      - PORT=8080
+    ports:
+      - "8080:8080"
+
+  tests:
+    build: .
+    working_dir: /app/repository_before
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+      - ./repository_before:/app/repository_before
+      - ./tests:/app/repository_before/tests
+      - ./evaluation:/app/evaluation
+    environment:
+      - GO111MODULE=on
+      - MONGO_URI=mongodb://db:27017
+      - DATABASE_URL=mongodb://db:27017
+      - BASE_URL=http://server:8080
+      - TEST_NEW_USER_EMAIL=khalid11abdu@gmail.com
+      - TEST_NEW_USER_PASSWORD=Password1!
+      - TEST_USER_EMAIL=khalid11abdu@gmail.com
+      - TEST_USER_PASSWORD=Password1!
+      - PORT=8080

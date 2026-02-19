@@ -1,0 +1,12 @@
+{
+            "instance_id": "8T2YT2",
+            "problem_statement": "Build a client‑side Regex Playground using Next.js and TailwindCSS that allows users to write, test, and debug regular expressions with real‑time highlighting, capture group analysis, and match metadata without any backend or external APIs. The application must handle invalid patterns, large text payloads, Unicode edge cases, and catastrophic backtracking safely while maintaining responsive UI performance through efficient state management and rendering. All processing must be deterministic, reproducible, and focused on providing a production‑grade developer utility for real‑world debugging and learning workflows.
+",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/8t2yt2-regex-playground",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

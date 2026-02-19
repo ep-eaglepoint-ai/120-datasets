@@ -1,0 +1,28 @@
+{
+  "name": "secure-jwt-auth-test-suite",
+  "private": true,
+  "version": "0.0.0",
+  "type": "commonjs",
+  "scripts": {
+    "test": "jest --runInBand",
+    "test:meta": "jest --config ./jest.meta.config.cjs --runInBand --runTestsByPath ../tests/meta_security_suite_mutation.test.js",
+    "test:meta:before": "jest --config ./jest.meta.before.config.cjs --runInBand",
+    "eval": "node ../evaluation/evaluation.js"
+  },
+  "dependencies": {
+    "lucide-react": "^0.563.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "ts-jest": "^29.4.1",
+    "typescript": "~5.9.3"
+  }
+}

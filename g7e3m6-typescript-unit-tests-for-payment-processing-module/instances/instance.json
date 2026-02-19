@@ -1,0 +1,11 @@
+{
+            "instance_id": "G7E3M6",
+            "problem_statement": "The payment processing module handles Stripe and PayPal transactions but lacks test coverage. Production incidents revealed edge cases around idempotency, partial refunds, and webhook signature verification that were never tested. The QA team manually tests happy paths but cannot cover all failure scenarios. Need comprehensive unit tests with mocked external APIs to catch regressions before deployment. Current coverage is 0% and target is 90%+ across all services.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/g7e3m6-typescript-unit-tests-for-payment-processing-module",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

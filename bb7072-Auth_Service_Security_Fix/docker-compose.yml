@@ -1,0 +1,29 @@
+version: "3.8"
+
+services:
+  test-before:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: auth_service_test_before
+    command: ["npx", "jest", "tests/", "--forceExit"]
+    environment:
+      - TARGET_REPOSITORY=repository_before
+
+  test-after:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: auth_service_test_after
+    command: ["npx", "jest", "tests/", "--forceExit"]
+    environment:
+      - TARGET_REPOSITORY=repository_after
+
+  evaluation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: auth_service_evaluation
+    command: ["node", "evaluation/evaluation.js"]
+    volumes:
+      - ./evaluation:/app/evaluation

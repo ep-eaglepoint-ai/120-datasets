@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+target/
+Cargo.lock
+
+node_modules/
+.env
+*.log
+.DS_Store
+
+evaluation/reports/

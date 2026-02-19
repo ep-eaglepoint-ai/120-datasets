@@ -1,0 +1,40 @@
+{
+  "instance_id": "899d52-Rate_limiter_optimization",
+  "problem_statement": "Design and implement a high-performance, distributed rate limiter for a global payment platform handling tens of thousands of requests per second. The existing centralized limiter introduces unacceptable latency, inconsistency, and single-point-of-failure risks. Your task is to refactor it into a per-user, thread-safe token bucket rate limiter that operates independently on each server instance—without any external coordination—while producing deterministic, consistent allow/deny decisions across nodes. The solution must support dynamic rate changes, tolerate clock skew, handle bursty traffic, and maintain strict performance and memory guarantees under heavy concurrency.",
+  "requirements": [
+    "1. Implement the token bucket algorithm without external dependencies",
+    "2. Support dynamic rate adjustment (e.g., from 1000 to 5000 requests/minute) without dropping requests", 
+    "3. Handle clock skew between servers (±100ms)",
+    "4. Thread-safe for 100+ concurrent threads",
+    "5. Memory efficient: ≤ 1KB per rate limit key",
+    "6. Provide exactly-once semantics during rate limit window transitions"
+  ],
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/899d52-Rate_limiter_optimization",
+  "environment_setup": "Dockerfile",
+  "FAIL_TO_PASS": [
+    "tests/test_rate_limiter.py::TestRequirement1TokenBucketAlgorithm::test_token_bucket_class_exists",
+    "tests/test_rate_limiter.py::TestRequirement2DynamicRateAdjustment::test_has_update_rate_method",
+    "tests/test_rate_limiter.py::TestRequirement2DynamicRateAdjustment::test_rate_change_without_dropping_requests",
+    "tests/test_rate_limiter.py::TestRequirement5MemoryEfficiency::test_uses_slots_for_memory_efficiency",
+    "tests/test_rate_limiter.py::TestRequirement5MemoryEfficiency::test_bucket_memory_under_1kb"
+  ],
+  "PASS_TO_PASS": [
+    "tests/test_equivalence.py::test_class_name_matches",
+    "tests/test_equivalence.py::test_allow_request_method_exists_on_class",
+    "tests/test_equivalence.py::test_allow_request_signature_compatible",
+    "tests/test_rate_limiter.py::TestRequirement1TokenBucketAlgorithm::test_no_external_dependencies",
+    "tests/test_rate_limiter.py::TestRequirement1TokenBucketAlgorithm::test_basic_token_bucket_behavior",
+    "tests/test_rate_limiter.py::TestRequirement2DynamicRateAdjustment::test_rate_change_1000_to_5000_preserves_tokens",
+    "tests/test_rate_limiter.py::TestRequirement3ClockSkewHandling::test_handles_minor_clock_skew_100ms",
+    "tests/test_rate_limiter.py::TestRequirement3ClockSkewHandling::test_handles_significant_clock_skew",
+    "tests/test_rate_limiter.py::TestRequirement4ThreadSafety::test_concurrent_100_threads_no_race_conditions",
+    "tests/test_rate_limiter.py::TestRequirement4ThreadSafety::test_concurrent_same_user_rate_limiting",
+    "tests/test_rate_limiter.py::TestRequirement5MemoryEfficiency::test_cleanup_removes_inactive_buckets",
+    "tests/test_rate_limiter.py::TestRequirement6ExactlyOnceSemantics::test_no_double_counting_at_refill",
+    "tests/test_rate_limiter.py::TestRequirement6ExactlyOnceSemantics::test_atomic_token_consumption",
+    "tests/test_rate_limiter.py::TestRequirement6ExactlyOnceSemantics::test_window_transition_consistency",
+    "tests/test_rate_limiter.py::TestPerUserIsolation::test_per_user_isolation"
+  ]
+}

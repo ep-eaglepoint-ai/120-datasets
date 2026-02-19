@@ -1,0 +1,46 @@
+diff --git a/repository_before/decompress.py b/repository_after/decompress.py
+index 899e7d3..ac7c09a 100644
+--- a/repository_before/decompress.py
++++ b/repository_after/decompress.py
+@@ -57,19 +57,22 @@ def write_file_binary(file_path: str, to_write: str) -> None:
+     byte_length = 8
+     try:
+         with open(file_path, "wb") as opened_file:
++            if not to_write:
++                return
++
+             result_byte_array = [
+                 to_write[i : i + byte_length]
+                 for i in range(0, len(to_write), byte_length)
+             ]
+ 
+-            if len(result_byte_array[-1]) % byte_length == 0:
+-                result_byte_array.append("10000000")
+-            else:
++            # Only pad if the last chunk is incomplete (not byte-aligned)
++            # Do NOT add extra bytes when already aligned
++            if len(result_byte_array[-1]) < byte_length:
+                 result_byte_array[-1] += "1" + "0" * (
+                     byte_length - len(result_byte_array[-1]) - 1
+                 )
+ 
+-            for elem in result_byte_array[:-1]:
++            for elem in result_byte_array:
+                 opened_file.write(int(elem, 2).to_bytes(1, byteorder="big"))
+     except OSError:
+         print("File not accessible")
+@@ -92,7 +95,7 @@ def remove_prefix(data_bits: str) -> str:
+     return data_bits
+ 
+ 
+-def compress(source_path: str, destination_path: str) -> None:
++def decompress(source_path: str, destination_path: str) -> None:
+     """
+     Reads source file, decompresses it and writes the result in destination file
+     """
+@@ -103,4 +106,4 @@ def compress(source_path: str, destination_path: str) -> None:
+ 
+ 
+ if __name__ == "__main__":
+-    compress(sys.argv[1], sys.argv[2])
++    decompress(sys.argv[1], sys.argv[2])

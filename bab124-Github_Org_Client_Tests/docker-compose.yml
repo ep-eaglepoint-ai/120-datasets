@@ -1,0 +1,22 @@
+services:
+  app:
+    build: .
+    command: pytest -q tests
+    environment:
+      - PYTHONPATH=/app/tests
+    volumes:
+      - .:/app
+
+  verify-before:
+    build: .
+    environment:
+      - PYTHONPATH=/app/repository_before:/app/tests
+    volumes:
+      - .:/app
+
+  verify-after:
+    build: .
+    environment:
+      - PYTHONPATH=/app/repository_after:/app/tests
+    volumes:
+      - .:/app

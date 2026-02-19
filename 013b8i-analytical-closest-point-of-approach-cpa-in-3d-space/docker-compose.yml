@@ -1,0 +1,6 @@
+services:
+  app:
+    build: .
+    volumes:
+      - ./evaluation/reports:/app/evaluation/reports
+    working_dir: /app

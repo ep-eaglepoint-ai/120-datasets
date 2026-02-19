@@ -1,0 +1,36 @@
+services:
+  meta-before:
+    build:
+      context: .
+      target: node-tests
+    working_dir: /app/repository_after
+    environment:
+      - CI=true
+      - INSIDE_DOCKER=true
+    volumes:
+      - ./evaluation/reports:/app/evaluation/reports
+    command: ["npm", "run", "test:meta:before"]
+
+  meta-after:
+    build:
+      context: .
+      target: node-tests
+    working_dir: /app/repository_after
+    environment:
+      - CI=true
+      - INSIDE_DOCKER=true
+    volumes:
+      - ./evaluation/reports:/app/evaluation/reports
+    command: ["npm", "run", "test:meta"]
+
+  evaluation:
+    build:
+      context: .
+      target: node-tests
+    working_dir: /app/repository_after
+    environment:
+      - CI=true
+      - INSIDE_DOCKER=true
+    volumes:
+      - ./evaluation/reports:/app/evaluation/reports
+    command: ["npm", "run", "eval"]

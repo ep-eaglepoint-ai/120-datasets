@@ -1,0 +1,9 @@
+services:
+  app:
+    build: .
+    command: node -e "console.log('Node OK')"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    working_dir: /app
+

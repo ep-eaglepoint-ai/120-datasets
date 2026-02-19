@@ -1,0 +1,69 @@
+﻿diff --git a/repository_before/analytics_api.py b/repository_after/analytics_api.py
+index b49621c..2216841 100644
+--- a/repository_before/analytics_api.py
++++ b/repository_after/analytics_api.py
+@@ -10,41 +10,26 @@ def generate_user_analytics_report():
+     user_id = request.args.get("user_id", "unknown")
+     start_time = time.time()
+ 
+-    user_events = []
+-    for i in range(20000):
+-        user_events.append({
+-            "user_id": user_id,
+-            "event_type": random.choice(["click", "view", "purchase"]),
+-            "timestamp": datetime.datetime.utcnow().isoformat(),
+-            "value": random.random()
+-        })
+-
+-    time.sleep(1.5)
+-
+     event_counts = {
+         "click": 0,
+         "view": 0,
+         "purchase": 0
+     }
+-
+-    for event in user_events:
+-        for compare_event in user_events:
+-            if event["event_type"] == compare_event["event_type"]:
+-                event_counts[event["event_type"]] += 1
+-
+-    audit_log = ""
+-    for event in user_events:
+-        audit_log += f'{event["event_type"]},{event["timestamp"]}\n'
+-
+-    computed_scores = []
+-    for event in user_events:
+-        score = event["value"]
++    
++    total_events = 20000
++    scores_generated = 0
++    event_types = ["click", "view", "purchase"]
++    
++    for _ in range(total_events):
++        event_type = random.choice(event_types)
++        event_counts[event_type] += 1
++        
++        value = random.random()
++        score = value
+         for _ in range(50):
+             score = score * random.random()
+         if score > 0.00001:
+-            computed_scores.append(score)
+-
+-    time.sleep(1)
++            scores_generated += 1
+ 
+     processing_time = time.time() - start_time
+ 
+@@ -52,8 +37,8 @@ def generate_user_analytics_report():
+         "user_id": user_id,
+         "report_generated_at": datetime.datetime.utcnow().isoformat(),
+         "event_counts": event_counts,
+-        "total_events": len(user_events),
+-        "scores_generated": len(computed_scores),
++        "total_events": total_events,
++        "scores_generated": scores_generated,
+         "processing_time_seconds": round(processing_time, 2),
+         "status": "completed"
+     }

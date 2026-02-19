@@ -1,0 +1,11 @@
+{
+            "instance_id": "J8NZR1",
+            "problem_statement": "The objective is to refactor an imperative, monolithic genomic file parser into an extensible Strategy-based architecture. This involves separating format-specific parsing logic from the main processing loop to support better error isolation, testability, and the future addition of new sequence types (e.g., BAM, CRAM) without modifying the core ingestion kernel.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/j8nzr1-sequence-data-ingestion-refactor",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

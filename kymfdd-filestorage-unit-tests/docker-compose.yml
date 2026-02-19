@@ -1,0 +1,8 @@
+services:
+  app:
+    build: .
+    environment:
+      - PYTHONPATH=/app:/app/repository_before:/app/repository_after
+      - REPO_PATH=${REPO_PATH:-repository_after}
+    volumes:
+      - .:/app

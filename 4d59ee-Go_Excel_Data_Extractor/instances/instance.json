@@ -1,0 +1,20 @@
+{
+  "instance_id": "4d59ee",
+  "problem_statement": "Extract data from Excel files and save it to a JSON file. The Excel file contains data in different formats, including numbers, strings, dates, and booleans. The JSON file should be saved in the same directory as the Excel file.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "",
+  "environment_setup": "Dockerfile",
+  "FAIL_TO_PASS": [
+    "tests/extractor_test.go::TestExtractFunctionExists",
+    "tests/extractor_test.go::TestTypeDetectionImplemented",
+    "tests/extractor_test.go::TestDateConversionImplemented"
+  ],
+  "PASS_TO_PASS": [
+    "tests/extractor_test.go::TestCLIArguments",
+    "tests/extractor_test.go::TestValidExtraction",
+    "tests/extractor_test.go::TestErrorHandling",
+    "tests/extractor_test.go::TestJSONOutput",
+    "tests/extractor_test.go::TestHeaderProcessing"
+  ]
+}

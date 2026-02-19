@@ -1,0 +1,40 @@
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  # Run tests for repository_before only
+  # Note: Uses "|| true" because test failures are EXPECTED for repository_before
+  test-before:
+    build: .
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REPO_PATH=repository_before
+    command: ["bash", "-c", "cp repository_before/CounterController.java src/main/java/com/example/counter/ && echo 'package com.example.counter; import org.springframework.boot.SpringApplication; import org.springframework.boot.autoconfigure.SpringBootApplication; @SpringBootApplication public class CounterApplication { public static void main(String[] args) { SpringApplication.run(CounterApplication.class, args); } }' > src/main/java/com/example/counter/CounterApplication.java && rm -f src/main/java/com/example/counter/RedisConfig.java && mvn test -Dtest=CounterControllerTest || true"]
+
+  # Run tests for repository_after only  
+  test-after:
+    build: .
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REPO_PATH=repository_after
+    command: ["bash", "-c", "cp repository_after/*.java src/main/java/com/example/counter/ && mvn test -Dtest=CounterControllerTest"]
+
+  # Run the evaluation (tests both repository_before and repository_after)
+  evaluation:
+    build: .
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./evaluation:/app/evaluation
+    command: ["bash", "-c", "java -cp target/test-classes:target/classes:$(mvn dependency:build-classpath -q -DincludeScope=test -Dmdep.outputFile=/dev/stdout) evaluation.Evaluation"]

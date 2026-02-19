@@ -1,0 +1,61 @@
+# Dependencies
+node_modules/
+repository_after/node_modules/
+package-lock.json
+*/package-lock.json
+
+# Next.js
+.next/
+out/
+build/
+dist/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Environment
+.env
+.env.local
+.env*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Reports - all evaluation reports should be ignored
+evaluation/20*/
+evaluation/*/report.json
+evaluation/reports/
+evaluation/reports/*.json
+report.json
+*.json
+!package.json
+!tsconfig.json
+!jest.config.js
+!next.config.js
+!postcss.config.js
+!instances/instance.json
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/

@@ -1,0 +1,11 @@
+{
+            "instance_id": "YPFQTF",
+            "problem_statement": "The test suite for the task queue system has critical coverage gaps that allowed production bugs to slip through. QA found that retry timing is untested - a recent deployment caused infinite retry loops because backoff overflow wasn't caught. Dead letter queue entries in production are missing retry history, making debugging impossible. Concurrent processing tests are absent, and two incidents involved tasks stuck in "running" state after worker crashes. The queue implementation is in queue.py and data models are in models.py.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/ypfqtf-python-task-queue-with-retry-logic-test-suite-development",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

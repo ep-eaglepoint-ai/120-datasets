@@ -1,0 +1,8 @@
+{
+  "instance_id": "3txgyr",
+  "problem_statement": "Noticed a critical gap in test coverage when auditing a medical claims processing system that parses EDI 837 files from zip archives. The issue appeared during a production incident where corrupt zip files caused silent failures, and operations teams had no visibility into which claims were dropped. The system processes 5000+ claims daily through the GetClaimsFileDebug function in a Go-based healthcare application, but lacks any automated test coverage for error paths, concurrency safety, or resource cleanup.\n\nDuring SOC 2 audit preparation, auditors flagged the absence of compliance documentation showing that modifier validation rules, segment parsing logic, and date transformations are tested against regulatory requirements. Performance profiling revealed memory leaks and goroutine leaks under high load, but no tests exist to detect these regressions.\n\nThe billing team reports occasional data corruption where patient names are swapped or insurance IDs are missing, suggesting race conditions or shared state issues, but the code has never been tested with -race flag or concurrent execution. The system needs comprehensive test coverage proving correctness, safety, performance compliance, and regulatory adherence within CI/CD pipelines.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/3txgyr-comprehensive-test-suite-for-edi-claims-parser/3txgyr-comprehensive-test-suite-for-edi-claims-parser",
+  "environment_setup": "Dockerfile"
+}

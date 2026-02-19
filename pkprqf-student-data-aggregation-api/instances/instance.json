@@ -1,0 +1,11 @@
+{
+            "instance_id": "PKPRQF",
+            "problem_statement": "The current implementation of the Student Data Aggregation API suffers from multiple critical issues that make it unsuitable for production use. It uses shared mutable state inside a REST controller, which breaks statelessness and introduces thread-safety risks in concurrent environments. The aggregation logic is inefficient due to unnecessary nested loops, resulting in poor time complexity and degraded performance as data size grows. Input validation and error handling are minimal, leading to unpredictable behavior and improper API responses. Additionally, the API design does not follow Spring Boot best practices, such as proper use of HTTP status codes, clean separation of concerns, and maintainable code structure. Refactoring is necessary to ensure correctness, scalability, performance, reliability, and adherence to real-world backend development standards.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/pkprqf-student-data-aggregation-api",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

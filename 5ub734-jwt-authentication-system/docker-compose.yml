@@ -1,0 +1,21 @@
+services:
+  test-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app/tests
+    volumes:
+      - ./repository_after/server:/app/server
+      - ./repository_after/client:/app/client
+      - ./tests:/app/tests
+
+      - /app/server/node_modules
+      - /app/client/node_modules
+      - /app/tests/node_modules
+      - ./evaluation:/app/tests/evaluation
+    environment:
+      - NODE_ENV=test
+      - CI=true
+      - NODE_PATH=/app/tests/node_modules
+      - INSIDE_DOCKER=true
+    command: npm test

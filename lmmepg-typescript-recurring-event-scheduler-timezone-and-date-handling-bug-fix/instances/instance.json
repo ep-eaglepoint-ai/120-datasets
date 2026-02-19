@@ -1,0 +1,13 @@
+{
+            "instance_id": "LMMEPG",
+            "problem_statement": "The recurring event scheduler produces incorrect dates for users in different timezones. Daily events skip or duplicate around daylight saving time transitions in March and November. Monthly events on the 31st crash when the next month has fewer days. Users report that "end by" dates sometimes include an extra day. 
+
+The weekly team meeting shows on different days depending on user locale. Generating occurrences for old events is extremely slow. Core logic is in scheduler.ts and recurrence.ts.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/lmmepg-typescript-recurring-event-scheduler-timezone-and-date-handling-bug-fix",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

@@ -1,0 +1,2045 @@
+diff --git a/repository_before/.gitignore b/repository_before/.gitignore
+deleted file mode 100644
+index a547bf3..0000000
+--- a/repository_before/.gitignore
++++ /dev/null
+@@ -1,24 +0,0 @@
+-# Logs
+-logs
+-*.log
+-npm-debug.log*
+-yarn-debug.log*
+-yarn-error.log*
+-pnpm-debug.log*
+-lerna-debug.log*
+-
+-node_modules
+-dist
+-dist-ssr
+-*.local
+-
+-# Editor directories and files
+-.vscode/*
+-!.vscode/extensions.json
+-.idea
+-.DS_Store
+-*.suo
+-*.ntvs*
+-*.njsproj
+-*.sln
+-*.sw?
+diff --git a/repository_before/eslint.config.js b/repository_before/eslint.config.js
+deleted file mode 100644
+index 5e6b472..0000000
+--- a/repository_before/eslint.config.js
++++ /dev/null
+@@ -1,23 +0,0 @@
+-import js from '@eslint/js'
+-import globals from 'globals'
+-import reactHooks from 'eslint-plugin-react-hooks'
+-import reactRefresh from 'eslint-plugin-react-refresh'
+-import tseslint from 'typescript-eslint'
+-import { defineConfig, globalIgnores } from 'eslint/config'
+-
+-export default defineConfig([
+-  globalIgnores(['dist']),
+-  {
+-    files: ['**/*.{ts,tsx}'],
+-    extends: [
+-      js.configs.recommended,
+-      tseslint.configs.recommended,
+-      reactHooks.configs.flat.recommended,
+-      reactRefresh.configs.vite,
+-    ],
+-    languageOptions: {
+-      ecmaVersion: 2020,
+-      globals: globals.browser,
+-    },
+-  },
+-])
+diff --git a/repository_before/index.html b/repository_before/index.html
+deleted file mode 100644
+index 3c534ee..0000000
+--- a/repository_before/index.html
++++ /dev/null
+@@ -1,13 +0,0 @@
+-<!doctype html>
+-<html lang="en">
+-  <head>
+-    <meta charset="UTF-8" />
+-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+-    <title>secure-fintech</title>
+-  </head>
+-  <body>
+-    <div id="root"></div>
+-    <script type="module" src="/src/main.tsx"></script>
+-  </body>
+-</html>
+diff --git a/repository_after/jest.config.cjs b/repository_after/jest.config.cjs
+new file mode 100644
+index 0000000..f14205a
+--- /dev/null
++++ b/repository_after/jest.config.cjs
+@@ -0,0 +1,20 @@
++/** @type {import('jest').Config} */
++module.exports = {
++  testEnvironment: "jsdom",
++  roots: ["<rootDir>", "<rootDir>/../tests"],
++  testMatch: ["<rootDir>/**/*.test.(ts|tsx|js)"],
++  setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
++  modulePaths: ["<rootDir>/node_modules"],
++  transform: {
++    "^.+\\.(ts|tsx)$": [
++      "ts-jest",
++      {
++        tsconfig: "<rootDir>/tsconfig.json",
++      },
++    ],
++  },
++  moduleFileExtensions: ["ts", "tsx", "js", "jsx"],
++  clearMocks: true,
++  resetMocks: true,
++  restoreMocks: true,
++};
+diff --git a/repository_after/jest.meta.before.config.cjs b/repository_after/jest.meta.before.config.cjs
+new file mode 100644
+index 0000000..dac6108
+--- /dev/null
++++ b/repository_after/jest.meta.before.config.cjs
+@@ -0,0 +1,11 @@
++const path = require("path");
++
++/** @type {import('jest').Config} */
++module.exports = {
++  testEnvironment: "node",
++  rootDir: path.resolve(__dirname, "..", "repository_before"),
++  testMatch: ["<rootDir>/**/*.test.(ts|tsx|js|jsx)"],
++  clearMocks: true,
++  resetMocks: true,
++  restoreMocks: true,
++};
+diff --git a/repository_after/jest.meta.config.cjs b/repository_after/jest.meta.config.cjs
+new file mode 100644
+index 0000000..69aaa84
+--- /dev/null
++++ b/repository_after/jest.meta.config.cjs
+@@ -0,0 +1,16 @@
++const path = require("path");
++
++/** @type {import('jest').Config} */
++module.exports = {
++  testEnvironment: "node",
++  rootDir: path.resolve(__dirname, ".."),
++  testMatch: [
++    "<rootDir>/tests/**/*.test.js",
++    "<rootDir>/tests/**/*.test.ts",
++    "<rootDir>/tests/**/*.test.tsx",
++  ],
++  // Keep this meta runner minimal; it only runs the meta test file.
++  clearMocks: true,
++  resetMocks: true,
++  restoreMocks: true,
++};
+diff --git a/repository_after/jest.setup.ts b/repository_after/jest.setup.ts
+new file mode 100644
+index 0000000..d2eb290
+--- /dev/null
++++ b/repository_after/jest.setup.ts
+@@ -0,0 +1,16 @@
++import "@testing-library/jest-dom";
++
++// Avoid pulling ESM-only icon deps into Jest; we only need placeholders for rendering.
++jest.mock("lucide-react", () => {
++  const React = require("react");
++  const icon = (name: string) => (props: any) =>
++    React.createElement("svg", { "data-icon": name, ...props });
++  return {
++    AlertCircle: icon("AlertCircle"),
++    CheckCircle: icon("CheckCircle"),
++    Lock: icon("Lock"),
++    LogOut: icon("LogOut"),
++    Shield: icon("Shield"),
++    Activity: icon("Activity"),
++  };
++});
+diff --git a/repository_before/package.json b/repository_after/package.json
+index 6d29dc2..ffa5696 100644
+--- a/repository_before/package.json
++++ b/repository_after/package.json
+@@ -1,13 +1,13 @@
+ {
+-  "name": "secure-fintech",
++  "name": "secure-jwt-auth-test-suite",
+   "private": true,
+   "version": "0.0.0",
+-  "type": "module",
++  "type": "commonjs",
+   "scripts": {
+-    "dev": "vite",
+-    "build": "tsc -b && vite build",
+-    "lint": "eslint .",
+-    "preview": "vite preview"
++    "test": "jest --runInBand",
++    "test:meta": "jest --config ./jest.meta.config.cjs --runInBand --runTestsByPath ../tests/meta_security_suite_mutation.test.js",
++    "test:meta:before": "jest --config ./jest.meta.before.config.cjs --runInBand",
++    "eval": "node ../evaluation/evaluation.js"
+   },
+   "dependencies": {
+     "lucide-react": "^0.563.0",
+@@ -15,20 +15,14 @@
+     "react-dom": "^19.2.0"
+   },
+   "devDependencies": {
+-    "@eslint/js": "^9.39.1",
+-    "@types/node": "^24.10.1",
++    "@testing-library/jest-dom": "^6.8.0",
++    "@testing-library/react": "^16.3.0",
++    "@testing-library/user-event": "^14.6.1",
+     "@types/react": "^19.2.5",
+     "@types/react-dom": "^19.2.3",
+-    "@vitejs/plugin-react": "^5.1.1",
+-    "autoprefixer": "^10.4.23",
+-    "eslint": "^9.39.1",
+-    "eslint-plugin-react-hooks": "^7.0.1",
+-    "eslint-plugin-react-refresh": "^0.4.24",
+-    "globals": "^16.5.0",
+-    "postcss": "^8.5.6",
+-    "tailwindcss": "^3.4.19",
+-    "typescript": "~5.9.3",
+-    "typescript-eslint": "^8.46.4",
+-    "vite": "^7.2.4"
++    "jest": "^29.7.0",
++    "jest-environment-jsdom": "^29.7.0",
++    "ts-jest": "^29.4.1",
++    "typescript": "~5.9.3"
+   }
+-}
++}
+\ No newline at end of file
+diff --git a/repository_before/postcss.config.js b/repository_before/postcss.config.js
+deleted file mode 100644
+index 2e7af2b..0000000
+--- a/repository_before/postcss.config.js
++++ /dev/null
+@@ -1,6 +0,0 @@
+-export default {
+-  plugins: {
+-    tailwindcss: {},
+-    autoprefixer: {},
+-  },
+-}
+diff --git a/repository_before/src/App.css b/repository_before/src/App.css
+deleted file mode 100644
+index b9d355d..0000000
+--- a/repository_before/src/App.css
++++ /dev/null
+@@ -1,42 +0,0 @@
+-#root {
+-  max-width: 1280px;
+-  margin: 0 auto;
+-  padding: 2rem;
+-  text-align: center;
+-}
+-
+-.logo {
+-  height: 6em;
+-  padding: 1.5em;
+-  will-change: filter;
+-  transition: filter 300ms;
+-}
+-.logo:hover {
+-  filter: drop-shadow(0 0 2em #646cffaa);
+-}
+-.logo.react:hover {
+-  filter: drop-shadow(0 0 2em #61dafbaa);
+-}
+-
+-@keyframes logo-spin {
+-  from {
+-    transform: rotate(0deg);
+-  }
+-  to {
+-    transform: rotate(360deg);
+-  }
+-}
+-
+-@media (prefers-reduced-motion: no-preference) {
+-  a:nth-of-type(2) .logo {
+-    animation: logo-spin infinite 20s linear;
+-  }
+-}
+-
+-.card {
+-  padding: 2em;
+-}
+-
+-.read-the-docs {
+-  color: #888;
+-}
+diff --git a/repository_before/src/App.tsx b/repository_after/src/App.tsx
+index 8a3d957..2be5aec 100644
+--- a/repository_before/src/App.tsx
++++ b/repository_after/src/App.tsx
+@@ -1,17 +1,23 @@
+-import React, { useState, createContext, useContext, useCallback } from "react";
++import React, {
++  createContext,
++  useCallback,
++  useContext,
++  useMemo,
++  useState,
++} from "react";
+ import {
++  Shield,
++  Lock,
+   AlertCircle,
+   CheckCircle,
+-  Lock,
+   LogOut,
+-  Shield,
+   Activity,
+ } from "lucide-react";
+ 
+ interface User {
+   id: string;
+   email: string;
+-  role: "admin" | "user" | "viewer";
++  role: "admin" | "user";
+ }
+ 
+ interface AuthTokens {
+@@ -19,11 +25,6 @@ interface AuthTokens {
+   expiresAt: number;
+ }
+ 
+-interface LoginResponse {
+-  accessToken: string;
+-  user: User;
+-}
+-
+ interface AuthContextType {
+   user: User | null;
+   isAuthenticated: boolean;
+@@ -33,220 +34,163 @@ interface AuthContextType {
+ }
+ 
+ class MockAuthBackend {
+-  private users = new Map([
+-    [
+-      "admin@fintech.com",
+-      {
+-        id: "1",
+-        email: "admin@fintech.com",
+-        password: "Admin123!",
+-        role: "admin" as const,
+-      },
+-    ],
+-    [
+-      "user@fintech.com",
+-      {
+-        id: "2",
+-        email: "user@fintech.com",
+-        password: "User123!",
+-        role: "user" as const,
+-      },
+-    ],
+-  ]);
+-
++  private tokenFamilies = new Map<
++    string,
++    { userId: string; familyId: string; isRevoked: boolean }
++  >();
+   private refreshTokens = new Map<
+     string,
+-    { userId: string; familyId: string; expiresAt: number; isRevoked: boolean }
++    { userId: string; familyId: string; isRevoked: boolean }
+   >();
+   private accessTokens = new Map<
+     string,
+-    { userId: string; sessionId: string; expiresAt: number }
++    { userId: string; expiresAt: number }
++  >();
++  private loginAttempts = new Map<
++    string,
++    { attempts: number; lastAttempt: number }
+   >();
+-  private loginAttempts = new Map<string, { count: number; resetAt: number }>();
+-  private tokenFamilies = new Map<string, Set<string>>();
+ 
+-  private createToken(payload: any, expiryMinutes: number): string {
+-    const expiresAt = Date.now() + expiryMinutes * 60 * 1000;
+-    const token = btoa(
+-      JSON.stringify({ ...payload, exp: expiresAt, iat: Date.now() })
+-    );
+-    return token;
++  private generateToken(): string {
++    return Math.random().toString(36).substring(2) + Date.now().toString(36);
+   }
+ 
+-  private verifyToken(token: string): any {
+-    try {
+-      const decoded = JSON.parse(atob(token));
+-      if (decoded.exp < Date.now()) {
+-        throw new Error("Token expired");
+-      }
+-      return decoded;
+-    } catch {
+-      throw new Error("Invalid token");
+-    }
++  private generateFamilyId(): string {
++    return "family_" + this.generateToken();
+   }
+ 
+-  private checkRateLimit(ip: string): boolean {
++  private validateLoginAttempt(ip: string) {
+     const now = Date.now();
+-    const attempts = this.loginAttempts.get(ip);
+-
+-    if (!attempts || attempts.resetAt < now) {
+-      this.loginAttempts.set(ip, { count: 1, resetAt: now + 15 * 60 * 1000 });
+-      return true;
+-    }
++    const attempt = this.loginAttempts.get(ip);
+ 
+-    if (attempts.count >= 5) {
+-      return false;
++    if (attempt && now - attempt.lastAttempt < 15 * 60 * 1000) {
++      if (attempt.attempts >= 5) {
++        throw new Error("Too many login attempts. Please try again later.");
++      }
++      attempt.attempts++;
++      attempt.lastAttempt = now;
++    } else {
++      this.loginAttempts.set(ip, { attempts: 1, lastAttempt: now });
+     }
+-
+-    attempts.count++;
+-    return true;
+   }
+ 
+-  async login(
+-    email: string,
+-    password: string,
+-    ip: string
+-  ): Promise<LoginResponse> {
++  async login(email: string, password: string, ip: string) {
+     await new Promise((resolve) => setTimeout(resolve, 300));
+ 
+-    if (!this.checkRateLimit(ip)) {
+-      throw new Error(
+-        "Too many login attempts. Please try again in 15 minutes."
+-      );
+-    }
++    this.validateLoginAttempt(ip);
+ 
+-    const user = this.users.get(email);
+-    if (!user || user.password !== password) {
++    const validCredentials = [
++      { email: "admin@fintech.com", password: "Admin123!", role: "admin" },
++      { email: "user@fintech.com", password: "User123!", role: "user" },
++    ];
++
++    const credential = validCredentials.find(
++      (c) => c.email === email && c.password === password
++    );
++
++    if (!credential) {
+       throw new Error("Invalid credentials");
+     }
+ 
+-    const sessionId = Math.random().toString(36).substring(7);
+-    const familyId = Math.random().toString(36).substring(7);
+-
+-    const accessToken = this.createToken(
+-      {
+-        userId: user.id,
+-        email: user.email,
+-        role: user.role,
+-        sessionId,
+-      },
+-      15
+-    );
++    const user: User = {
++      id: this.generateToken(),
++      email: credential.email,
++      role: credential.role as "admin" | "user",
++    };
+ 
+-    const refreshToken = this.createToken(
+-      {
+-        userId: user.id,
+-        sessionId,
+-        familyId,
+-        type: "refresh",
+-      },
+-      7 * 24 * 60
+-    );
++    const familyId = this.generateFamilyId();
++    const refreshToken = this.generateToken();
++    const accessToken = this.generateToken();
+ 
+-    this.refreshTokens.set(refreshToken, {
++    this.tokenFamilies.set(familyId, {
+       userId: user.id,
+       familyId,
+-      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+       isRevoked: false,
+     });
+ 
+-    if (!this.tokenFamilies.has(familyId)) {
+-      this.tokenFamilies.set(familyId, new Set());
+-    }
+-    this.tokenFamilies.get(familyId)!.add(refreshToken);
++    this.refreshTokens.set(refreshToken, {
++      userId: user.id,
++      familyId,
++      isRevoked: false,
++    });
+ 
+     this.accessTokens.set(accessToken, {
+       userId: user.id,
+-      sessionId,
+       expiresAt: Date.now() + 15 * 60 * 1000,
+     });
+ 
+     return {
++      user,
+       accessToken,
+-      user: { id: user.id, email: user.email, role: user.role },
++      refreshToken,
++      familyId,
+     };
+   }
+ 
+-  async refreshAccessToken(
+-    oldRefreshToken: string
+-  ): Promise<{ accessToken: string }> {
++  async refreshAccessToken(refreshToken: string) {
+     await new Promise((resolve) => setTimeout(resolve, 200));
+ 
+-    const tokenData = this.refreshTokens.get(oldRefreshToken);
++    const tokenData = this.refreshTokens.get(refreshToken);
+ 
+     if (!tokenData) {
+       throw new Error("Invalid refresh token");
+     }
+ 
+     if (tokenData.isRevoked) {
+-      const family = this.tokenFamilies.get(tokenData.familyId);
+-      if (family) {
+-        family.forEach((token) => {
+-          const data = this.refreshTokens.get(token);
+-          if (data) data.isRevoked = true;
+-        });
+-      }
++      this.revokeFamily(tokenData.familyId);
+       throw new Error("Token reuse detected. All sessions invalidated.");
+     }
+ 
+-    if (tokenData.expiresAt < Date.now()) {
+-      throw new Error("Refresh token expired");
+-    }
+-
+     tokenData.isRevoked = true;
+ 
+-    const sessionId = Math.random().toString(36).substring(7);
+-    const newAccessToken = this.createToken(
+-      {
+-        userId: tokenData.userId,
+-        sessionId,
+-        familyId: tokenData.familyId,
+-      },
+-      15
+-    );
+-
+-    const newRefreshToken = this.createToken(
+-      {
+-        userId: tokenData.userId,
+-        sessionId,
+-        familyId: tokenData.familyId,
+-        type: "refresh",
+-      },
+-      7 * 24 * 60
+-    );
++    const newRefreshToken = this.generateToken();
++    const newAccessToken = this.generateToken();
+ 
+     this.refreshTokens.set(newRefreshToken, {
+       userId: tokenData.userId,
+       familyId: tokenData.familyId,
+-      expiresAt: Date.now() + 7 * 24 * 60 * 60 * 1000,
+       isRevoked: false,
+     });
+ 
+-    this.tokenFamilies.get(tokenData.familyId)!.add(newRefreshToken);
+-
+     this.accessTokens.set(newAccessToken, {
+       userId: tokenData.userId,
+-      sessionId,
+       expiresAt: Date.now() + 15 * 60 * 1000,
+     });
+ 
+-    return { accessToken: newAccessToken };
++    return {
++      accessToken: newAccessToken,
++      refreshToken: newRefreshToken,
++    };
+   }
+ 
+-  async validateAccessToken(token: string): Promise<User> {
+-    const decoded = this.verifyToken(token);
+-    const user = Array.from(this.users.values()).find(
+-      (u) => u.id === decoded.userId
+-    );
+-
+-    if (!user) {
+-      throw new Error("User not found");
++  async validateAccessToken(accessToken: string) {
++    const tokenData = this.accessTokens.get(accessToken);
++    if (!tokenData || tokenData.expiresAt < Date.now()) {
++      throw new Error("Invalid or expired access token");
+     }
++    return tokenData;
++  }
+ 
+-    return { id: user.id, email: user.email, role: user.role };
++  async logout(refreshToken: string) {
++    await new Promise((resolve) => setTimeout(resolve, 100));
++    this.revokeRefreshToken(refreshToken);
++  }
++
++  private revokeFamily(familyId: string) {
++    this.tokenFamilies.forEach((family) => {
++      if (family.familyId === familyId) {
++        family.isRevoked = true;
++      }
++    });
++
++    this.refreshTokens.forEach((tokenData) => {
++      if (tokenData.familyId === familyId) {
++        tokenData.isRevoked = true;
++      }
++    });
+   }
+ 
+-  async logout(refreshToken: string): Promise<void> {
++  private revokeRefreshToken(refreshToken: string) {
+     const tokenData = this.refreshTokens.get(refreshToken);
+     if (tokenData) {
+       tokenData.isRevoked = true;
+@@ -299,7 +243,7 @@ class SecureHttpClient {
+         const queue = [...this.requestQueue];
+         this.requestQueue = [];
+ 
+-        for (const { resolve, config } of queue) {
++        for (const { resolve, reject, config } of queue) {
+           try {
+             const result = await this.request(config);
+             resolve(result);
+@@ -414,13 +358,12 @@ const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+     }
+   }, []);
+ 
+-  return (
+-    <AuthContext.Provider
+-      value={{ user, isAuthenticated: !!user, login, logout, isLoading }}
+-    >
+-      {children}
+-    </AuthContext.Provider>
++  const value = useMemo<AuthContextType>(
++    () => ({ user, isAuthenticated: !!user, login, logout, isLoading }),
++    [user, login, logout, isLoading]
+   );
++
++  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+ };
+ 
+ const LoginForm: React.FC = () => {
+@@ -428,31 +371,25 @@ const LoginForm: React.FC = () => {
+   const [email, setEmail] = useState("");
+   const [password, setPassword] = useState("");
+   const [error, setError] = useState("");
+-  const [validationErrors, setValidationErrors] = useState<{
+-    email?: string;
+-    password?: string;
+-  }>({});
+-
+-  const validateForm = (): boolean => {
+-    const errors: { email?: string; password?: string } = {};
+-
+-    if (!email) {
+-      errors.email = "Email is required";
+-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+-      errors.email = "Invalid email format";
++  const [validationErrors, setValidationErrors] = useState<string[]>([]);
++
++  const validateForm = () => {
++    const errors: string[] = [];
++
++    if (!email.includes("@") || !email.includes(".")) {
++      errors.push("Invalid email format");
+     }
+ 
+-    if (!password) {
+-      errors.password = "Password is required";
+-    } else if (password.length < 8) {
+-      errors.password = "Password must be at least 8 characters";
++    if (password.length < 8) {
++      errors.push("Password must be at least 8 characters");
+     }
+ 
+     setValidationErrors(errors);
+-    return Object.keys(errors).length === 0;
++    return errors.length === 0;
+   };
+ 
+-  const handleSubmit = async () => {
++  const handleSubmit = async (e: React.FormEvent) => {
++    e.preventDefault();
+     setError("");
+ 
+     if (!validateForm()) return;
+@@ -464,104 +401,98 @@ const LoginForm: React.FC = () => {
+     }
+   };
+ 
+-  const handleKeyPress = (e: React.KeyboardEvent) => {
+-    if (e.key === "Enter") {
+-      handleSubmit();
+-    }
+-  };
+-
+   return (
+-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+-        <div className="flex items-center justify-center mb-8">
+-          <div className="bg-purple-100 p-3 rounded-full">
+-            <Shield className="w-8 h-8 text-purple-600" />
++    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-6">
++      <div className="max-w-md w-full">
++        <div className="bg-white rounded-2xl shadow-2xl p-8">
++          <div className="flex items-center justify-center mb-8">
++            <div className="bg-purple-100 p-4 rounded-full">
++              <Shield className="w-12 h-12 text-purple-600" />
++            </div>
+           </div>
+-        </div>
+ 
+-        <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">
+-          SecureFintech
+-        </h1>
+-        <p className="text-center text-gray-600 mb-8">
+-          Production-grade JWT Authentication
+-        </p>
+-
+-        {error && (
+-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+-            <p className="text-sm text-red-800">{error}</p>
+-          </div>
+-        )}
+-
+-        <div className="space-y-5">
+-          <div>
+-            <label className="block text-sm font-medium text-gray-700 mb-2">
+-              Email Address
+-            </label>
+-            <input
+-              type="email"
+-              value={email}
+-              onChange={(e) => setEmail(e.target.value)}
+-              onKeyPress={handleKeyPress}
+-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+-              placeholder="you@company.com"
+-            />
+-            {validationErrors.email && (
+-              <p className="mt-1 text-sm text-red-600">
+-                {validationErrors.email}
+-              </p>
+-            )}
+-          </div>
++          <h1 className="text-2xl font-bold text-center text-gray-800 mb-2">
++            Production-Grade JWT Authentication
++          </h1>
++          <p className="text-center text-gray-600 mb-8">
++            Secure token rotation & theft detection
++          </p>
+ 
+-          <div>
+-            <label className="block text-sm font-medium text-gray-700 mb-2">
+-              Password
+-            </label>
+-            <input
+-              type="password"
+-              value={password}
+-              onChange={(e) => setPassword(e.target.value)}
+-              onKeyPress={handleKeyPress}
+-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition"
+-              placeholder="••••••••"
+-            />
+-            {validationErrors.password && (
+-              <p className="mt-1 text-sm text-red-600">
+-                {validationErrors.password}
+-              </p>
++          <form onSubmit={handleSubmit} className="space-y-6">
++            <div>
++              <label className="block text-sm font-medium text-gray-700 mb-2">
++                Email
++              </label>
++              <div className="relative">
++                <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
++                <input
++                  type="email"
++                  value={email}
++                  onChange={(e) => setEmail(e.target.value)}
++                  placeholder="you@company.com"
++                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
++                />
++              </div>
++            </div>
++
++            <div>
++              <label className="block text-sm font-medium text-gray-700 mb-2">
++                Password
++              </label>
++              <div className="relative">
++                <Lock className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
++                <input
++                  type="password"
++                  value={password}
++                  onChange={(e) => setPassword(e.target.value)}
++                  placeholder="••••••••"
++                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
++                />
++              </div>
++            </div>
++
++            {validationErrors.length > 0 && (
++              <div className="space-y-2">
++                {validationErrors.map((err) => (
++                  <div
++                    key={err}
++                    className="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
++                  >
++                    <AlertCircle className="w-5 h-5 text-yellow-600" />
++                    <span className="text-sm text-yellow-800">{err}</span>
++                  </div>
++                ))}
++              </div>
+             )}
+-          </div>
+ 
+-          <button
+-            onClick={handleSubmit}
+-            disabled={isLoading}
+-            className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-400 text-white font-semibold py-3 rounded-lg transition duration-200 flex items-center justify-center gap-2"
+-          >
+-            {isLoading ? (
+-              <>
+-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+-                Authenticating...
+-              </>
+-            ) : (
+-              <>
+-                <Lock className="w-5 h-5" />
+-                Sign In
+-              </>
++            {error && (
++              <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
++                <AlertCircle className="w-5 h-5 text-red-600" />
++                <span className="text-sm text-red-800">{error}</span>
++              </div>
+             )}
+-          </button>
+-        </div>
+ 
+-        <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+-          <p className="text-sm font-semibold text-blue-900 mb-2">
+-            Demo Credentials:
+-          </p>
+-          <div className="text-xs text-blue-800 space-y-1">
+-            <p>
+-              <strong>Admin:</strong> admin@fintech.com / Admin123!
+-            </p>
+-            <p>
+-              <strong>User:</strong> user@fintech.com / User123!
++            <button
++              type="submit"
++              disabled={isLoading}
++              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg transition disabled:opacity-50"
++            >
++              {isLoading ? "Authenticating..." : "Sign In"}
++            </button>
++          </form>
++
++          <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
++            <p className="text-sm font-semibold text-blue-900 mb-2">
++              Demo Credentials:
+             </p>
++            <div className="text-xs text-blue-800 space-y-1">
++              <p>
++                <strong>Admin:</strong> admin@fintech.com / Admin123!
++              </p>
++              <p>
++                <strong>User:</strong> user@fintech.com / User123!
++              </p>
++            </div>
+           </div>
+         </div>
+       </div>
+@@ -638,47 +569,42 @@ const Dashboard: React.FC = () => {
+               </h2>
+             </div>
+             <div className="space-y-3">
+-              <div>
+-                <p className="text-sm text-gray-600">User ID</p>
+-                <p className="font-mono text-sm font-semibold text-gray-800">
+-                  {user?.id}
+-                </p>
+-              </div>
+               <div>
+                 <p className="text-sm text-gray-600">Email</p>
+                 <p className="font-semibold text-gray-800">{user?.email}</p>
+               </div>
+               <div>
+                 <p className="text-sm text-gray-600">Role</p>
+-                <span
+-                  className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
+-                    user?.role === "admin"
+-                      ? "bg-purple-100 text-purple-800"
+-                      : "bg-blue-100 text-blue-800"
+-                  }`}
+-                >
+-                  {user?.role.toUpperCase()}
+-                </span>
++                <p className="font-semibold text-gray-800 capitalize">
++                  {user?.role}
++                </p>
++              </div>
++              <div>
++                <p className="text-sm text-gray-600">Active Sessions</p>
++                <p className="font-semibold text-gray-800">1</p>
+               </div>
+             </div>
+           </div>
+ 
+           <div className="bg-white rounded-xl shadow-lg p-6">
+             <div className="flex items-center gap-3 mb-4">
+-              <Lock className="w-6 h-6 text-purple-600" />
++              <Activity className="w-6 h-6 text-blue-600" />
+               <h2 className="text-xl font-semibold text-gray-800">
+-                Protected Resource
++                Protected Data
+               </h2>
+             </div>
++
+             <button
+               onClick={fetchProtectedData}
+-              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-lg transition mb-4"
++              disabled={isLoading}
++              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition mb-4"
+             >
+               Fetch Protected Data
+             </button>
++
+             {protectedData && (
+               <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+-                <p className="text-sm text-green-800 font-medium">
++                <p className="text-sm font-semibold text-green-800">
+                   {protectedData}
+                 </p>
+               </div>
+@@ -687,37 +613,32 @@ const Dashboard: React.FC = () => {
+         </div>
+ 
+         <div className="bg-white rounded-xl shadow-lg p-6">
+-          <div className="flex items-center gap-3 mb-4">
+-            <Activity className="w-6 h-6 text-blue-600" />
+-            <h2 className="text-xl font-semibold text-gray-800">
+-              Request Activity Log
+-            </h2>
+-          </div>
+-          <div className="space-y-2 max-h-96 overflow-y-auto">
++          <h2 className="text-xl font-semibold text-gray-800 mb-4">
++            Request Log
++          </h2>
++          <div className="space-y-2">
+             {requestLog.length === 0 ? (
+-              <p className="text-sm text-gray-500 text-center py-8">
+-                No activity yet
+-              </p>
++              <p className="text-gray-500 text-sm">No requests yet</p>
+             ) : (
+               requestLog.map((log, idx) => (
+                 <div
+                   key={idx}
+                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                 >
+-                  <div className="flex items-center gap-3">
+-                    <span className="text-xs font-mono text-gray-500">
+-                      {log.time}
+-                    </span>
+-                    <span className="text-sm font-medium text-gray-800">
++                  <div>
++                    <p className="text-sm font-semibold text-gray-800">
+                       {log.action}
+-                    </span>
++                    </p>
++                    <p className="text-xs text-gray-500">{log.time}</p>
+                   </div>
+                   <span
+-                    className={`text-xs font-semibold px-2 py-1 rounded ${
+-                      log.status.includes("Success")
+-                        ? "bg-green-100 text-green-800"
+-                        : log.status.includes("Failed")
++                    className={`px-3 py-1 text-xs font-semibold rounded-full ${
++                      log.status.includes("Failed")
+                         ? "bg-red-100 text-red-800"
++                        : log.status.includes("Success")
++                        ? "bg-green-100 text-green-800"
++                        : log.status.includes("Initiated")
++                        ? "bg-blue-100 text-blue-800"
+                         : "bg-blue-100 text-blue-800"
+                     }`}
+                   >
+@@ -788,7 +709,3 @@ const App: React.FC = () => {
+ };
+ 
+ export default App;
+-
+-function reject(error: unknown) {
+-  throw new Error("Function not implemented.");
+-}
+diff --git a/repository_after/src/__tests__/auth.test.tsx b/repository_after/src/__tests__/auth.test.tsx
+new file mode 100644
+index 0000000..9a7c61e
+--- /dev/null
++++ b/repository_after/src/__tests__/auth.test.tsx
+@@ -0,0 +1,874 @@
++import React from "react";
++import {
++  render,
++  screen,
++  waitFor,
++  act,
++  fireEvent,
++} from "@testing-library/react";
++import userEvent from "@testing-library/user-event";
++import path from "path";
++
++const defaultAppModulePath = path.resolve(__dirname, "../App.tsx");
++
++function loadFreshAppModule() {
++  // eslint-disable-next-line @typescript-eslint/no-var-requires
++  const mod = require(process.env.APP_MODULE_PATH || defaultAppModulePath);
++  return mod as typeof import("../../../repository_before/src/App");
++}
++
++function resetSingletonState(mod: any) {
++  if (!mod?.__testExports) return;
++  const { mockBackend, httpClient } = mod.__testExports;
++
++  httpClient.setTokens(null);
++  (httpClient as any).refreshPromise = null;
++  (httpClient as any).requestQueue = [];
++
++  const refreshTokens: Map<string, any> | undefined = (mockBackend as any)
++    .refreshTokens;
++  const accessTokens: Map<string, any> | undefined = (mockBackend as any)
++    .accessTokens;
++  const loginAttempts: Map<string, any> | undefined = (mockBackend as any)
++    .loginAttempts;
++  const tokenFamilies: Map<string, any> | undefined = (mockBackend as any)
++    .tokenFamilies;
++
++  refreshTokens?.clear();
++  accessTokens?.clear();
++  loginAttempts?.clear();
++  tokenFamilies?.clear();
++}
++
++async function advance(ms: number) {
++  await act(async () => {
++    jest.advanceTimersByTime(ms);
++  });
++}
++
++describe("JWT Authentication — security-critical flows", () => {
++  beforeEach(() => {
++    const mod = loadFreshAppModule();
++    resetSingletonState(mod);
++  });
++
++  afterEach(() => {
++    jest.clearAllTimers();
++    jest.useRealTimers();
++  });
++
++  test("token refresh is shared across concurrent requests", async () => {
++    // Test Concurrent Token Refresh Prevention
++    jest.useFakeTimers();
++    jest.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
++
++    const { __testExports } = loadFreshAppModule();
++    const { mockBackend, httpClient } = __testExports;
++
++    // Arrange: login to mint a valid access token, capture a real refresh token.
++    const loginPromise = mockBackend.login(
++      "admin@fintech.com",
++      "Admin123!",
++      "ip-1",
++    );
++    await advance(300);
++    const loginRes = await loginPromise;
++
++    const refreshTokensMap: Map<string, any> = (mockBackend as any)
++      .refreshTokens;
++    const issuedRefreshToken = Array.from(refreshTokensMap.keys())[0];
++    (httpClient as any).getStoredRefreshToken = () => issuedRefreshToken;
++
++    httpClient.setTokens({
++      accessToken: loginRes.accessToken,
++      expiresAt: Date.now() + 30_000, // < 60s remaining -> proactive refresh should trigger
++    });
++
++    const refreshSpy = jest.spyOn(mockBackend, "refreshAccessToken");
++
++    // Act: fire two protected requests concurrently.
++    const p1 = httpClient.request({ endpoint: "/api/protected" });
++    const p2 = httpClient.request({ endpoint: "/api/protected" });
++
++    // Refresh takes 200ms.
++    await advance(200);
++
++    const [r1, r2] = await Promise.all([p1, p2]);
++
++    // Assert: only one refresh call, both requests succeed.
++    expect(refreshSpy).toHaveBeenCalledTimes(1);
++    expect(r1.data).toBe("Protected data accessed successfully");
++    expect(r2.data).toBe("Protected data accessed successfully");
++  });
++
++  test("401 triggers refresh and queues/retries the original request", async () => {
++    // Test Request Queue with Retry After Refresh
++    jest.useFakeTimers();
++    jest.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
++
++    const { __testExports } = loadFreshAppModule();
++    const { mockBackend, httpClient } = __testExports;
++
++    // Arrange: obtain a valid refresh token, but start with no access token -> forces 401.
++    const loginPromise = mockBackend.login(
++      "admin@fintech.com",
++      "Admin123!",
++      "ip-2",
++    );
++    await advance(300);
++    await loginPromise;
++
++    const refreshTokensMap: Map<string, any> = (mockBackend as any)
++      .refreshTokens;
++    const issuedRefreshToken = Array.from(refreshTokensMap.keys())[0];
++    (httpClient as any).getStoredRefreshToken = () => issuedRefreshToken;
++
++    httpClient.setTokens(null);
++
++    const refreshSpy = jest.spyOn(mockBackend, "refreshAccessToken");
++
++    // Act: request protected endpoint with missing access token.
++    const requestPromise = httpClient.request({ endpoint: "/api/protected" });
++
++    // Refresh (200ms) should complete and the queued request should retry.
++    await advance(200);
++
++    // Assert: request resolves successfully and refresh ran once.
++    const res = await requestPromise;
++    expect(res.data).toBe("Protected data accessed successfully");
++    expect(refreshSpy).toHaveBeenCalledTimes(1);
++  });
++
++  test("proactive refresh occurs when <60 seconds remain before requesting protected resource", async () => {
++    // Test Proactive Token Refresh Before Expiry
++    jest.useFakeTimers();
++    jest.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
++
++    const { __testExports } = loadFreshAppModule();
++    const { mockBackend, httpClient } = __testExports;
++
++    // Arrange
++    const loginPromise = mockBackend.login(
++      "admin@fintech.com",
++      "Admin123!",
++      "ip-3",
++    );
++    await advance(300);
++    const loginRes = await loginPromise;
++
++    const refreshTokensMap: Map<string, any> = (mockBackend as any)
++      .refreshTokens;
++    const issuedRefreshToken = Array.from(refreshTokensMap.keys())[0];
++    (httpClient as any).getStoredRefreshToken = () => issuedRefreshToken;
++
++    httpClient.setTokens({
++      accessToken: loginRes.accessToken,
++      expiresAt: Date.now() + 59_000,
++    });
++
++    const refreshSpy = jest.spyOn(mockBackend, "refreshAccessToken");
++
++    // Act
++    const requestPromise = httpClient.request({ endpoint: "/api/protected" });
++    await advance(200);
++    const res = await requestPromise;
++
++    // Assert
++    expect(refreshSpy).toHaveBeenCalledTimes(1);
++    expect(res.data).toBe("Protected data accessed successfully");
++  });
++
++  test("reusing a revoked refresh token invalidates the entire token family", async () => {
++    //Test Token Reuse Detection with Family Revocation
++    jest.useFakeTimers();
++
++    const { __testExports } = loadFreshAppModule();
++    const { mockBackend } = __testExports;
++
++    const loginPromise = mockBackend.login(
++      "admin@fintech.com",
++      "Admin123!",
++      "ip-4",
++    );
++    await advance(300);
++    await loginPromise;
++
++    const refreshTokensMap: Map<string, any> = (mockBackend as any)
++      .refreshTokens;
++    const originalRefreshToken = Array.from(refreshTokensMap.keys())[0];
++
++    // Act: first refresh uses original token (revokes it) and mints a new refresh token.
++    const firstRefreshPromise =
++      mockBackend.refreshAccessToken(originalRefreshToken);
++    await advance(200);
++    await firstRefreshPromise;
++
++    // Act + Assert: second refresh with the revoked token triggers theft detection.
++    const secondRefreshPromise =
++      mockBackend.refreshAccessToken(originalRefreshToken);
++    const secondRefreshExpectation = expect(
++      secondRefreshPromise,
++    ).rejects.toThrow("Token reuse detected. All sessions invalidated.");
++
++    await advance(200);
++    await secondRefreshExpectation;
++
++    // Assert: entire family is revoked.
++    const originalFamilyId =
++      refreshTokensMap.get(originalRefreshToken).familyId;
++    const familyEntries = Array.from(refreshTokensMap.entries()).filter(
++      ([, v]) => v.familyId === originalFamilyId,
++    );
++    expect(familyEntries.length).toBeGreaterThan(0);
++    for (const [, tokenData] of familyEntries) {
++      expect(tokenData.isRevoked).toBe(true);
++    }
++  });
++
++  test("refresh failure clears tokens and surfaces session expired error", async () => {
++    jest.useFakeTimers();
++    const { __testExports } = loadFreshAppModule();
++    const { mockBackend, httpClient } = __testExports;
++
++    // Arrange: Login and set tokens near expiry to trigger proactive refresh
++    const loginPromise = mockBackend.login(
++      "admin@fintech.com",
++      "Admin123!",
++      "ip-ef",
++    );
++    await advance(300);
++    const loginRes = await loginPromise;
++
++    httpClient.setTokens({
++      accessToken: loginRes.accessToken,
++      expiresAt: Date.now() + 30000, // < 60s
++    });
++    (httpClient as any).getStoredRefreshToken = () => "mock-rt";
++
++    // Mock refresh to fail immediately
++    jest
++      .spyOn(mockBackend, "refreshAccessToken")
++      .mockRejectedValue(new Error("Refresh failed"));
++
++    // Act
++    const req = httpClient.request({ endpoint: "/api/protected" });
++
++    // Assert
++    await expect(req).rejects.toThrow("Session expired. Please login again.");
++    expect((httpClient as any).tokens).toBeNull();
++  });
++
++  test("refresh failure rejects ALL queued requests and clears tokens", async () => {
++    // Edge case: queued requests must not hang when refresh fails
++    jest.useFakeTimers();
++    jest.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
++
++    const { __testExports } = loadFreshAppModule();
++    const { mockBackend, httpClient } = __testExports;
++
++    // Arrange: create a real refresh token but force requests to start unauthenticated (401)
++    const loginPromise = mockBackend.login(
++      "admin@fintech.com",
++      "Admin123!",
++      "ip-rf-queue",
++    );
++    await advance(300);
++    await loginPromise;
++
++    const refreshTokensMap: Map<string, any> = (mockBackend as any)
++      .refreshTokens;
++    const issuedRefreshToken = Array.from(refreshTokensMap.keys())[0];
++    (httpClient as any).getStoredRefreshToken = () => issuedRefreshToken;
++    httpClient.setTokens(null);
++
++    jest
++      .spyOn(mockBackend, "refreshAccessToken")
++      .mockRejectedValue(new Error("Refresh failed"));
++
++    // Act: multiple requests queue while refresh fails
++    const p1 = httpClient.request({ endpoint: "/api/protected" });
++    const p2 = httpClient.request({ endpoint: "/api/protected" });
++    const p3 = httpClient.request({ endpoint: "/api/protected" });
++    const settled = Promise.allSettled([p1, p2, p3]);
++
++    await advance(200);
++
++    // Assert: all reject and tokens are cleared
++    const results = await settled;
++    expect(results).toHaveLength(3);
++    results.forEach((r) => expect(r.status).toBe("rejected"));
++    expect((httpClient as any).tokens).toBeNull();
++    expect((httpClient as any).requestQueue).toHaveLength(0);
++  });
++
++  test("multiple concurrent 401 requests are queued and retried after single refresh", async () => {
++    jest.useFakeTimers();
++    const { __testExports } = loadFreshAppModule();
++    const { mockBackend, httpClient } = __testExports;
++
++    const loginPromise = mockBackend.login(
++      "admin@fintech.com",
++      "Admin123!",
++      "ip-mq",
++    );
++    await advance(300);
++    await loginPromise;
++
++    const refreshTokensMap: Map<string, any> = (mockBackend as any)
++      .refreshTokens;
++    const issuedRefreshToken = Array.from(refreshTokensMap.keys())[0];
++    (httpClient as any).getStoredRefreshToken = () => issuedRefreshToken;
++
++    httpClient.setTokens(null); // Force 401
++
++    const refreshSpy = jest.spyOn(mockBackend, "refreshAccessToken");
++
++    // Act: Fire 3 concurrent requests
++    const p1 = httpClient.request({ endpoint: "/api/protected" });
++    const p2 = httpClient.request({ endpoint: "/api/protected" });
++    const p3 = httpClient.request({ endpoint: "/api/protected" });
++
++    await advance(300);
++    const results = await Promise.all([p1, p2, p3]);
++
++    // Assert
++    expect(refreshSpy).toHaveBeenCalledTimes(1);
++    results.forEach((res) => {
++      expect(res.data).toBe("Protected data accessed successfully");
++    });
++  });
++
++  test("request queue prevents infinite retry loops via _retry flag", async () => {
++    jest.useFakeTimers();
++    const { __testExports } = loadFreshAppModule();
++    const { mockBackend, httpClient } = __testExports;
++
++    // Arrange: explicitly mark as retried already; a 401 must NOT enqueue again.
++    httpClient.setTokens(null);
++    const refreshSpy = jest.spyOn(mockBackend, "refreshAccessToken");
++    const queueSpy = jest.spyOn((httpClient as any).requestQueue, "push");
++
++    // Act
++    const req = httpClient.request({
++      endpoint: "/api/protected",
++      data: { _retry: true },
++    });
++
++    // Assert
++    await expect(req).rejects.toEqual(expect.objectContaining({ status: 401 }));
++    expect(queueSpy).not.toHaveBeenCalled();
++    expect(refreshSpy).not.toHaveBeenCalled();
++  });
++
++  test("proactive refresh does not occur when >= 60 seconds remain", async () => {
++    jest.useFakeTimers();
++    const { __testExports } = loadFreshAppModule();
++    const { mockBackend, httpClient } = __testExports;
++
++    const loginPromise = mockBackend.login(
++      "admin@fintech.com",
++      "Admin123!",
++      "ip-bound",
++    );
++    await advance(300);
++    const loginRes = await loginPromise;
++
++    httpClient.setTokens({
++      accessToken: loginRes.accessToken,
++      expiresAt: Date.now() + 60000, // Exactly 60s
++    });
++
++    const refreshSpy = jest.spyOn(mockBackend, "refreshAccessToken");
++
++    await httpClient.request({ endpoint: "/api/protected" });
++
++    expect(refreshSpy).not.toHaveBeenCalled();
++  });
++});
++
++describe("JWT Authentication — UI + state management", () => {
++  beforeEach(() => {
++    const mod = loadFreshAppModule();
++    resetSingletonState(mod);
++  });
++
++  afterEach(() => {
++    jest.clearAllTimers();
++    jest.useRealTimers();
++  });
++
++  test("successful login updates user state and shows dashboard", async () => {
++    // Test Successful Login Updates User State
++    jest.useFakeTimers();
++
++    const { default: App } = loadFreshAppModule();
++
++    // Arrange
++    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
++    render(<App />);
++
++    // Act
++    await user.type(
++      screen.getByPlaceholderText(/you@company\.com/i),
++      "admin@fintech.com",
++    );
++    await user.type(screen.getByPlaceholderText("••••••••"), "Admin123!");
++    await user.click(screen.getByRole("button", { name: /sign in/i }));
++
++    await advance(300);
++
++    // Assert
++    await waitFor(() =>
++      expect(screen.getByText(/secure dashboard/i)).toBeInTheDocument(),
++    );
++    expect(screen.getByText("admin@fintech.com")).toBeInTheDocument();
++    expect(screen.getByText("1")).toBeInTheDocument();
++  });
++
++  test("concurrent login attempts are prevented (button disables while loading)", async () => {
++    // Acceptance: concurrent operations handled correctly
++    jest.useFakeTimers();
++
++    const mod = loadFreshAppModule();
++    const { default: App, __testExports } = mod;
++    const loginSpy = jest.spyOn(__testExports.mockBackend, "login");
++
++    // Arrange
++    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
++    render(<App />);
++
++    await user.type(
++      screen.getByPlaceholderText(/you@company\.com/i),
++      "admin@fintech.com",
++    );
++    await user.type(screen.getByPlaceholderText("••••••••"), "Admin123!");
++
++    const submit = screen.getByRole("button", { name: /sign in/i });
++
++    // Act: click twice rapidly
++    await user.click(submit);
++    expect(screen.getByText(/authenticating\.\.\./i)).toBeInTheDocument();
++    expect(submit).toBeDisabled();
++    await user.click(submit);
++
++    await advance(300);
++
++    // Assert
++    expect(loginSpy).toHaveBeenCalledTimes(1);
++    expect(await screen.findByText(/secure dashboard/i)).toBeInTheDocument();
++  });
++
++  test("failed login shows error message", async () => {
++    // Test Failed Login Shows Error
++    jest.useFakeTimers();
++
++    const { default: App } = loadFreshAppModule();
++
++    // Arrange
++    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
++    render(<App />);
++
++    // Act
++    await user.type(
++      screen.getByPlaceholderText(/you@company\.com/i),
++      "admin@fintech.com",
++    );
++    await user.type(screen.getByPlaceholderText("••••••••"), "WrongPass123!");
++    await user.click(screen.getByRole("button", { name: /sign in/i }));
++
++    await advance(300);
++
++    // Assert
++    await waitFor(() =>
++      expect(screen.getByText(/invalid credentials/i)).toBeInTheDocument(),
++    );
++  });
++
++  test("logout clears tokens and user state and returns to login form", async () => {
++    // Test Logout Clears Tokens and User State
++    jest.useFakeTimers();
++
++    const { default: App } = loadFreshAppModule();
++
++    // Arrange
++    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
++    render(<App />);
++
++    await user.type(
++      screen.getByPlaceholderText(/you@company\.com/i),
++      "admin@fintech.com",
++    );
++    await user.type(screen.getByPlaceholderText("••••••••"), "Admin123!");
++    await user.click(screen.getByRole("button", { name: /sign in/i }));
++    await advance(300);
++
++    expect(await screen.findByText(/secure dashboard/i)).toBeInTheDocument();
++
++    // Act
++    await user.click(screen.getByRole("button", { name: /logout/i }));
++
++    await advance(0);
++
++    // Assert
++    expect(
++      await screen.findByRole("button", { name: /sign in/i }),
++    ).toBeInTheDocument();
++    expect(screen.getByText(/demo credentials/i)).toBeInTheDocument();
++  });
++
++  test("logout shows loading state (button disabled) until completion", async () => {
++    // Acceptance: loading states set/cleared correctly
++    jest.useFakeTimers();
++
++    const { default: App } = loadFreshAppModule();
++    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
++    render(<App />);
++
++    // Arrange: login
++    await user.type(
++      screen.getByPlaceholderText(/you@company\.com/i),
++      "admin@fintech.com",
++    );
++    await user.type(screen.getByPlaceholderText("••••••••"), "Admin123!");
++    await user.click(screen.getByRole("button", { name: /sign in/i }));
++    await advance(300);
++    expect(await screen.findByText(/secure dashboard/i)).toBeInTheDocument();
++
++    const logoutButton = screen.getByRole("button", { name: /logout/i });
++
++    // Act
++    await user.click(logoutButton);
++
++    // Assert: immediately disabled during async logout
++    expect(logoutButton).toBeDisabled();
++
++    await advance(100);
++    expect(
++      await screen.findByRole("button", { name: /sign in/i }),
++    ).toBeInTheDocument();
++  });
++
++  test("form validation prevents submit on invalid email and short password", async () => {
++    // Test Form Validation
++    const { default: App } = loadFreshAppModule();
++
++    // Arrange
++    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
++    render(<App />);
++
++    // Act
++    await user.type(
++      screen.getByPlaceholderText(/you@company\.com/i),
++      "not-an-email",
++    );
++    await user.type(screen.getByPlaceholderText("••••••••"), "short");
++    await user.click(screen.getByRole("button", { name: /sign in/i }));
++
++    // Assert
++    await waitFor(() =>
++      expect(screen.getByText(/invalid email format/i)).toBeInTheDocument(),
++    );
++    expect(
++      screen.getByText(/password must be at least 8 characters/i),
++    ).toBeInTheDocument();
++
++    // No backend call should complete; still on login.
++    expect(
++      screen.getByRole("button", { name: /sign in/i }),
++    ).toBeInTheDocument();
++  });
++
++  test("unauthenticated users are shown the login form (protected route)", async () => {
++    // Test Unauthenticated Access Redirects to Login
++    const { default: App } = loadFreshAppModule();
++
++    // Arrange + Act
++    render(<App />);
++
++    // Assert
++    expect(
++      screen.getByRole("button", { name: /sign in/i }),
++    ).toBeInTheDocument();
++    expect(
++      screen.getByText(/production-grade jwt authentication/i),
++    ).toBeInTheDocument();
++  });
++
++  test("authenticated users can access dashboard (protected route)", async () => {
++    // Test Authenticated Access to Dashboard
++    jest.useFakeTimers();
++
++    const { default: App } = loadFreshAppModule();
++
++    // Arrange
++    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
++    render(<App />);
++
++    // Act
++    await user.type(
++      screen.getByPlaceholderText(/you@company\.com/i),
++      "user@fintech.com",
++    );
++    await user.type(screen.getByPlaceholderText("••••••••"), "User123!");
++    await user.click(screen.getByRole("button", { name: /sign in/i }));
++
++    await advance(300);
++
++    // Assert
++    expect(await screen.findByText(/secure dashboard/i)).toBeInTheDocument();
++    expect(screen.getByText("user@fintech.com")).toBeInTheDocument();
++  });
++
++  test("login form displays demo credentials", async () => {
++    // Test LoginForm Displays Demo Credentials
++    const { default: App } = loadFreshAppModule();
++
++    // Arrange + Act
++    render(<App />);
++
++    // Assert
++    expect(screen.getByText(/demo credentials/i)).toBeInTheDocument();
++    expect(screen.getByText(/admin@fintech.com/i)).toBeInTheDocument();
++    expect(screen.getByText(/user@fintech.com/i)).toBeInTheDocument();
++  });
++
++  test("dashboard shows user info and logout button", async () => {
++    // Test Dashboard Shows User Info and Logout Button
++    jest.useFakeTimers();
++
++    const { default: App } = loadFreshAppModule();
++
++    // Arrange
++    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
++    render(<App />);
++
++    await user.type(
++      screen.getByPlaceholderText(/you@company\.com/i),
++      "admin@fintech.com",
++    );
++    await user.type(screen.getByPlaceholderText("••••••••"), "Admin123!");
++    await user.click(screen.getByRole("button", { name: /sign in/i }));
++    await advance(300);
++
++    // Assert
++    expect(await screen.findByText(/user profile/i)).toBeInTheDocument();
++    expect(screen.getByText("admin@fintech.com")).toBeInTheDocument();
++    expect(screen.getByRole("button", { name: /logout/i })).toBeInTheDocument();
++  });
++
++  test("error messages display correctly for auth failures", async () => {
++    // Test Error Messages Display Correctly
++    jest.useFakeTimers();
++
++    const { default: App } = loadFreshAppModule();
++
++    // Arrange
++    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
++    render(<App />);
++
++    // Act
++    await user.type(
++      screen.getByPlaceholderText(/you@company\.com/i),
++      "admin@fintech.com",
++    );
++    await user.type(screen.getByPlaceholderText("••••••••"), "WrongPass123!");
++    await user.click(screen.getByRole("button", { name: /sign in/i }));
++    await advance(300);
++
++    // Assert
++    const error = await screen.findByText(/invalid credentials/i);
++    expect(error).toBeInTheDocument();
++  });
++
++  test("loading state displays during authentication", async () => {
++    jest.useFakeTimers();
++    const { default: App } = loadFreshAppModule();
++    render(<App />);
++
++    const emailInput = screen.getByPlaceholderText(/you@company\.com/i);
++    const passInput = screen.getByPlaceholderText("••••••••");
++
++    // Use userEvent for typing
++    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
++    await user.type(emailInput, "admin@fintech.com");
++    await user.type(passInput, "Admin123!");
++
++    const submitBtn = screen.getByRole("button", { name: /sign in/i });
++
++    // Manually fire click to check intermediate state without awaiting full resolution
++    fireEvent.click(submitBtn);
++
++    // Assert loading state (button text changes)
++    expect(screen.getByText(/authenticating.../i)).toBeInTheDocument();
++    expect(submitBtn).toBeDisabled();
++
++    // Finish
++    await advance(300);
++    expect(await screen.findByText(/secure dashboard/i)).toBeInTheDocument();
++  });
++
++  test("session expiration (refresh failure) shows error to user", async () => {
++    jest.useFakeTimers();
++    const mod = loadFreshAppModule();
++    const { default: App, __testExports } = mod;
++    const { mockBackend, httpClient } = __testExports;
++
++    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
++    render(<App />);
++
++    // Login
++    await user.type(
++      screen.getByPlaceholderText(/you@company\.com/i),
++      "admin@fintech.com",
++    );
++    await user.type(screen.getByPlaceholderText("••••••••"), "Admin123!");
++    await user.click(screen.getByRole("button", { name: /sign in/i }));
++    await advance(300);
++
++    // Force expiration state
++    const loginPromise = mockBackend.login(
++      "admin@fintech.com",
++      "Admin123!",
++      "ip-temp",
++    );
++    await advance(300);
++    const loginRes = await loginPromise;
++
++    httpClient.setTokens({
++      accessToken: loginRes.accessToken,
++      expiresAt: Date.now() + 30000,
++    });
++
++    // Mock refresh failure
++    jest
++      .spyOn(mockBackend, "refreshAccessToken")
++      .mockRejectedValue(new Error("Refresh failed"));
++
++    // Act
++    await user.click(
++      screen.getByRole("button", { name: /fetch protected data/i }),
++    );
++    // Instant failure expected due to mockRejectedValue
++    await advance(0);
++
++    // Assert
++    expect(
++      await screen.findByText(/failed: session expired. please login again/i),
++    ).toBeInTheDocument();
++  });
++
++  test("token theft invalidates session preventing further access", async () => {
++    jest.useFakeTimers();
++    const mod = loadFreshAppModule();
++    const { default: App, __testExports } = mod;
++    const { mockBackend, httpClient } = __testExports;
++
++    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
++    render(<App />);
++
++    // Login
++    await user.type(
++      screen.getByPlaceholderText(/you@company\.com/i),
++      "admin@fintech.com",
++    );
++    await user.type(screen.getByPlaceholderText("••••••••"), "Admin123!");
++    await user.click(screen.getByRole("button", { name: /sign in/i }));
++    await advance(300);
++
++    // Simulate theft: Get the current refresh token and reuse it
++    const refreshTokensMap: Map<string, any> = (mockBackend as any)
++      .refreshTokens;
++    const originalRefreshToken = Array.from(refreshTokensMap.keys())[0];
++
++    // First use: Valid refresh
++    const r1 = mockBackend.refreshAccessToken(originalRefreshToken);
++    await advance(200);
++    await r1;
++
++    // Second use: Theft!
++    const r2 = mockBackend.refreshAccessToken(originalRefreshToken);
++    const r2Check = expect(r2).rejects.toThrow("Token reuse detected");
++    await advance(200);
++    await r2Check;
++
++    // Force access token expiry to trigger refresh on next request
++    httpClient.setTokens({
++      accessToken: "expired_token",
++      expiresAt: Date.now() - 1000,
++    });
++    (httpClient as any).getStoredRefreshToken = () => originalRefreshToken;
++
++    // Act
++    await user.click(
++      screen.getByRole("button", { name: /fetch protected data/i }),
++    );
++    await advance(200); // refresh is triggered, should fail after delay
++
++    // Assert
++    expect(
++      await screen.findByText(/failed: session expired. please login again/i),
++    ).toBeInTheDocument();
++  });
++
++  test("UI-driven token rotation: proactive refresh revokes old refresh token", async () => {
++    // Acceptance: token rotation invalidates old refresh tokens (triggered via UI)
++    jest.useFakeTimers();
++    jest.setSystemTime(new Date("2026-01-01T00:00:00.000Z"));
++
++    const mod = loadFreshAppModule();
++    const { default: App, __testExports } = mod;
++    const { mockBackend, httpClient } = __testExports;
++    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
++    render(<App />);
++
++    // Arrange: login via UI
++    await user.type(
++      screen.getByPlaceholderText(/you@company\.com/i),
++      "admin@fintech.com",
++    );
++    await user.type(screen.getByPlaceholderText("••••••••"), "Admin123!");
++    await user.click(screen.getByRole("button", { name: /sign in/i }));
++    await advance(300);
++    expect(await screen.findByText(/secure dashboard/i)).toBeInTheDocument();
++
++    // Arrange: capture an issued refresh token for this session and force client to use it
++    const refreshTokensMap: Map<string, any> = (mockBackend as any)
++      .refreshTokens;
++    const originalRefreshToken = Array.from(refreshTokensMap.keys())[0];
++    (httpClient as any).getStoredRefreshToken = () => originalRefreshToken;
++
++    // Arrange: force access token near expiry so the next protected call triggers proactive refresh
++    const login2 = mockBackend.login(
++      "admin@fintech.com",
++      "Admin123!",
++      "ip-ui-rt",
++    );
++    await advance(300);
++    const loginRes = await login2;
++    httpClient.setTokens({
++      accessToken: loginRes.accessToken,
++      expiresAt: Date.now() + 30_000,
++    });
++
++    // Act: fetch protected data
++    await user.click(
++      screen.getByRole("button", { name: /fetch protected data/i }),
++    );
++    await advance(200);
++
++    // Assert: UI success, and refresh token rotation happened in backend
++    expect(
++      await screen.findByText(/protected data accessed successfully/i),
++    ).toBeInTheDocument();
++
++    const originalData = refreshTokensMap.get(originalRefreshToken);
++    expect(originalData).toBeTruthy();
++    expect(originalData.isRevoked).toBe(true);
++
++    const sameFamily = Array.from(refreshTokensMap.entries()).filter(
++      ([, v]) => v.familyId === originalData.familyId,
++    );
++    expect(sameFamily.length).toBeGreaterThanOrEqual(2);
++    expect(sameFamily.some(([t]) => t !== originalRefreshToken)).toBe(true);
++  });
++});
+diff --git a/repository_before/src/index.css b/repository_before/src/index.css
+deleted file mode 100644
+index 11dddab..0000000
+--- a/repository_before/src/index.css
++++ /dev/null
+@@ -1,8 +0,0 @@
+-@tailwind base;
+-@tailwind components;
+-@tailwind utilities;
+-
+-/* optional: add some global styles if needed */
+-body {
+-  font-family: 'Inter', sans-serif;
+-}
+diff --git a/repository_before/src/main.tsx b/repository_before/src/main.tsx
+deleted file mode 100644
+index bef5202..0000000
+--- a/repository_before/src/main.tsx
++++ /dev/null
+@@ -1,10 +0,0 @@
+-import { StrictMode } from 'react'
+-import { createRoot } from 'react-dom/client'
+-import './index.css'
+-import App from './App.tsx'
+-
+-createRoot(document.getElementById('root')!).render(
+-  <StrictMode>
+-    <App />
+-  </StrictMode>,
+-)
+diff --git a/repository_before/tailwind.config.cjs b/repository_before/tailwind.config.cjs
+deleted file mode 100644
+index f96487d..0000000
+--- a/repository_before/tailwind.config.cjs
++++ /dev/null
+@@ -1,6 +0,0 @@
+-/** @type {import('tailwindcss').Config} */
+-module.exports = {
+-  content: ["./index.html", "./src/**/*.{ts,tsx}"],
+-  theme: { extend: {} },
+-  plugins: [],
+-}
+diff --git a/repository_before/tsconfig.app.json b/repository_before/tsconfig.app.json
+deleted file mode 100644
+index a9b5a59..0000000
+--- a/repository_before/tsconfig.app.json
++++ /dev/null
+@@ -1,28 +0,0 @@
+-{
+-  "compilerOptions": {
+-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+-    "target": "ES2022",
+-    "useDefineForClassFields": true,
+-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+-    "module": "ESNext",
+-    "types": ["vite/client"],
+-    "skipLibCheck": true,
+-
+-    /* Bundler mode */
+-    "moduleResolution": "bundler",
+-    "allowImportingTsExtensions": true,
+-    "verbatimModuleSyntax": true,
+-    "moduleDetection": "force",
+-    "noEmit": true,
+-    "jsx": "react-jsx",
+-
+-    /* Linting */
+-    "strict": true,
+-    "noUnusedLocals": true,
+-    "noUnusedParameters": true,
+-    "erasableSyntaxOnly": true,
+-    "noFallthroughCasesInSwitch": true,
+-    "noUncheckedSideEffectImports": true
+-  },
+-  "include": ["src"]
+-}
+diff --git a/repository_before/tsconfig.json b/repository_after/tsconfig.json
+index 1ffef60..c690ecd 100644
+--- a/repository_before/tsconfig.json
++++ b/repository_after/tsconfig.json
+@@ -1,7 +1,22 @@
+ {
+-  "files": [],
+-  "references": [
+-    { "path": "./tsconfig.app.json" },
+-    { "path": "./tsconfig.node.json" }
++  "compilerOptions": {
++    "target": "ES2022",
++    "lib": ["ES2022", "DOM", "DOM.Iterable"],
++    "module": "CommonJS",
++    "jsx": "react",
++    "moduleResolution": "Node",
++    "esModuleInterop": true,
++    "allowJs": true,
++    "resolveJsonModule": true,
++    "strict": true,
++    "skipLibCheck": true,
++    "types": ["jest", "@testing-library/jest-dom"],
++    "isolatedModules": true
++  },
++  "include": [
++    "**/*.ts",
++    "**/*.tsx",
++    "../repository_before/src/**/*.ts",
++    "../repository_before/src/**/*.tsx"
+   ]
+ }
+diff --git a/repository_before/tsconfig.node.json b/repository_before/tsconfig.node.json
+deleted file mode 100644
+index 8a67f62..0000000
+--- a/repository_before/tsconfig.node.json
++++ /dev/null
+@@ -1,26 +0,0 @@
+-{
+-  "compilerOptions": {
+-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+-    "target": "ES2023",
+-    "lib": ["ES2023"],
+-    "module": "ESNext",
+-    "types": ["node"],
+-    "skipLibCheck": true,
+-
+-    /* Bundler mode */
+-    "moduleResolution": "bundler",
+-    "allowImportingTsExtensions": true,
+-    "verbatimModuleSyntax": true,
+-    "moduleDetection": "force",
+-    "noEmit": true,
+-
+-    /* Linting */
+-    "strict": true,
+-    "noUnusedLocals": true,
+-    "noUnusedParameters": true,
+-    "erasableSyntaxOnly": true,
+-    "noFallthroughCasesInSwitch": true,
+-    "noUncheckedSideEffectImports": true
+-  },
+-  "include": ["vite.config.ts"]
+-}
+diff --git a/repository_before/vite.config.ts b/repository_before/vite.config.ts
+deleted file mode 100644
+index 8b0f57b..0000000
+--- a/repository_before/vite.config.ts
++++ /dev/null
+@@ -1,7 +0,0 @@
+-import { defineConfig } from 'vite'
+-import react from '@vitejs/plugin-react'
+-
+-// https://vite.dev/config/
+-export default defineConfig({
+-  plugins: [react()],
+-})

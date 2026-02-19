@@ -1,0 +1,26 @@
+diff --git a/repository_before/parallelizing.py b/repository_after/parallelizing.py
+index 1234567..abcdefg 100644
+--- a/repository_before/parallelizing.py
++++ b/repository_after/parallelizing.py
+@@ -1,12 +1,10 @@
+-from multiprocessing import Process
+-regressTuple = [(x,) for x in regressList]
+-processes = []
+-for i in range(len(regressList)):
+-    processes.append(
+-        Process(
+-            target=runRegressWriteStatus,
+-            args=regressTuple[i]))
+-for process in processes:
+-    process.start()
+-for process in processes:
+-    process.join()
++from multiprocessing import Pool, cpu_count
++
++def run_parallel_tasks(regress_list, target_func):
++    max_workers = cpu_count()
++    
++    with Pool(processes=max_workers) as pool:
++        results = pool.map(target_func, regress_list)
++    
++    return results

@@ -1,0 +1,9 @@
+{
+  "name": "cfcfd6-evaluation",
+  "version": "1.0.0",
+  "description": "Evaluation script for JavaScript bug fixes",
+  "scripts": {
+    "evaluate": "node evaluation.js"
+  },
+  "dependencies": {}
+}

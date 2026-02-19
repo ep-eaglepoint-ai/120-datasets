@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+.DS_Store
+coverage/
+.nyc_output/
+*.tsbuildinfo
+
+# Generated reports and logs
+evaluation/
+reports/
+report.json
+
+# Dependencies lock
+package-lock.json

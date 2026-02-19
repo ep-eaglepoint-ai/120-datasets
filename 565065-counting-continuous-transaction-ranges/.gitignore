@@ -1,0 +1,10 @@
+evaluation/reports/**
+evaluation/reports/*
+.pytest_cache/
+__pycache__/
+*.pyc
+.DS_Store
+.vscode/
+.idea/
+.env
+.env.*

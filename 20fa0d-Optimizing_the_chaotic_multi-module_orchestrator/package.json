@@ -1,0 +1,18 @@
+{
+  "name": "chaotic-component-evaluation",
+  "version": "1.0.0",
+  "description": "Evaluation of ChaoticComponent refactoring",
+  "scripts": {
+    "test:before": "cd tests && npx playwright test test_before.spec.js --reporter=list",
+    "test:after": "cd tests && npx playwright test test_after.spec.js --reporter=list",
+    "test:all": "cd tests && npx playwright test test_before.spec.js test_after.spec.js --reporter=list",
+    "evaluate": "tsx evaluation/evaluation.ts"
+  },
+  "keywords": ["refactoring", "evaluation", "playwright"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "tsx": "^4.7.0"
+  },
+  "dependencies": {}
+}

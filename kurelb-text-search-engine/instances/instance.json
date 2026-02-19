@@ -1,0 +1,11 @@
+{
+            "instance_id": "KURELB",
+            "problem_statement": "Refactor a Python text search engine that currently uses O(n²) bubble sorting, linear scans, and naive substring matching to instead implement an inverted index with O(1) term lookups, pre‑computed TF‑IDF scoring, and Knuth‑Morris‑Pratt phrase matching for sub‑100ms queries on 100,000+ documents. Replace character‑by‑character tokenization with re.findall(), stopword checks with frozenset membership, and all sorting with Python’s built‑in sorted(), while caching stems and document vectors during indexing to avoid redundant computation. The engine must achieve at least 1,000 queries per second with under 10ms latency for keyword searches and under 50ms for similarity detection while maintaining accurate relevance ranking and phrase‑matching correctness.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/kurelb-text-search-engine",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

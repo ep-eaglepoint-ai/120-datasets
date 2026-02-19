@@ -1,0 +1,210 @@
+diff --git a/repository_before/__init__.py b/repository_before/__init__.py
+deleted file mode 100644
+index e69de29b..00000000
+diff --git a/repository_after/pom.xml b/repository_after/pom.xml
+new file mode 100644
+index 00000000..7ba96bdf
+--- /dev/null
++++ b/repository_after/pom.xml
+@@ -0,0 +1,42 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project xmlns="http://maven.apache.org/POM/4.0.0"
++         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
++    <modelVersion>4.0.0</modelVersion>
++
++    <groupId>com.example</groupId>
++    <artifactId>single-flight-cache</artifactId>
++    <version>1.0.0</version>
++    <packaging>jar</packaging>
++
++    <name>Single Flight Cache</name>
++    <description>
++        A cache implementation that prevents the cache stampede (thundering herd) problem.
++        Ensures expensive computations execute only once per key under concurrent access.
++    </description>
++
++    <properties>
++        <maven.compiler.source>17</maven.compiler.source>
++        <maven.compiler.target>17</maven.compiler.target>
++        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
++    </properties>
++
++    <build>
++        <plugins>
++            <plugin>
++                <groupId>org.apache.maven.plugins</groupId>
++                <artifactId>maven-compiler-plugin</artifactId>
++                <version>3.11.0</version>
++                <configuration>
++                    <source>17</source>
++                    <target>17</target>
++                </configuration>
++            </plugin>
++            <plugin>
++                <groupId>org.apache.maven.plugins</groupId>
++                <artifactId>maven-jar-plugin</artifactId>
++                <version>3.3.0</version>
++            </plugin>
++        </plugins>
++    </build>
++</project>
+diff --git a/repository_after/src/main/java/cache/ComputationException.java b/repository_after/src/main/java/cache/ComputationException.java
+new file mode 100644
+index 00000000..01999735
+--- /dev/null
++++ b/repository_after/src/main/java/cache/ComputationException.java
+@@ -0,0 +1,16 @@
++package cache;
++
++public class ComputationException extends RuntimeException {
++    
++    private static final long serialVersionUID = 1L;
++    
++   
++    public ComputationException(String message, Throwable cause) {
++        super(message, cause);
++    }
++    
++    
++    public ComputationException(Throwable cause) {
++        super("Computation failed", cause);
++    }
++}
+diff --git a/repository_after/src/main/java/cache/ComputeFunction.java b/repository_after/src/main/java/cache/ComputeFunction.java
+new file mode 100644
+index 00000000..3d18d8b0
+--- /dev/null
++++ b/repository_after/src/main/java/cache/ComputeFunction.java
+@@ -0,0 +1,9 @@
++package cache;
++
++
++@FunctionalInterface
++public interface ComputeFunction<K, V> {
++    
++
++    V compute(K key) throws Exception;
++}
+diff --git a/repository_after/src/main/java/cache/SingleFlightCache.java b/repository_after/src/main/java/cache/SingleFlightCache.java
+new file mode 100644
+index 00000000..48b392bc
+--- /dev/null
++++ b/repository_after/src/main/java/cache/SingleFlightCache.java
+@@ -0,0 +1,116 @@
++package cache;
++
++import java.util.concurrent.ConcurrentHashMap;
++import java.util.concurrent.CompletableFuture;
++import java.util.concurrent.ExecutionException;
++
++public class SingleFlightCache<K, V> {
++    private final ConcurrentHashMap<K, CompletableFuture<V>> inFlightComputations;
++    
++    public SingleFlightCache() {
++        this.inFlightComputations = new ConcurrentHashMap<>();
++    }
++    
++    public SingleFlightCache(int initialCapacity) {
++        if (initialCapacity < 0) {
++            throw new IllegalArgumentException("Initial capacity must be non-negative: " + initialCapacity);
++        }
++        this.inFlightComputations = new ConcurrentHashMap<>(initialCapacity);
++    }
++   
++    public V get(K key, ComputeFunction<K, V> computeFunction) throws InterruptedException {
++        if (key == null) {
++            throw new NullPointerException("Key must not be null");
++        }
++        if (computeFunction == null) {
++            throw new NullPointerException("Compute function must not be null");
++        }
++        
++        while (true) {
++            CompletableFuture<V> newFuture = new CompletableFuture<>();
++            
++            CompletableFuture<V> existingFuture = inFlightComputations.putIfAbsent(key, newFuture);
++            
++            if (existingFuture != null) {
++                // If the existing future already completed exceptionally, clean it up and retry
++                // This allows subsequent requests after a failure to attempt a new computation
++                if (existingFuture.isCompletedExceptionally()) {
++                    inFlightComputations.remove(key, existingFuture);
++                    continue;
++                }
++                return waitForResult(existingFuture);
++            }
++            
++            return executeComputation(key, computeFunction, newFuture);
++        }
++    }
++    
++    private V executeComputation(K key, ComputeFunction<K, V> computeFunction, 
++                                  CompletableFuture<V> future) throws InterruptedException {
++        try {
++            V result = computeFunction.compute(key);
++            
++            future.complete(result);
++            
++            return result;
++            
++        } catch (InterruptedException e) {
++            future.completeExceptionally(e);
++            Thread.currentThread().interrupt();
++            throw e;
++            
++        } catch (Exception e) {
++            future.completeExceptionally(e);
++            throw new ComputationException("Computation failed for key: " + key, e);
++            
++        } finally {
++            // Only clean up on success, not on failure
++            // On failure, leave the entry in the map so concurrent waiters
++            // can still receive the exception. New arrivals will clean it up
++            // when they see it's completed exceptionally and retry.
++            if (!future.isCompletedExceptionally()) {
++                cleanupInflightEntry(key, future);
++            }
++        }
++    }
++    
++    
++    private V waitForResult(CompletableFuture<V> future) throws InterruptedException {
++        try {
++         
++            return future.get();
++            
++        } catch (ExecutionException e) {
++           
++            Throwable cause = e.getCause();
++            
++            if (cause instanceof InterruptedException) {
++                throw (InterruptedException) cause;
++            }
++            
++            if (cause instanceof ComputationException) {
++                throw (ComputationException) cause;
++            }
++            
++            throw new ComputationException("Computation failed", cause);
++            
++        } catch (InterruptedException e) {
++            Thread.currentThread().interrupt();
++            throw e;
++        }
++    }
++    
++    private void cleanupInflightEntry(K key, CompletableFuture<V> future) {
++    
++        inFlightComputations.remove(key, future);
++    }
++    
++    public int getInflightCount() {
++        return inFlightComputations.size();
++    }
++    
++    
++    public boolean isInflight(K key) {
++        return inFlightComputations.containsKey(key);
++    }
++}

@@ -1,0 +1,113 @@
+services:
+  # Test runner / mock service: runs unit tests without starting dependencies.
+  # This keeps `docker compose run --rm app pytest -v` fast and self-contained.
+  app:
+    build: .
+    network_mode: host
+    command: ["pytest", "-v", "tests"]
+    volumes:
+      - .:/app
+
+  # Required services per spec (not needed to run unit tests).
+  db:
+    image: postgres:15
+    network_mode: host
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7
+    network_mode: host
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-h", "127.0.0.1", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: .
+    network_mode: host
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/postgres
+      REDIS_URL: redis://127.0.0.1:6379/0
+      UPLOAD_DIR: /data/uploads
+      AUTO_CREATE_DB: "true"
+      CELERY_TASK_ALWAYS_EAGER: "false"
+    volumes:
+      - .:/app
+      - uploads_data:/data/uploads
+    command:
+      [
+        "uvicorn",
+        "repository_after.api:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--workers",
+        "4",
+      ]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health').read()",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  worker:
+    build: .
+    network_mode: host
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@127.0.0.1:5432/postgres
+      REDIS_URL: redis://127.0.0.1:6379/0
+      UPLOAD_DIR: /data/uploads
+      AUTO_CREATE_DB: "true"
+      CELERY_TASK_ALWAYS_EAGER: "false"
+      WORKER_SHUTDOWN_TIMEOUT_SECONDS: "60"
+      TASK_SOFT_TIME_LIMIT_SECONDS: "3600"
+      TASK_TIME_LIMIT_SECONDS: "3700"
+    volumes:
+      - .:/app
+      - uploads_data:/data/uploads
+    command:
+      [
+        "celery",
+        "-A",
+        "repository_after.celery_app:celery_app",
+        "worker",
+        "--loglevel=INFO",
+        "--concurrency=4",
+        "--max-tasks-per-child=10",
+        "--prefetch-multiplier=1",
+      ]
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "celery -A repository_after.celery_app:celery_app inspect ping -d celery@$(hostname) | grep -q pong",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db_data:
+  redis_data:
+  uploads_data:

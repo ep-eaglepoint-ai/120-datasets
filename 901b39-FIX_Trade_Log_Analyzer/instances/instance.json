@@ -1,0 +1,9 @@
+{
+  "instance_id": "901b39-FIX_Trade_Log_Analyzer",
+  "problem_statement": "The trade log analyzer at a quantitative trading firm processes real-time market data feeds to detect anomalies and generate compliance reports. The current implementation cannot keep pace with market open volume, causing monitoring delays and missed compliance requirements.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/901b39-FIX_Trade_Log_Analyzer",
+  "environment_setup": "Dockerfile"
+}
+

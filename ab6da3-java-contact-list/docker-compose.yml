@@ -1,0 +1,16 @@
+services:
+  evaluation:
+    build: .
+    volumes:
+      - ./evaluation/reports:/app/evaluation/reports
+    command: java -cp /app/bin Evaluation
+
+  test-before:
+    build: .
+    # CI runs this as a separate command and expects a 0 exit code.
+    # We still print failures, but do not fail the container exit status.
+    command: sh -c "java -cp /app/bin RunTests /app/repository_before || true"
+
+  test-after:
+    build: .
+    command: java -cp /app/bin RunTests /app/repository_after

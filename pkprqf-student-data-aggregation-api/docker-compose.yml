@@ -1,0 +1,30 @@
+services:
+  test-before:
+    build: .
+    volumes:
+      - ./tests:/app/tests
+      - ./repository_before:/app/repository_before
+    command: >
+      sh -c "cd /app/tests &&
+             mvn test -Dtest=RepositoryBeforeStructureTest -Dstructure.repo.before.path=/app/repository_before/dataAggregation.java -q;
+             exit 0"
+
+  test-after:
+    build: .
+    volumes:
+      - ./tests:/app/tests
+      - ./repository_after:/app/repository_after
+    command: >
+      sh -c "rm -rf /app/tests/src/main &&
+             cd /app/repository_after && mvn install -q &&
+             cd /app/tests && mvn test -Dtest=!RepositoryBeforeStructureTest"
+
+  evaluation:
+    build: .
+    volumes:
+      - ./evaluation:/app/evaluation
+      - ./tests:/app/tests
+      - ./repository_after:/app/repository_after
+      - ./repository_before:/app/repository_before
+    command: >
+      sh -c "cd /app/evaluation && mvn compile exec:java -e"

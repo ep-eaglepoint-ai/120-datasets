@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    volumes:
+      - .:/app
+      # Preserve the container's node_modules so local folders don't overwrite them
+      - /app/node_modules

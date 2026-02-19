@@ -1,0 +1,56 @@
+services:
+  repository_before:
+    build: .
+    command: sh -c "cd repository_before && if [ -f main.py ]; then uvicorn main:app --host 0.0.0.0 --port 8001; else echo 'repository_before not implemented'; exit 0; fi"
+    ports:
+      - "8001:8001"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONPATH=/app
+    profiles:
+      - before
+
+  repository_after:
+    build: .
+    command: sh -c "cd repository_after && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONPATH=/app/repository_after
+
+  tests:
+    build: .
+    command: pytest -q tests
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONPATH=/app
+
+  test-before:
+    build: .
+    command: pytest -q tests
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONPATH=/app
+      - TEST_REPOSITORY=repository_before
+
+  test-after:
+    build: .
+    command: pytest -q tests
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONPATH=/app
+      - TEST_REPOSITORY=repository_after
+
+  evaluation:
+    build: .
+    command: python3 evaluation/evaluation.py
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONPATH=/app

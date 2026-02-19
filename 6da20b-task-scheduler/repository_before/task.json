@@ -1,0 +1,23 @@
+[
+    {
+      "name": "Task A",
+      "duration": 2,
+      "earliest": 8,
+      "latest": 12
+    },
+    {
+      "name": "Task B",
+      "duration": 1,
+      "earliest": 0,
+      "latest": 18,
+      "after": "Task A"
+    },
+    {
+      "name": "Task C",
+      "duration": 0.5,
+      "earliest": 0,
+      "latest": 18,
+      "not_same_day_as": "Task A"
+    }
+  ]
+  

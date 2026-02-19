@@ -1,0 +1,11 @@
+# Go build / test artifacts
+bin/
+*.test
+*.out
+
+# IDE / editor config
+.vscode/
+.idea/
+
+# Evaluation reports (dated directories)
+/evaluation/**/*.json

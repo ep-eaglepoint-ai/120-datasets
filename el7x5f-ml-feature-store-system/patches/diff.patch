@@ -1,0 +1,2504 @@
+diff --git a/repository_before/__init__.py b/repository_after/__init__.py
+index e69de29b..414d8cce 100644
+--- a/repository_before/__init__.py
++++ b/repository_after/__init__.py
+@@ -0,0 +1,6 @@
++"""Repository-after implementation.
++
++Exports the feature store public API from `repository_after.feature_store`.
++"""
++
++from .feature_store import *  # noqa: F401,F403
+diff --git a/repository_after/__pycache__/__init__.cpython-311.pyc b/repository_after/__pycache__/__init__.cpython-311.pyc
+new file mode 100644
+index 00000000..e08bb473
+Binary files /dev/null and b/repository_after/__pycache__/__init__.cpython-311.pyc differ
+diff --git a/repository_after/app.py b/repository_after/app.py
+new file mode 100644
+index 00000000..1b115cf3
+--- /dev/null
++++ b/repository_after/app.py
+@@ -0,0 +1,15 @@
++import os
++
++from feature_store.api import AppSettings, create_app
++
++
++def _env(name: str, default: str) -> str:
++    return os.environ.get(name, default)
++
++
++settings = AppSettings(
++    database_url=_env("DATABASE_URL", "postgresql+psycopg2://postgres:postgres@postgres:5432/feature_store"),
++    redis_url=_env("REDIS_URL", "redis://redis:6379/0"),
++)
++
++app = create_app(settings)
+diff --git a/repository_after/feature_store/__init__.py b/repository_after/feature_store/__init__.py
+new file mode 100644
+index 00000000..563094ac
+--- /dev/null
++++ b/repository_after/feature_store/__init__.py
+@@ -0,0 +1,55 @@
++"""Feature store library package.
++
++This package provides:
++- Declarative DSL for features
++- SQLAlchemy-backed registry (PostgreSQL)
++- Online serving (Redis)
++- Training data generation (point-in-time correct joins)
++- FastAPI app for discovery and serving
++
++Optional integrations (Spark/Faust/Great Expectations) are designed to be
++importable without requiring those heavy dependencies at runtime.
++"""
++
++from .dsl import (
++    Feature,
++    FeatureMetadata,
++    FeatureSource,
++    PythonTransform,
++    SQLTransform,
++    feature,
++)
++from .registry import FeatureRegistry, RegistrySettings
++from .serving import OnlineStore, RedisOnlineStore, RedisTimeSeriesOnlineStore
++from .pit_join import point_in_time_join_pandas, point_in_time_join_spark
++from .offline_store import OfflineStore, ParquetOfflineStore, ParquetOfflineStoreSettings
++from .alerts import AlertSink, NoopAlertSink, Thresholds
++from .feature_set import FeatureSet
++from .validation import FeatureValidator
++from .drift import population_stability_index, DriftResult
++
++__all__ = [
++    "Feature",
++    "FeatureMetadata",
++    "FeatureSource",
++    "PythonTransform",
++    "SQLTransform",
++    "feature",
++    "FeatureRegistry",
++    "RegistrySettings",
++    "OnlineStore",
++    "RedisOnlineStore",
++    "RedisTimeSeriesOnlineStore",
++    "point_in_time_join_pandas",
++    "point_in_time_join_spark",
++    "OfflineStore",
++    "ParquetOfflineStore",
++    "ParquetOfflineStoreSettings",
++    "AlertSink",
++    "NoopAlertSink",
++    "Thresholds",
++    "FeatureSet",
++    "FeatureValidator",
++    "population_stability_index",
++    "DriftResult",
++]
+diff --git a/repository_after/feature_store/__pycache__/__init__.cpython-311.pyc b/repository_after/feature_store/__pycache__/__init__.cpython-311.pyc
+new file mode 100644
+index 00000000..c6d4a835
+Binary files /dev/null and b/repository_after/feature_store/__pycache__/__init__.cpython-311.pyc differ
+diff --git a/repository_after/feature_store/__pycache__/alerts.cpython-311.pyc b/repository_after/feature_store/__pycache__/alerts.cpython-311.pyc
+new file mode 100644
+index 00000000..c7eb5fc3
+Binary files /dev/null and b/repository_after/feature_store/__pycache__/alerts.cpython-311.pyc differ
+diff --git a/repository_after/feature_store/__pycache__/api.cpython-311.pyc b/repository_after/feature_store/__pycache__/api.cpython-311.pyc
+new file mode 100644
+index 00000000..9e78d9eb
+Binary files /dev/null and b/repository_after/feature_store/__pycache__/api.cpython-311.pyc differ
+diff --git a/repository_after/feature_store/__pycache__/catalog_hooks.cpython-311.pyc b/repository_after/feature_store/__pycache__/catalog_hooks.cpython-311.pyc
+new file mode 100644
+index 00000000..14ab3d04
+Binary files /dev/null and b/repository_after/feature_store/__pycache__/catalog_hooks.cpython-311.pyc differ
+diff --git a/repository_after/feature_store/__pycache__/db.cpython-311.pyc b/repository_after/feature_store/__pycache__/db.cpython-311.pyc
+new file mode 100644
+index 00000000..5067ab86
+Binary files /dev/null and b/repository_after/feature_store/__pycache__/db.cpython-311.pyc differ
+diff --git a/repository_after/feature_store/__pycache__/drift.cpython-311.pyc b/repository_after/feature_store/__pycache__/drift.cpython-311.pyc
+new file mode 100644
+index 00000000..fc1fefe8
+Binary files /dev/null and b/repository_after/feature_store/__pycache__/drift.cpython-311.pyc differ
+diff --git a/repository_after/feature_store/__pycache__/dsl.cpython-311.pyc b/repository_after/feature_store/__pycache__/dsl.cpython-311.pyc
+new file mode 100644
+index 00000000..30275c7f
+Binary files /dev/null and b/repository_after/feature_store/__pycache__/dsl.cpython-311.pyc differ
+diff --git a/repository_after/feature_store/__pycache__/feature_set.cpython-311.pyc b/repository_after/feature_store/__pycache__/feature_set.cpython-311.pyc
+new file mode 100644
+index 00000000..f32d7a12
+Binary files /dev/null and b/repository_after/feature_store/__pycache__/feature_set.cpython-311.pyc differ
+diff --git a/repository_after/feature_store/__pycache__/models.cpython-311.pyc b/repository_after/feature_store/__pycache__/models.cpython-311.pyc
+new file mode 100644
+index 00000000..01aa968c
+Binary files /dev/null and b/repository_after/feature_store/__pycache__/models.cpython-311.pyc differ
+diff --git a/repository_after/feature_store/__pycache__/offline_store.cpython-311.pyc b/repository_after/feature_store/__pycache__/offline_store.cpython-311.pyc
+new file mode 100644
+index 00000000..04e10b68
+Binary files /dev/null and b/repository_after/feature_store/__pycache__/offline_store.cpython-311.pyc differ
+diff --git a/repository_after/feature_store/__pycache__/pit_join.cpython-311.pyc b/repository_after/feature_store/__pycache__/pit_join.cpython-311.pyc
+new file mode 100644
+index 00000000..8fb6929a
+Binary files /dev/null and b/repository_after/feature_store/__pycache__/pit_join.cpython-311.pyc differ
+diff --git a/repository_after/feature_store/__pycache__/processing_batch.cpython-311.pyc b/repository_after/feature_store/__pycache__/processing_batch.cpython-311.pyc
+new file mode 100644
+index 00000000..476f74e8
+Binary files /dev/null and b/repository_after/feature_store/__pycache__/processing_batch.cpython-311.pyc differ
+diff --git a/repository_after/feature_store/__pycache__/processing_stream.cpython-311.pyc b/repository_after/feature_store/__pycache__/processing_stream.cpython-311.pyc
+new file mode 100644
+index 00000000..6e166ee9
+Binary files /dev/null and b/repository_after/feature_store/__pycache__/processing_stream.cpython-311.pyc differ
+diff --git a/repository_after/feature_store/__pycache__/registry.cpython-311.pyc b/repository_after/feature_store/__pycache__/registry.cpython-311.pyc
+new file mode 100644
+index 00000000..348ea5a3
+Binary files /dev/null and b/repository_after/feature_store/__pycache__/registry.cpython-311.pyc differ
+diff --git a/repository_after/feature_store/__pycache__/serving.cpython-311.pyc b/repository_after/feature_store/__pycache__/serving.cpython-311.pyc
+new file mode 100644
+index 00000000..0f2db8a2
+Binary files /dev/null and b/repository_after/feature_store/__pycache__/serving.cpython-311.pyc differ
+diff --git a/repository_after/feature_store/__pycache__/validation.cpython-311.pyc b/repository_after/feature_store/__pycache__/validation.cpython-311.pyc
+new file mode 100644
+index 00000000..0fa9dd80
+Binary files /dev/null and b/repository_after/feature_store/__pycache__/validation.cpython-311.pyc differ
+diff --git a/repository_after/feature_store/__pycache__/validation_ge.cpython-311.pyc b/repository_after/feature_store/__pycache__/validation_ge.cpython-311.pyc
+new file mode 100644
+index 00000000..db97adad
+Binary files /dev/null and b/repository_after/feature_store/__pycache__/validation_ge.cpython-311.pyc differ
+diff --git a/repository_after/feature_store/alerts.py b/repository_after/feature_store/alerts.py
+new file mode 100644
+index 00000000..c7845896
+--- /dev/null
++++ b/repository_after/feature_store/alerts.py
+@@ -0,0 +1,20 @@
++from __future__ import annotations
++
++from dataclasses import dataclass
++from typing import Any, Callable, Dict, Optional, Protocol
++
++
++class AlertSink(Protocol):
++    def emit(self, *, alert_type: str, payload: Dict[str, Any]) -> None:
++        ...
++
++
++class NoopAlertSink:
++    def emit(self, *, alert_type: str, payload: Dict[str, Any]) -> None:
++        return
++
++
++@dataclass(frozen=True)
++class Thresholds:
++    max_staleness_seconds: Optional[int] = None
++    psi_threshold: Optional[float] = None
+diff --git a/repository_after/feature_store/api.py b/repository_after/feature_store/api.py
+new file mode 100644
+index 00000000..2601d46b
+--- /dev/null
++++ b/repository_after/feature_store/api.py
+@@ -0,0 +1,176 @@
++from __future__ import annotations
++
++from dataclasses import dataclass
++from typing import Any, Dict, List, Optional, Sequence
++
++from fastapi import Depends, FastAPI, HTTPException
++from fastapi.responses import HTMLResponse
++from pydantic import BaseModel, Field
++
++from .registry import FeatureRegistry, RegistrySettings
++from .serving import RedisOnlineStore, RedisOnlineStoreSettings
++from .dsl import FeatureSource, FeatureMetadata, Feature, SQLTransform
++
++
++class FeatureSummary(BaseModel):
++    name: str
++    version: str
++    description: str
++    owner: str
++    tags: List[str]
++    entity_keys: List[str]
++    event_timestamp: str
++    source: Dict[str, Any]
++    transform: Dict[str, Any]
++    depends_on: List[str]
++    feature_schema: Dict[str, Any] = Field(default_factory=dict, alias="schema")
++    default_value: Optional[Any] = None
++
++
++class GetOnlineRequest(BaseModel):
++    feature_set: str
++    entity_key: str
++    feature_names: List[str]
++    max_age_seconds: Optional[int] = None
++
++
++class GetOnlineBatchRequest(BaseModel):
++    feature_set: str
++    entity_keys: List[str]
++    feature_names: List[str]
++    max_age_seconds: Optional[int] = None
++
++
++class RegisterFeatureRequest(BaseModel):
++    name: str
++    version: str = "v1"
++    description: str
++    owner: str
++    tags: List[str] = []
++    entity_keys: List[str]
++    event_timestamp: str
++    source: Dict[str, Any]
++    transform: Dict[str, Any]
++    depends_on: List[str] = []
++    feature_schema: Dict[str, Any] = Field(default_factory=dict, alias="schema")
++    default_value: Optional[Any] = None
++
++
++@dataclass(frozen=True)
++class AppSettings:
++    database_url: str
++    redis_url: str
++
++
++def create_app(settings: AppSettings) -> FastAPI:
++    registry = FeatureRegistry(RegistrySettings(database_url=settings.database_url))
++    registry.create_schema()
++    online = RedisOnlineStore(RedisOnlineStoreSettings(redis_url=settings.redis_url))
++
++    app = FastAPI(title="Feature Store", version="0.1.0")
++
++    def get_registry() -> FeatureRegistry:
++        return registry
++
++    def get_online() -> RedisOnlineStore:
++        return online
++
++    @app.get("/health")
++    def health() -> Dict[str, str]:
++        return {"status": "ok"}
++
++    @app.get("/features", response_model=List[FeatureSummary])
++    def list_features(reg: FeatureRegistry = Depends(get_registry)):
++        return reg.list_features()
++
++    @app.get("/features/{name}", response_model=FeatureSummary)
++    def get_feature(name: str, version: str = "v1", reg: FeatureRegistry = Depends(get_registry)):
++        try:
++            f = reg.get(name=name, version=version)
++        except Exception as e:
++            raise HTTPException(status_code=404, detail="Feature not found")
++
++        # Return as summary dict
++        d = reg.list_features()
++        for it in d:
++            if it["name"] == name and it["version"] == version:
++                return it
++        raise HTTPException(status_code=404, detail="Feature not found")
++
++    @app.post("/online/get")
++    def online_get(req: GetOnlineRequest, store: RedisOnlineStore = Depends(get_online)):
++        return store.get_features(
++            feature_set=req.feature_set,
++            entity_key=req.entity_key,
++            feature_names=req.feature_names,
++            defaults=None,
++            max_age_seconds=req.max_age_seconds,
++        )
++
++    @app.post("/online/get_batch")
++    def online_get_batch(req: GetOnlineBatchRequest, store: RedisOnlineStore = Depends(get_online)):
++        return store.get_features_batch(
++            feature_set=req.feature_set,
++            entity_keys=req.entity_keys,
++            feature_names=req.feature_names,
++            defaults=None,
++            max_age_seconds=req.max_age_seconds,
++        )
++
++    @app.get("/lineage")
++    def lineage(reg: FeatureRegistry = Depends(get_registry)):
++        g = reg.lineage_graph()
++        return {"nodes": list(g.nodes()), "edges": [{"from": u, "to": v} for u, v in g.edges()]}
++
++    @app.post("/features/register")
++    def register_feature(req: RegisterFeatureRequest, reg: FeatureRegistry = Depends(get_registry)):
++        src = FeatureSource(
++            name=req.source.get("name", "source"),
++            kind=req.source.get("kind", "sql"),
++            identifier=req.source.get("identifier", ""),
++        )
++        if req.transform.get("kind") != "sql":
++            raise HTTPException(status_code=400, detail="Only sql transforms are supported via REST")
++        tx = SQLTransform(sql=req.transform.get("sql", ""))
++
++        f = Feature(
++            name=req.name,
++            entity_keys=tuple(req.entity_keys),
++            event_timestamp=req.event_timestamp,
++            source=src,
++            transform=tx,
++            metadata=FeatureMetadata(
++                description=req.description,
++                owner=req.owner,
++                tags=tuple(req.tags),
++                version=req.version,
++            ),
++            depends_on=tuple(req.depends_on),
++            schema=req.feature_schema,
++            default_value=req.default_value,
++        )
++        reg.register(f)
++        return {"status": "registered", "name": req.name, "version": req.version}
++
++    @app.get("/ui", response_class=HTMLResponse)
++    def web_ui(reg: FeatureRegistry = Depends(get_registry)):
++        features = reg.list_features()
++        rows = "".join(
++            f"<tr><td>{f['name']}</td><td>{f['version']}</td><td>{f['owner']}</td><td>{f['description']}</td></tr>"
++            for f in features
++        )
++        html = f"""
++        <html>
++          <head><title>Feature Store UI</title></head>
++          <body>
++            <h1>Feature Registry</h1>
++            <table border='1' cellpadding='6' cellspacing='0'>
++              <tr><th>Name</th><th>Version</th><th>Owner</th><th>Description</th></tr>
++              {rows}
++            </table>
++          </body>
++        </html>
++        """
++        return HTMLResponse(content=html)
++
++    return app
+diff --git a/repository_after/feature_store/catalog_hooks.py b/repository_after/feature_store/catalog_hooks.py
+new file mode 100644
+index 00000000..10ab166f
+--- /dev/null
++++ b/repository_after/feature_store/catalog_hooks.py
+@@ -0,0 +1,13 @@
++from __future__ import annotations
++
++from typing import Any, Dict, Protocol
++
++
++class DataCatalogHook(Protocol):
++    def publish_feature(self, feature_definition: Dict[str, Any]) -> None:
++        ...
++
++
++class NoopCatalogHook:
++    def publish_feature(self, feature_definition: Dict[str, Any]) -> None:
++        return
+diff --git a/repository_after/feature_store/db.py b/repository_after/feature_store/db.py
+new file mode 100644
+index 00000000..132fe91d
+--- /dev/null
++++ b/repository_after/feature_store/db.py
+@@ -0,0 +1,19 @@
++from __future__ import annotations
++
++from dataclasses import dataclass
++from typing import Optional
++
++from sqlalchemy import create_engine
++from sqlalchemy.engine import Engine
++from sqlalchemy.orm import sessionmaker
++
++
++@dataclass(frozen=True)
++class DatabaseSettings:
++    database_url: str
++
++
++def create_engine_and_session_factory(settings: DatabaseSettings) -> tuple[Engine, sessionmaker]:
++    engine = create_engine(settings.database_url, pool_pre_ping=True)
++    SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
++    return engine, SessionLocal
+diff --git a/repository_after/feature_store/drift.py b/repository_after/feature_store/drift.py
+new file mode 100644
+index 00000000..19cfbe83
+--- /dev/null
++++ b/repository_after/feature_store/drift.py
+@@ -0,0 +1,48 @@
++from __future__ import annotations
++
++from dataclasses import dataclass
++from typing import Any, Dict, Optional, Sequence
++
++import numpy as np
++
++
++@dataclass(frozen=True)
++class DriftResult:
++    metric: str
++    value: float
++    threshold: Optional[float]
++    violated: bool
++
++
++def population_stability_index(
++    *,
++    expected: Sequence[float],
++    actual: Sequence[float],
++    bins: int = 10,
++    eps: float = 1e-6,
++) -> float:
++    """Compute PSI between expected (training) and actual (serving) distributions."""
++
++    expected = np.asarray(list(expected), dtype=float)
++    actual = np.asarray(list(actual), dtype=float)
++
++    if expected.size == 0 or actual.size == 0:
++        return float("nan")
++
++    edges = np.quantile(expected, np.linspace(0, 1, bins + 1))
++    edges = np.unique(edges)
++    if edges.size < 3:
++        # Degenerate distribution
++        return 0.0
++
++    exp_counts, _ = np.histogram(expected, bins=edges)
++    act_counts, _ = np.histogram(actual, bins=edges)
++
++    exp_pct = exp_counts / max(exp_counts.sum(), 1)
++    act_pct = act_counts / max(act_counts.sum(), 1)
++
++    exp_pct = np.clip(exp_pct, eps, 1)
++    act_pct = np.clip(act_pct, eps, 1)
++
++    psi = np.sum((act_pct - exp_pct) * np.log(act_pct / exp_pct))
++    return float(psi)
+diff --git a/repository_after/feature_store/dsl.py b/repository_after/feature_store/dsl.py
+new file mode 100644
+index 00000000..fe629ce9
+--- /dev/null
++++ b/repository_after/feature_store/dsl.py
+@@ -0,0 +1,144 @@
++from __future__ import annotations
++
++from dataclasses import dataclass, field
++import re
++from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Tuple, Union
++
++
++@dataclass(frozen=True)
++class FeatureMetadata:
++    description: str
++    owner: str
++    tags: Tuple[str, ...] = ()
++    version: str = "v1"
++
++
++@dataclass(frozen=True)
++class FeatureSource:
++    """Binding to a data source.
++
++    In production you can back this by:
++    - a SQL table/view (offline)
++    - a Kafka topic (streaming)
++
++    This class is intentionally lightweight; richer connectors can wrap it.
++    """
++
++    name: str
++    kind: str  # "sql" | "kafka" | "custom"
++    identifier: str  # table name, topic name, etc.
++
++
++class Transform:
++    kind: str
++
++
++@dataclass(frozen=True)
++class SQLTransform(Transform):
++    sql: str
++    kind: str = "sql"
++
++
++@dataclass(frozen=True)
++class PythonTransform(Transform):
++    func: Callable[[Any], Any]
++    kind: str = "python"
++
++
++_SQL_DEP_RE = re.compile(r"\{\{\s*([a-zA-Z0-9_.-]+)\s*\}\}")
++
++
++def infer_dependencies_from_sql(sql: str) -> Tuple[str, ...]:
++    """Infer feature dependencies from SQL.
++
++    Convention: downstream SQL may reference other features using placeholders
++    like `{{upstream_feature_name}}`. This keeps dependency tracking explicit
++    while avoiding full SQL parsing.
++    """
++
++    deps = tuple(sorted(set(_SQL_DEP_RE.findall(sql or ""))))
++    return deps
++
++
++def depends_on(*feature_names: str):
++    """Decorator to attach feature dependencies to Python transform callables."""
++
++    def _decorator(func: Callable[[Any], Any]):
++        setattr(func, "__feature_dependencies__", tuple(feature_names))
++        return func
++
++    return _decorator
++
++
++@dataclass
++class Feature:
++    """Declarative feature definition.
++
++    A Feature may depend on other Features. Dependencies are used for lineage.
++
++    Minimal fields to support training-serving consistency:
++    - entity_keys: the join keys (e.g. user_id)
++    - event_timestamp: column name used for point-in-time joins
++    """
++
++    name: str
++    entity_keys: Tuple[str, ...]
++    event_timestamp: str
++    source: FeatureSource
++    transform: Union[SQLTransform, PythonTransform]
++    metadata: FeatureMetadata
++    depends_on: Tuple[str, ...] = ()
++    default_value: Optional[Any] = None
++    schema: Optional[Dict[str, Any]] = None
++
++    def dependency_set(self) -> Set[str]:
++        return set(self.depends_on)
++
++
++def feature(
++    *,
++    name: str,
++    entity_keys: Sequence[str],
++    event_timestamp: str,
++    source: FeatureSource,
++    transform: Union[SQLTransform, PythonTransform],
++    description: str,
++    owner: str,
++    tags: Sequence[str] = (),
++    version: str = "v1",
++    depends_on: Sequence[Any] = (),
++    default_value: Optional[Any] = None,
++    schema: Optional[Dict[str, Any]] = None,
++) -> Feature:
++    """Convenience constructor for Feature definitions."""
++
++    inferred: Tuple[str, ...] = ()
++    if not depends_on:
++        if isinstance(transform, SQLTransform):
++            inferred = infer_dependencies_from_sql(transform.sql)
++        elif isinstance(transform, PythonTransform):
++            inferred = tuple(getattr(transform.func, "__feature_dependencies__", ()))
++
++    deps: List[str] = []
++    for d in (list(depends_on) if depends_on else list(inferred)):
++        if isinstance(d, Feature):
++            deps.append(d.name)
++        else:
++            deps.append(str(d))
++
++    return Feature(
++        name=name,
++        entity_keys=tuple(entity_keys),
++        event_timestamp=event_timestamp,
++        source=source,
++        transform=transform,
++        metadata=FeatureMetadata(
++            description=description,
++            owner=owner,
++            tags=tuple(tags),
++            version=version,
++        ),
++        depends_on=tuple(deps),
++        default_value=default_value,
++        schema=schema,
++    )
+diff --git a/repository_after/feature_store/examples.py b/repository_after/feature_store/examples.py
+new file mode 100644
+index 00000000..4a161c9e
+--- /dev/null
++++ b/repository_after/feature_store/examples.py
+@@ -0,0 +1,37 @@
++from __future__ import annotations
++
++from .dsl import FeatureSource, PythonTransform, SQLTransform, feature
++
++
++def example_features():
++    users = FeatureSource(name="users", kind="sql", identifier="public.users")
++
++    f_age = feature(
++        name="user_age",
++        entity_keys=["user_id"],
++        event_timestamp="event_time",
++        source=users,
++        transform=SQLTransform(sql="SELECT user_id, event_time, age AS user_age FROM users"),
++        description="User age at event time",
++        owner="ml-platform",
++        tags=["demographics"],
++        version="v1",
++        depends_on=[],
++        default_value=None,
++    )
++
++    f_is_adult = feature(
++        name="user_is_adult",
++        entity_keys=["user_id"],
++        event_timestamp="event_time",
++        source=users,
++        transform=PythonTransform(func=lambda row: int(row["user_age"]) >= 18),
++        description="Derived feature: adult flag",
++        owner="ml-platform",
++        tags=["demographics", "derived"],
++        version="v1",
++        depends_on=["user_age"],
++        default_value=0,
++    )
++
++    return [f_age, f_is_adult]
+diff --git a/repository_after/feature_store/feature_set.py b/repository_after/feature_store/feature_set.py
+new file mode 100644
+index 00000000..b0b06b4d
+--- /dev/null
++++ b/repository_after/feature_store/feature_set.py
+@@ -0,0 +1,33 @@
++from __future__ import annotations
++
++from dataclasses import dataclass
++from typing import Any, Dict, Mapping, Optional, Sequence
++
++import pandas as pd
++
++from .pit_join import point_in_time_join_pandas
++
++
++@dataclass(frozen=True)
++class FeatureSet:
++    name: str
++    entity_keys: Sequence[str]
++    event_timestamp: str
++    feature_names: Sequence[str]
++
++    def build_training_dataframe_pandas(
++        self,
++        *,
++        labels: pd.DataFrame,
++        label_time_col: str,
++        features: pd.DataFrame,
++        feature_time_col: str,
++    ) -> pd.DataFrame:
++        return point_in_time_join_pandas(
++            labels=labels,
++            features=features,
++            entity_keys=self.entity_keys,
++            label_time_col=label_time_col,
++            feature_time_col=feature_time_col,
++            feature_cols=self.feature_names,
++        )
+diff --git a/repository_after/feature_store/integrations/__init__.py b/repository_after/feature_store/integrations/__init__.py
+new file mode 100644
+index 00000000..143ea3a1
+--- /dev/null
++++ b/repository_after/feature_store/integrations/__init__.py
+@@ -0,0 +1,5 @@
++"""Optional third-party integrations (MLflow, etc.).
++
++These modules keep heavyweight dependencies optional so the core feature store
++remains lightweight for library users who only need the registry/serving layers.
++"""
+diff --git a/repository_after/feature_store/integrations/__pycache__/__init__.cpython-311.pyc b/repository_after/feature_store/integrations/__pycache__/__init__.cpython-311.pyc
+new file mode 100644
+index 00000000..f0d7fc01
+Binary files /dev/null and b/repository_after/feature_store/integrations/__pycache__/__init__.cpython-311.pyc differ
+diff --git a/repository_after/feature_store/integrations/__pycache__/mlflow.cpython-311.pyc b/repository_after/feature_store/integrations/__pycache__/mlflow.cpython-311.pyc
+new file mode 100644
+index 00000000..1475308f
+Binary files /dev/null and b/repository_after/feature_store/integrations/__pycache__/mlflow.cpython-311.pyc differ
+diff --git a/repository_after/feature_store/integrations/mlflow.py b/repository_after/feature_store/integrations/mlflow.py
+new file mode 100644
+index 00000000..7130d63c
+--- /dev/null
++++ b/repository_after/feature_store/integrations/mlflow.py
+@@ -0,0 +1,58 @@
++from __future__ import annotations
++
++from typing import Any, Dict, Optional, Sequence
++
++from ..dsl import Feature
++
++
++def _require_mlflow():
++    try:
++        import mlflow  # type: ignore
++
++        return mlflow
++    except Exception as e:  # pragma: no cover
++        raise RuntimeError(
++            "MLflow is required for this integration (dependency missing)."
++        ) from e
++
++
++def log_feature_definition(*, feature: Feature, extra_tags: Optional[Dict[str, Any]] = None) -> None:
++    """Log a feature definition into the current MLflow run.
++
++    This is intentionally minimal: it records feature metadata and transform info
++    as MLflow tags so experiments can be traced back to feature versions.
++    """
++
++    mlflow = _require_mlflow()
++
++    tags: Dict[str, Any] = {
++        "feature.name": feature.name,
++        "feature.version": feature.metadata.version,
++        "feature.owner": feature.metadata.owner,
++        "feature.description": feature.metadata.description,
++        "feature.entity_keys": ",".join(feature.entity_keys),
++        "feature.event_timestamp": feature.event_timestamp,
++        "feature.source.kind": feature.source.kind,
++        "feature.source.identifier": feature.source.identifier,
++    }
++    if feature.metadata.tags:
++        tags["feature.tags"] = ",".join(feature.metadata.tags)
++    if feature.depends_on:
++        tags["feature.depends_on"] = ",".join(feature.depends_on)
++    if extra_tags:
++        tags.update({str(k): v for k, v in extra_tags.items()})
++
++    mlflow.set_tags(tags)
++
++
++def log_feature_stats(*, feature: Feature, stats: Dict[str, Any], prefix: str = "feature_stats") -> None:
++    """Log feature stats as MLflow metrics (numeric) and params (strings)."""
++
++    mlflow = _require_mlflow()
++
++    for k, v in stats.items():
++        key = f"{prefix}.{feature.name}.{k}"
++        if isinstance(v, (int, float)):
++            mlflow.log_metric(key, float(v))
++        else:
++            mlflow.log_param(key, str(v))
+diff --git a/repository_after/feature_store/models.py b/repository_after/feature_store/models.py
+new file mode 100644
+index 00000000..269f50e2
+--- /dev/null
++++ b/repository_after/feature_store/models.py
+@@ -0,0 +1,80 @@
++from __future__ import annotations
++
++import json
++from datetime import datetime
++from typing import Any, Dict, Optional
++
++from sqlalchemy import JSON, DateTime, Integer, String, Text, UniqueConstraint
++from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
++
++
++class Base(DeclarativeBase):
++    pass
++
++
++class FeatureDefinitionModel(Base):
++    __tablename__ = "feature_definitions"
++    __table_args__ = (UniqueConstraint("name", "version", name="uq_feature_name_version"),)
++
++    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
++    name: Mapped[str] = mapped_column(String(255), nullable=False)
++    version: Mapped[str] = mapped_column(String(64), nullable=False)
++
++    description: Mapped[str] = mapped_column(Text, nullable=False)
++    owner: Mapped[str] = mapped_column(String(255), nullable=False)
++    tags: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
++
++    entity_keys: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False)
++    event_timestamp: Mapped[str] = mapped_column(String(255), nullable=False)
++
++    source: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False)
++    transform: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False)
++    depends_on: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
++
++    schema: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
++    default_value: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSON, nullable=True)
++
++    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
++    updated_at: Mapped[datetime] = mapped_column(
++        DateTime(timezone=True), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
++    )
++
++
++class FeatureStatsModel(Base):
++    __tablename__ = "feature_stats"
++
++    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
++    feature_name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
++    feature_version: Mapped[str] = mapped_column(String(64), nullable=False)
++    stats: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False)
++    computed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
++
++
++class FeatureLineageEdgeModel(Base):
++    __tablename__ = "feature_lineage_edges"
++
++    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
++    upstream: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
++    downstream: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
++    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow)
++
++
++class FeatureProcessingStateModel(Base):
++    """Per-feature processing state for batch/stream pipelines.
++
++    Used for incremental processing watermarks and backfill checkpoints.
++    """
++
++    __tablename__ = "feature_processing_state"
++    __table_args__ = (
++        UniqueConstraint("feature_name", "feature_version", "state_key", name="uq_feature_state"),
++    )
++
++    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
++    feature_name: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
++    feature_version: Mapped[str] = mapped_column(String(64), nullable=False)
++    state_key: Mapped[str] = mapped_column(String(128), nullable=False)
++    state: Mapped[Dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
++    updated_at: Mapped[datetime] = mapped_column(
++        DateTime(timezone=True), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow
++    )
+diff --git a/repository_after/feature_store/offline_store.py b/repository_after/feature_store/offline_store.py
+new file mode 100644
+index 00000000..7268d176
+--- /dev/null
++++ b/repository_after/feature_store/offline_store.py
+@@ -0,0 +1,53 @@
++from __future__ import annotations
++
++from dataclasses import dataclass
++from pathlib import Path
++from typing import Optional, Protocol
++
++
++class OfflineStore(Protocol):
++    def write_feature_frame(
++        self,
++        *,
++        df,
++        feature_name: str,
++        version: str,
++        mode: str = "append",
++        partition_cols: Optional[list[str]] = None,
++    ) -> str:
++        ...
++
++
++@dataclass(frozen=True)
++class ParquetOfflineStoreSettings:
++    root_path: str
++
++
++class ParquetOfflineStore:
++    """Simple offline store backed by Parquet on a filesystem.
++
++    Intended for local/dev and as a reference implementation.
++    """
++
++    def __init__(self, settings: ParquetOfflineStoreSettings):
++        self._settings = settings
++
++    def write_feature_frame(
++        self,
++        *,
++        df,
++        feature_name: str,
++        version: str,
++        mode: str = "append",
++        partition_cols: Optional[list[str]] = None,
++    ) -> str:
++        base = Path(self._settings.root_path)
++        path = base / feature_name / version
++        path.mkdir(parents=True, exist_ok=True)
++
++        writer = df.write
++        if partition_cols:
++            writer = writer.partitionBy(*partition_cols)
++
++        writer.mode(mode).parquet(str(path))
++        return str(path)
+diff --git a/repository_after/feature_store/pit_join.py b/repository_after/feature_store/pit_join.py
+new file mode 100644
+index 00000000..74e2405f
+--- /dev/null
++++ b/repository_after/feature_store/pit_join.py
+@@ -0,0 +1,102 @@
++from __future__ import annotations
++
++from typing import List, Sequence
++
++import pandas as pd
++
++
++def point_in_time_join_pandas(
++    *,
++    labels: pd.DataFrame,
++    features: pd.DataFrame,
++    entity_keys: Sequence[str],
++    label_time_col: str,
++    feature_time_col: str,
++    feature_cols: Sequence[str],
++) -> pd.DataFrame:
++    """Point-in-time correct join (pandas).
++
++    For each label row, picks the latest feature row for the same entity where
++    feature_time <= label_time.
++
++    This prevents leakage by construction.
++    """
++
++    if labels.empty:
++        return labels.copy()
++
++    for col in list(entity_keys) + [label_time_col]:
++        if col not in labels.columns:
++            raise KeyError(f"labels missing column: {col}")
++    for col in list(entity_keys) + [feature_time_col] + list(feature_cols):
++        if col not in features.columns:
++            raise KeyError(f"features missing column: {col}")
++
++    left = labels.copy()
++    right = features.copy()
++
++    left[label_time_col] = pd.to_datetime(left[label_time_col], utc=True)
++    right[feature_time_col] = pd.to_datetime(right[feature_time_col], utc=True)
++
++    # Sort for merge_asof
++    left = left.sort_values(list(entity_keys) + [label_time_col])
++    right = right.sort_values(list(entity_keys) + [feature_time_col])
++
++    joined = left
++    # merge_asof supports a single "by" list for exact match on entity keys
++    joined = pd.merge_asof(
++        joined,
++        right[list(entity_keys) + [feature_time_col] + list(feature_cols)],
++        left_on=label_time_col,
++        right_on=feature_time_col,
++        by=list(entity_keys),
++        direction="backward",
++        allow_exact_matches=True,
++    )
++
++    # Drop the feature timestamp unless user explicitly needs it
++    return joined.drop(columns=[feature_time_col])
++
++
++def point_in_time_join_spark(
++    *,
++    labels_df,
++    features_df,
++    entity_keys: Sequence[str],
++    label_time_col: str,
++    feature_time_col: str,
++    feature_cols: Sequence[str],
++):
++    """Point-in-time correct join (Spark).
++
++    Uses a left join with condition feature_time <= label_time, then selects the
++    latest feature per label row via a window ordered by feature_time desc.
++    """
++
++    try:
++        from pyspark.sql import Window
++        import pyspark.sql.functions as F
++    except Exception as e:  # pragma: no cover
++        raise RuntimeError("PySpark is required for point_in_time_join_spark") from e
++
++    # Cast time columns to timestamp for correct ordering/comparisons.
++    labels_cast = labels_df.withColumn(label_time_col, F.to_timestamp(F.col(label_time_col)))
++    feats_cast = features_df.withColumn(feature_time_col, F.to_timestamp(F.col(feature_time_col)))
++
++    # Assign stable row id to each label row so we can window per label
++    labels = labels_cast.withColumn("__label_row_id", F.monotonically_increasing_id())
++
++    join_cond = [labels[k] == feats_cast[k] for k in entity_keys] + [
++        feats_cast[feature_time_col] <= labels[label_time_col]
++    ]
++
++    joined = labels.join(feats_cast, on=join_cond, how="left")
++
++    w = Window.partitionBy("__label_row_id").orderBy(F.col(feature_time_col).desc_nulls_last())
++    ranked = joined.withColumn("__rn", F.row_number().over(w))
++    best = ranked.where(F.col("__rn") == 1)
++
++    # Select original label columns plus requested feature columns
++    label_cols = [c for c in labels_df.columns]
++    out_cols = label_cols + list(feature_cols)
++    return best.select(*out_cols)
+diff --git a/repository_after/feature_store/processing_batch.py b/repository_after/feature_store/processing_batch.py
+new file mode 100644
+index 00000000..8f25127b
+--- /dev/null
++++ b/repository_after/feature_store/processing_batch.py
+@@ -0,0 +1,289 @@
++from __future__ import annotations
++
++from dataclasses import dataclass
++from datetime import datetime, timezone
++from typing import Any, Dict, Iterable, List, Optional, Mapping, Sequence
++
++import pandas as pd
++
++from .dsl import Feature, SQLTransform, PythonTransform
++from .offline_store import OfflineStore
++from .serving import OnlineStore
++from .registry import FeatureRegistry
++
++
++@dataclass(frozen=True)
++class SparkBatchSettings:
++    watermark_delay: str = "1 day"
++    watermark_state_key: str = "batch_watermark"
++
++
++class SparkBatchProcessor:
++    """Batch feature computation using PySpark.
++
++    This module is intentionally import-light; PySpark is optional.
++    """
++
++    def __init__(self, settings: SparkBatchSettings):
++        self._settings = settings
++
++    def plan_execution_order(self, features: Sequence[Feature]) -> List[Feature]:
++        """Topologically sort features by declared dependencies.
++
++        Only considers dependencies that are present in `features`.
++        """
++
++        by_name = {f.name: f for f in features}
++        deps: Dict[str, set[str]] = {
++            f.name: set(d for d in f.depends_on if d in by_name and d != f.name) for f in features
++        }
++
++        ready = sorted([n for n, ds in deps.items() if not ds])
++        out: List[Feature] = []
++
++        while ready:
++            name = ready.pop(0)
++            out.append(by_name[name])
++            for other, ds in deps.items():
++                if name in ds:
++                    ds.remove(name)
++                    if not ds and by_name[other] not in out and other not in ready:
++                        ready.append(other)
++                        ready.sort()
++
++        if len(out) != len(features):
++            remaining = [n for n, ds in deps.items() if ds]
++            raise ValueError(f"Cyclic or missing dependencies among: {remaining}")
++
++        return out
++
++    def _parse_watermark_delay_seconds(self) -> int:
++        td = pd.to_timedelta(self._settings.watermark_delay)
++        return int(td.total_seconds())
++
++    def incremental_compute_and_materialize(
++        self,
++        *,
++        spark,
++        registry: FeatureRegistry,
++        feature: Feature,
++        sources: Mapping[str, Any],
++        offline_store: OfflineStore,
++        online_store: Optional[OnlineStore] = None,
++        feature_set: str = "default",
++        event_time_col: Optional[str] = None,
++        mode: str = "append",
++    ) -> Dict[str, Any]:
++        """Incremental batch computation with watermark tracking.
++
++        Watermark logic:
++        - Reads the last processed watermark from the registry.
++        - Processes source rows with event_time > watermark and <= (now - delay).
++        - Updates watermark to the max event_time actually processed.
++        """
++
++        try:
++            import pyspark.sql.functions as F
++        except Exception as e:  # pragma: no cover
++            raise RuntimeError("PySpark is required for SparkBatchProcessor") from e
++
++        feature_version = feature.metadata.version
++        event_time_col = event_time_col or feature.event_timestamp
++
++        state = registry.get_processing_state(
++            feature_name=feature.name,
++            feature_version=feature_version,
++            state_key=self._settings.watermark_state_key,
++        )
++        last_watermark = None if state is None else state.get("watermark")
++
++        now = datetime.now(tz=timezone.utc)
++        cutoff = now - pd.to_timedelta(self._settings.watermark_delay)
++
++        watermark_ts = None
++        if last_watermark:
++            watermark_ts = datetime.fromisoformat(last_watermark)
++
++        # Filter the primary source by watermark/cutoff when possible.
++        filtered_sources: Dict[str, Any] = {}
++        for view_name, df in sources.items():
++            if view_name == feature.source.name and event_time_col in getattr(df, "columns", []):
++                df = df.where(F.col(event_time_col) <= F.lit(cutoff))
++                if watermark_ts is not None:
++                    df = df.where(F.col(event_time_col) > F.lit(watermark_ts))
++            filtered_sources[view_name] = df
++
++        df = self.compute(
++            spark=spark,
++            feature=feature,
++            sources=filtered_sources,
++            watermark_col=None,
++            watermark_ts=None,
++        )
++
++        # Determine the max event time processed for watermark update.
++        max_row = df.select(F.max(F.col(event_time_col)).alias("mx")).collect()[0]
++        mx = max_row["mx"]
++
++        result = self.materialize(
++            df=df,
++            feature=feature,
++            offline_store=offline_store,
++            online_store=online_store,
++            feature_set=feature_set,
++            mode=mode,
++        )
++
++        if mx is not None:
++            if hasattr(mx, "tzinfo") and mx.tzinfo is None:
++                mx = mx.replace(tzinfo=timezone.utc)
++            registry.set_processing_state(
++                feature_name=feature.name,
++                feature_version=feature_version,
++                state_key=self._settings.watermark_state_key,
++                state={"watermark": mx.isoformat()},
++            )
++
++        result["watermark_updated_to"] = None if mx is None else mx.isoformat()
++        result["cutoff"] = cutoff.isoformat()
++        return result
++
++    def backfill_compute_and_materialize(
++        self,
++        *,
++        spark,
++        feature: Feature,
++        sources: Mapping[str, Any],
++        offline_store: OfflineStore,
++        online_store: Optional[OnlineStore] = None,
++        feature_set: str = "default",
++        start_time: datetime,
++        end_time: datetime,
++        event_time_col: Optional[str] = None,
++        mode: str = "append",
++    ) -> Dict[str, Any]:
++        """Backfill historical features for a bounded time range."""
++
++        try:
++            import pyspark.sql.functions as F
++        except Exception as e:  # pragma: no cover
++            raise RuntimeError("PySpark is required for SparkBatchProcessor") from e
++
++        event_time_col = event_time_col or feature.event_timestamp
++        filtered_sources: Dict[str, Any] = {}
++
++        for view_name, df in sources.items():
++            if view_name == feature.source.name and event_time_col in getattr(df, "columns", []):
++                df = df.where(F.col(event_time_col) >= F.lit(start_time)).where(F.col(event_time_col) < F.lit(end_time))
++            filtered_sources[view_name] = df
++
++        df = self.compute(spark=spark, feature=feature, sources=filtered_sources)
++        result = self.materialize(
++            df=df,
++            feature=feature,
++            offline_store=offline_store,
++            online_store=online_store,
++            feature_set=feature_set,
++            mode=mode,
++        )
++        result["backfill_range"] = {"start": start_time.isoformat(), "end": end_time.isoformat()}
++        return result
++
++    def compute(
++        self,
++        *,
++        spark,
++        feature: Feature,
++        sources: Mapping[str, Any],
++        watermark_col: Optional[str] = None,
++        watermark_ts: Optional[Any] = None,
++    ):
++        """Compute a feature DataFrame from named Spark sources.
++
++        - `sources` is a mapping of view name -> Spark DataFrame.
++        - If `watermark_col` and `watermark_ts` are provided, the source view
++          matching `feature.source.name` is filtered to strictly newer records.
++        """
++
++        try:
++            import pyspark.sql.functions as F
++        except Exception as e:  # pragma: no cover
++            raise RuntimeError("PySpark is required for SparkBatchProcessor") from e
++
++        # Register temp views
++        for view_name, df in sources.items():
++            df_to_use = df
++            if (
++                view_name == feature.source.name
++                and watermark_col is not None
++                and watermark_ts is not None
++                and watermark_col in df.columns
++            ):
++                df_to_use = df.where(F.col(watermark_col) > F.lit(watermark_ts))
++            df_to_use.createOrReplaceTempView(view_name)
++
++        if isinstance(feature.transform, SQLTransform):
++            return spark.sql(feature.transform.sql)
++
++        if isinstance(feature.transform, PythonTransform):
++            # For Spark execution, treat the python transform as a callable that
++            # receives a dict of sources and returns a DataFrame.
++            return feature.transform.func(sources)
++
++        raise TypeError(f"Unsupported transform type: {type(feature.transform)}")
++
++    def materialize(
++        self,
++        *,
++        df,
++        feature: Feature,
++        offline_store: OfflineStore,
++        online_store: Optional[OnlineStore] = None,
++        feature_set: str = "default",
++        mode: str = "append",
++    ) -> Dict[str, Any]:
++        """Write computed features to offline store and optionally to online store.
++
++        Assumes `df` contains entity keys + event timestamp + the feature column.
++        """
++
++        version = feature.metadata.version
++        offline_path = offline_store.write_feature_frame(
++            df=df,
++            feature_name=feature.name,
++            version=version,
++            mode=mode,
++        )
++
++        if online_store is not None:
++            self._materialize_online(df=df, feature=feature, online_store=online_store, feature_set=feature_set)
++
++        return {"offline_path": offline_path, "feature": feature.name, "version": version}
++
++    def _materialize_online(self, *, df, feature: Feature, online_store: OnlineStore, feature_set: str) -> None:
++        # Scalable-ish: write per partition without collecting entire DF.
++        entity_keys = list(feature.entity_keys)
++        ts_col = feature.event_timestamp
++        feat_col = feature.name
++
++        def write_partition(rows_iter):
++            from datetime import datetime, timezone
++
++            for row in rows_iter:
++                ek = "|".join(str(row[k]) for k in entity_keys)
++                event_time = row[ts_col]
++                if isinstance(event_time, str):
++                    s = event_time.strip()
++                    if s.endswith("Z"):
++                        s = s[:-1] + "+00:00"
++                    event_time = datetime.fromisoformat(s)
++                if getattr(event_time, "tzinfo", None) is None:
++                    event_time = event_time.replace(tzinfo=timezone.utc)
++                online_store.write_features(
++                    feature_set=feature_set,
++                    entity_key=ek,
++                    values={feat_col: row[feat_col]},
++                    event_time=event_time,
++                )
++
++        df.select(*entity_keys, ts_col, feat_col).rdd.foreachPartition(write_partition)
+diff --git a/repository_after/feature_store/processing_stream.py b/repository_after/feature_store/processing_stream.py
+new file mode 100644
+index 00000000..98ac395b
+--- /dev/null
++++ b/repository_after/feature_store/processing_stream.py
+@@ -0,0 +1,192 @@
++from __future__ import annotations
++
++from dataclasses import dataclass
++from datetime import datetime, timezone
++from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Sequence
++
++import pandas as pd
++
++from .serving import OnlineStore
++
++
++@dataclass(frozen=True)
++class StreamSettings:
++    app_id: str = "feature-store"
++    max_lateness: str = "10 minutes"
++
++
++WindowKind = Literal["tumbling", "sliding", "session"]
++AggFunc = Literal["count", "sum", "avg", "percentile"]
++
++
++@dataclass(frozen=True)
++class WindowSpec:
++    kind: WindowKind
++    size: str
++    step: Optional[str] = None  # only for sliding
++    grace: Optional[str] = None  # lateness grace period
++
++
++@dataclass(frozen=True)
++class AggregationSpec:
++    name: str
++    func: AggFunc
++    field: Optional[str] = None  # None => count(*)
++    window: WindowSpec = WindowSpec(kind="tumbling", size="5 minutes")
++    percentile: Optional[float] = None  # only for percentile
++
++
++@dataclass(frozen=True)
++class StreamFeatureSpec:
++    """Declarative spec for streaming feature computation."""
++
++    feature_set: str
++    source_topic: str
++    entity_key_field: str
++    event_time_field: str
++    aggregations: Sequence[AggregationSpec]
++
++
++def _parse_timedelta_seconds(value: str) -> int:
++    return int(pd.to_timedelta(value).total_seconds())
++
++
++class FaustStreamProcessor:
++    """Kafka + Faust streaming feature computation.
++
++    This is a scaffolding layer suitable for production extension.
++    The project keeps Faust optional so the library can be installed without Kafka.
++    """
++
++    def __init__(self, settings: StreamSettings):
++        self._settings = settings
++
++    def validate_specs(self, specs: Sequence[StreamFeatureSpec]) -> None:
++        for spec in specs:
++            if not spec.aggregations:
++                raise ValueError("StreamFeatureSpec must include at least one aggregation")
++            for agg in spec.aggregations:
++                if agg.func == "count":
++                    continue
++                if agg.field is None:
++                    raise ValueError(f"Aggregation '{agg.name}' requires 'field'")
++                if agg.func == "percentile" and (agg.percentile is None or not (0 < agg.percentile < 1)):
++                    raise ValueError(f"Aggregation '{agg.name}' requires percentile in (0,1)")
++                if agg.window.kind == "sliding" and not agg.window.step:
++                    raise ValueError(f"Sliding window for '{agg.name}' requires step")
++
++    def build_app(
++        self,
++        *,
++        broker: str,
++        specs: Sequence[StreamFeatureSpec],
++        online_store: OnlineStore,
++    ):
++        """Build a Faust app that consumes Kafka and writes aggregates to the online store.
++
++        Notes:
++        - This builds the topology; running the app is an operational concern.
++        - Late data is handled by dropping events older than (now - max_lateness).
++        """
++
++        self.validate_specs(specs)
++
++        try:
++            import faust
++        except Exception as e:  # pragma: no cover
++            raise RuntimeError("Faust is required for FaustStreamProcessor") from e
++
++        app = faust.App(self._settings.app_id, broker=broker)
++        max_late_s = _parse_timedelta_seconds(self._settings.max_lateness)
++
++        for spec in specs:
++            topic = app.topic(spec.source_topic, value_type=dict)
++
++            # One table per aggregation. Value is a small dict containing running state.
++            tables = {}
++            for agg in spec.aggregations:
++                win = agg.window
++                size_s = _parse_timedelta_seconds(win.size)
++
++                if win.kind == "tumbling":
++                    table = app.Table(f"{spec.feature_set}:{agg.name}:tumbling", default=dict).tumbling(
++                        size_s, expires=size_s * 2
++                    )
++                elif win.kind == "sliding":
++                    step_s = _parse_timedelta_seconds(win.step or "1 minute")
++                    table = app.Table(f"{spec.feature_set}:{agg.name}:sliding", default=dict).hopping(
++                        size_s, step=step_s, expires=size_s * 2
++                    )
++                else:
++                    # Session windows are trickier; implement as a tumbling proxy by default.
++                    table = app.Table(f"{spec.feature_set}:{agg.name}:session", default=dict).tumbling(
++                        size_s, expires=size_s * 2
++                    )
++
++                tables[agg.name] = table
++
++            @app.agent(topic)
++            async def process(stream):  # pragma: no cover (requires kafka runtime)
++                async for event in stream:
++                    if spec.entity_key_field not in event or spec.event_time_field not in event:
++                        continue
++
++                    ek = str(event[spec.entity_key_field])
++                    raw_ts = event[spec.event_time_field]
++                    if isinstance(raw_ts, str):
++                        s = raw_ts.strip()
++                        if s.endswith("Z"):
++                            s = s[:-1] + "+00:00"
++                        et = datetime.fromisoformat(s)
++                    else:
++                        et = raw_ts
++                    if getattr(et, "tzinfo", None) is None:
++                        et = et.replace(tzinfo=timezone.utc)
++
++                    now = datetime.now(tz=timezone.utc)
++                    if (now - et).total_seconds() > max_late_s:
++                        continue
++
++                    updates: Dict[str, Any] = {}
++
++                    for agg in spec.aggregations:
++                        table = tables[agg.name]
++                        state = dict(table[ek] or {})
++
++                        if agg.func == "count":
++                            state["count"] = int(state.get("count", 0)) + 1
++                            updates[agg.name] = state["count"]
++                        else:
++                            val = event.get(agg.field) if agg.field else None
++                            if val is None:
++                                continue
++                            v = float(val)
++                            if agg.func == "sum":
++                                state["sum"] = float(state.get("sum", 0.0)) + v
++                                updates[agg.name] = state["sum"]
++                            elif agg.func == "avg":
++                                state["sum"] = float(state.get("sum", 0.0)) + v
++                                state["count"] = int(state.get("count", 0)) + 1
++                                updates[agg.name] = state["sum"] / max(state["count"], 1)
++                            else:
++                                # Simple (non-scalable) percentile: keep a bounded buffer.
++                                buf = list(state.get("values", []))
++                                buf.append(v)
++                                buf = buf[-500:]
++                                state["values"] = buf
++                                p = float(agg.percentile or 0.5)
++                                buf_sorted = sorted(buf)
++                                idx = int(p * (len(buf_sorted) - 1))
++                                updates[agg.name] = buf_sorted[idx] if buf_sorted else None
++
++                        table[ek] = state
++
++                    if updates:
++                        online_store.write_features(
++                            feature_set=spec.feature_set,
++                            entity_key=ek,
++                            values=updates,
++                            event_time=et,
++                        )
++
++        return app
+diff --git a/repository_after/feature_store/registry.py b/repository_after/feature_store/registry.py
+new file mode 100644
+index 00000000..d0d3d412
+--- /dev/null
++++ b/repository_after/feature_store/registry.py
+@@ -0,0 +1,270 @@
++from __future__ import annotations
++
++from dataclasses import dataclass
++from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
++
++import networkx as nx
++from sqlalchemy import delete, select
++from sqlalchemy.orm import Session
++
++from .db import DatabaseSettings, create_engine_and_session_factory
++from .dsl import Feature, FeatureMetadata, FeatureSource, PythonTransform, SQLTransform
++from .models import Base, FeatureDefinitionModel, FeatureLineageEdgeModel, FeatureProcessingStateModel, FeatureStatsModel
++
++
++@dataclass(frozen=True)
++class RegistrySettings:
++    database_url: str
++
++
++class FeatureRegistry:
++    """SQLAlchemy-backed registry.
++
++    Stores feature definitions (schemas, metadata) + lineage edges.
++    """
++
++    def __init__(self, settings: RegistrySettings):
++        self._settings = settings
++        self._engine, self._SessionLocal = create_engine_and_session_factory(
++            DatabaseSettings(database_url=settings.database_url)
++        )
++
++    @property
++    def engine(self):
++        return self._engine
++
++    def create_schema(self) -> None:
++        Base.metadata.create_all(self._engine)
++
++    def drop_schema(self) -> None:
++        Base.metadata.drop_all(self._engine)
++
++    def _session(self) -> Session:
++        return self._SessionLocal()
++
++    def register(self, feature: Feature, *, catalog_hook=None) -> None:
++        """Upsert a feature definition and its lineage edges."""
++
++        with self._session() as session:
++            existing = session.execute(
++                select(FeatureDefinitionModel).where(
++                    FeatureDefinitionModel.name == feature.name,
++                    FeatureDefinitionModel.version == feature.metadata.version,
++                )
++            ).scalar_one_or_none()
++
++            row = FeatureDefinitionModel(
++                name=feature.name,
++                version=feature.metadata.version,
++                description=feature.metadata.description,
++                owner=feature.metadata.owner,
++                tags={"tags": list(feature.metadata.tags)},
++                entity_keys={"entity_keys": list(feature.entity_keys)},
++                event_timestamp=feature.event_timestamp,
++                source={
++                    "name": feature.source.name,
++                    "kind": feature.source.kind,
++                    "identifier": feature.source.identifier,
++                },
++                transform=self._serialize_transform(feature),
++                depends_on={"depends_on": list(feature.depends_on)},
++                schema=feature.schema or {},
++                default_value=None if feature.default_value is None else {"value": feature.default_value},
++            )
++
++            if existing is None:
++                session.add(row)
++            else:
++                existing.description = row.description
++                existing.owner = row.owner
++                existing.tags = row.tags
++                existing.entity_keys = row.entity_keys
++                existing.event_timestamp = row.event_timestamp
++                existing.source = row.source
++                existing.transform = row.transform
++                existing.depends_on = row.depends_on
++                existing.schema = row.schema
++                existing.default_value = row.default_value
++
++                session.execute(
++                    delete(FeatureLineageEdgeModel).where(
++                        FeatureLineageEdgeModel.downstream == feature.name
++                    )
++                )
++
++            for upstream in feature.depends_on:
++                session.add(FeatureLineageEdgeModel(upstream=upstream, downstream=feature.name))
++
++            session.commit()
++
++        if catalog_hook is not None:
++            catalog_hook.publish_feature(
++                {
++                    "name": feature.name,
++                    "version": feature.metadata.version,
++                    "description": feature.metadata.description,
++                    "owner": feature.metadata.owner,
++                    "tags": list(feature.metadata.tags),
++                    "entity_keys": list(feature.entity_keys),
++                    "event_timestamp": feature.event_timestamp,
++                    "source": {
++                        "name": feature.source.name,
++                        "kind": feature.source.kind,
++                        "identifier": feature.source.identifier,
++                    },
++                    "transform": self._serialize_transform(feature),
++                    "depends_on": list(feature.depends_on),
++                    "schema": feature.schema or {},
++                    "default_value": feature.default_value,
++                }
++            )
++
++    def get(self, name: str, version: Optional[str] = None) -> Feature:
++        version = version or "v1"
++        with self._session() as session:
++            row = session.execute(
++                select(FeatureDefinitionModel).where(
++                    FeatureDefinitionModel.name == name,
++                    FeatureDefinitionModel.version == version,
++                )
++            ).scalar_one()
++
++            return self._deserialize_feature(row)
++
++    def list_features(self) -> List[Dict[str, Any]]:
++        with self._session() as session:
++            rows = session.execute(select(FeatureDefinitionModel)).scalars().all()
++            return [
++                {
++                    "name": r.name,
++                    "version": r.version,
++                    "description": r.description,
++                    "owner": r.owner,
++                    "tags": r.tags.get("tags", []),
++                    "entity_keys": r.entity_keys.get("entity_keys", []),
++                    "event_timestamp": r.event_timestamp,
++                    "source": r.source,
++                    "transform": r.transform,
++                    "depends_on": r.depends_on.get("depends_on", []),
++                    "schema": r.schema or {},
++                    "default_value": None if r.default_value is None else r.default_value.get("value"),
++                }
++                for r in rows
++            ]
++
++    def set_processing_state(
++        self,
++        *,
++        feature_name: str,
++        feature_version: str,
++        state_key: str,
++        state: Dict[str, Any],
++    ) -> None:
++        with self._session() as session:
++            existing = session.execute(
++                select(FeatureProcessingStateModel).where(
++                    FeatureProcessingStateModel.feature_name == feature_name,
++                    FeatureProcessingStateModel.feature_version == feature_version,
++                    FeatureProcessingStateModel.state_key == state_key,
++                )
++            ).scalar_one_or_none()
++
++            if existing is None:
++                session.add(
++                    FeatureProcessingStateModel(
++                        feature_name=feature_name,
++                        feature_version=feature_version,
++                        state_key=state_key,
++                        state=state,
++                    )
++                )
++            else:
++                existing.state = state
++
++            session.commit()
++
++    def get_processing_state(
++        self,
++        *,
++        feature_name: str,
++        feature_version: str,
++        state_key: str,
++    ) -> Optional[Dict[str, Any]]:
++        with self._session() as session:
++            row = session.execute(
++                select(FeatureProcessingStateModel).where(
++                    FeatureProcessingStateModel.feature_name == feature_name,
++                    FeatureProcessingStateModel.feature_version == feature_version,
++                    FeatureProcessingStateModel.state_key == state_key,
++                )
++            ).scalar_one_or_none()
++            return None if row is None else row.state
++
++    def lineage_graph(self) -> nx.DiGraph:
++        g = nx.DiGraph()
++        with self._session() as session:
++            edges = session.execute(select(FeatureLineageEdgeModel)).scalars().all()
++            for e in edges:
++                g.add_edge(e.upstream, e.downstream)
++        return g
++
++    def record_stats(self, feature_name: str, feature_version: str, stats: Dict[str, Any]) -> None:
++        with self._session() as session:
++            session.add(
++                FeatureStatsModel(feature_name=feature_name, feature_version=feature_version, stats=stats)
++            )
++            session.commit()
++
++    def latest_stats(self, feature_name: str, feature_version: str) -> Optional[Dict[str, Any]]:
++        with self._session() as session:
++            row = session.execute(
++                select(FeatureStatsModel)
++                .where(
++                    FeatureStatsModel.feature_name == feature_name,
++                    FeatureStatsModel.feature_version == feature_version,
++                )
++                .order_by(FeatureStatsModel.computed_at.desc())
++            ).scalars().first()
++            return None if row is None else row.stats
++
++    def _serialize_transform(self, feature: Feature) -> Dict[str, Any]:
++        t = feature.transform
++        if isinstance(t, SQLTransform):
++            return {"kind": "sql", "sql": t.sql}
++        if isinstance(t, PythonTransform):
++            # Do not attempt to pickle code for registry; store a reference.
++            return {"kind": "python", "callable": getattr(t.func, "__name__", "<callable>")}
++        raise TypeError(f"Unsupported transform type: {type(t)}")
++
++    def _deserialize_feature(self, row: FeatureDefinitionModel) -> Feature:
++        source = FeatureSource(
++            name=row.source["name"],
++            kind=row.source["kind"],
++            identifier=row.source["identifier"],
++        )
++        transform = row.transform
++        if transform.get("kind") == "sql":
++            tx = SQLTransform(sql=transform["sql"])
++        else:
++            # For python transforms, the registry stores only a reference.
++            # Execution is handled by pipelines that bind actual callables.
++            tx = SQLTransform(sql="-- python transform reference stored in registry")
++
++        md = FeatureMetadata(
++            description=row.description,
++            owner=row.owner,
++            tags=tuple(row.tags.get("tags", [])),
++            version=row.version,
++        )
++
++        return Feature(
++            name=row.name,
++            entity_keys=tuple(row.entity_keys.get("entity_keys", [])),
++            event_timestamp=row.event_timestamp,
++            source=source,
++            transform=tx,
++            metadata=md,
++            depends_on=tuple(row.depends_on.get("depends_on", [])),
++            default_value=None if row.default_value is None else row.default_value.get("value"),
++            schema=row.schema or {},
++        )
+diff --git a/repository_after/feature_store/sdk_pandas.py b/repository_after/feature_store/sdk_pandas.py
+new file mode 100644
+index 00000000..3f5f0715
+--- /dev/null
++++ b/repository_after/feature_store/sdk_pandas.py
+@@ -0,0 +1,35 @@
++from __future__ import annotations
++
++from dataclasses import dataclass
++from typing import Any, Dict, List, Mapping, Optional, Sequence
++
++import pandas as pd
++
++from .serving import OnlineStore
++
++
++@dataclass(frozen=True)
++class PandasFeatureFetcher:
++    online_store: OnlineStore
++    feature_set: str
++
++    def fetch(
++        self,
++        *,
++        entities: pd.DataFrame,
++        entity_key_col: str,
++        feature_names: Sequence[str],
++        defaults: Optional[Mapping[str, Any]] = None,
++        max_age_seconds: Optional[int] = None,
++    ) -> pd.DataFrame:
++        rows: List[Dict[str, Any]] = []
++        for ek in entities[entity_key_col].astype(str).tolist():
++            feats = self.online_store.get_features(
++                feature_set=self.feature_set,
++                entity_key=ek,
++                feature_names=feature_names,
++                defaults=defaults,
++                max_age_seconds=max_age_seconds,
++            )
++            rows.append({entity_key_col: ek, **feats})
++        return entities.merge(pd.DataFrame(rows), on=entity_key_col, how="left")
+diff --git a/repository_after/feature_store/sdk_sklearn.py b/repository_after/feature_store/sdk_sklearn.py
+new file mode 100644
+index 00000000..3caeadcb
+--- /dev/null
++++ b/repository_after/feature_store/sdk_sklearn.py
+@@ -0,0 +1,38 @@
++from __future__ import annotations
++
++from dataclasses import dataclass
++from typing import Any, Mapping, Optional, Sequence
++
++import numpy as np
++import pandas as pd
++
++from .sdk_pandas import PandasFeatureFetcher
++
++
++@dataclass
++class FeatureStoreTransformer:
++    """scikit-learn compatible transformer interface.
++
++    This transformer fetches online features given an entity key column.
++    """
++
++    fetcher: PandasFeatureFetcher
++    entity_key_col: str
++    feature_names: Sequence[str]
++    defaults: Optional[Mapping[str, Any]] = None
++    max_age_seconds: Optional[int] = None
++
++    def fit(self, X, y=None):
++        return self
++
++    def transform(self, X):
++        if not isinstance(X, pd.DataFrame):
++            X = pd.DataFrame(X)
++        df = self.fetcher.fetch(
++            entities=X,
++            entity_key_col=self.entity_key_col,
++            feature_names=self.feature_names,
++            defaults=self.defaults,
++            max_age_seconds=self.max_age_seconds,
++        )
++        return df[self.feature_names].to_numpy()
+diff --git a/repository_after/feature_store/sdk_torch.py b/repository_after/feature_store/sdk_torch.py
+new file mode 100644
+index 00000000..b825172b
+--- /dev/null
++++ b/repository_after/feature_store/sdk_torch.py
+@@ -0,0 +1,44 @@
++from __future__ import annotations
++
++from dataclasses import dataclass
++from typing import Any, Mapping, Optional, Sequence
++
++try:
++    import torch
++    from torch.utils.data import Dataset
++except Exception:  # pragma: no cover
++    torch = None
++    Dataset = object
++
++import pandas as pd
++
++from .sdk_pandas import PandasFeatureFetcher
++
++
++@dataclass
++class FeatureStoreDataset(Dataset):
++    """PyTorch Dataset that fetches features on-the-fly."""
++
++    entities: pd.DataFrame
++    entity_key_col: str
++    feature_names: Sequence[str]
++    fetcher: PandasFeatureFetcher
++    defaults: Optional[Mapping[str, Any]] = None
++    max_age_seconds: Optional[int] = None
++
++    def __len__(self) -> int:
++        return len(self.entities)
++
++    def __getitem__(self, idx: int):
++        row = self.entities.iloc[[idx]]
++        df = self.fetcher.fetch(
++            entities=row,
++            entity_key_col=self.entity_key_col,
++            feature_names=self.feature_names,
++            defaults=self.defaults,
++            max_age_seconds=self.max_age_seconds,
++        )
++        values = df[self.feature_names].iloc[0].to_list()
++        if torch is None:  # pragma: no cover
++            return values
++        return torch.tensor(values)
+diff --git a/repository_after/feature_store/serving.py b/repository_after/feature_store/serving.py
+new file mode 100644
+index 00000000..ae46a1cd
+--- /dev/null
++++ b/repository_after/feature_store/serving.py
+@@ -0,0 +1,282 @@
++from __future__ import annotations
++
++from dataclasses import dataclass
++from datetime import datetime, timezone
++from typing import Any, Dict, Mapping, Optional, Protocol, Sequence
++
++from .alerts import AlertSink, NoopAlertSink
++
++
++class OnlineStore(Protocol):
++    def write_features(
++        self,
++        *,
++        feature_set: str,
++        entity_key: str,
++        values: Mapping[str, Any],
++        event_time: datetime,
++    ) -> None:
++        ...
++
++    def get_features(
++        self,
++        *,
++        feature_set: str,
++        entity_key: str,
++        feature_names: Sequence[str],
++        defaults: Optional[Mapping[str, Any]] = None,
++        max_age_seconds: Optional[int] = None,
++    ) -> Dict[str, Any]:
++        ...
++
++    def get_features_batch(
++        self,
++        *,
++        feature_set: str,
++        entity_keys: Sequence[str],
++        feature_names: Sequence[str],
++        defaults: Optional[Mapping[str, Any]] = None,
++        max_age_seconds: Optional[int] = None,
++    ) -> Dict[str, Dict[str, Any]]:
++        ...
++
++
++@dataclass(frozen=True)
++class RedisOnlineStoreSettings:
++    redis_url: str
++    key_prefix: str = "fs"
++    alert_sink: Optional[AlertSink] = None
++
++
++class RedisOnlineStore:
++    """Low-latency Redis-backed online store.
++
++    Uses Redis hashes + a per-entity freshness timestamp.
++    This works everywhere without requiring RedisTimeSeries module.
++
++    You can swap to RedisTimeSeries later by implementing a different writer/reader.
++    """
++
++    def __init__(self, settings: RedisOnlineStoreSettings):
++        import redis
++
++        self._settings = settings
++        self._client = redis.Redis.from_url(settings.redis_url, decode_responses=True)
++        self._alert_sink = settings.alert_sink or NoopAlertSink()
++
++    def _entity_hash_key(self, feature_set: str, entity_key: str) -> str:
++        return f"{self._settings.key_prefix}:{feature_set}:{entity_key}:values"
++
++    def _entity_meta_key(self, feature_set: str, entity_key: str) -> str:
++        return f"{self._settings.key_prefix}:{feature_set}:{entity_key}:meta"
++
++    def write_features(
++        self,
++        *,
++        feature_set: str,
++        entity_key: str,
++        values: Mapping[str, Any],
++        event_time: datetime,
++    ) -> None:
++        if event_time.tzinfo is None:
++            event_time = event_time.replace(tzinfo=timezone.utc)
++        ts = int(event_time.timestamp())
++
++        hkey = self._entity_hash_key(feature_set, entity_key)
++        mkey = self._entity_meta_key(feature_set, entity_key)
++
++        pipe = self._client.pipeline()
++        # Values are stored as strings by redis-py; keep it simple.
++        pipe.hset(hkey, mapping={k: "" if v is None else str(v) for k, v in values.items()})
++        pipe.hset(mkey, mapping={"event_time": str(ts)})
++        pipe.execute()
++
++    def get_features(
++        self,
++        *,
++        feature_set: str,
++        entity_key: str,
++        feature_names: Sequence[str],
++        defaults: Optional[Mapping[str, Any]] = None,
++        max_age_seconds: Optional[int] = None,
++    ) -> Dict[str, Any]:
++        defaults = defaults or {}
++
++        hkey = self._entity_hash_key(feature_set, entity_key)
++        mkey = self._entity_meta_key(feature_set, entity_key)
++
++        pipe = self._client.pipeline()
++        pipe.hmget(hkey, list(feature_names))
++        pipe.hget(mkey, "event_time")
++        values, event_time_s = pipe.execute()
++
++        now_ts = int(datetime.now(tz=timezone.utc).timestamp())
++        if max_age_seconds is not None and event_time_s is not None:
++            age = now_ts - int(event_time_s)
++            if age > max_age_seconds:
++                # staleness => return defaults
++                self._alert_sink.emit(
++                    alert_type="feature_stale",
++                    payload={
++                        "feature_set": feature_set,
++                        "entity_key": entity_key,
++                        "age_seconds": age,
++                        "max_age_seconds": max_age_seconds,
++                        "feature_names": list(feature_names),
++                    },
++                )
++                return {name: defaults.get(name) for name in feature_names}
++
++        out: Dict[str, Any] = {}
++        for name, raw in zip(feature_names, values):
++            if raw is None:
++                out[name] = defaults.get(name)
++            else:
++                out[name] = raw
++        return out
++
++    def get_features_batch(
++        self,
++        *,
++        feature_set: str,
++        entity_keys: Sequence[str],
++        feature_names: Sequence[str],
++        defaults: Optional[Mapping[str, Any]] = None,
++        max_age_seconds: Optional[int] = None,
++    ) -> Dict[str, Dict[str, Any]]:
++        return {
++            ek: self.get_features(
++                feature_set=feature_set,
++                entity_key=ek,
++                feature_names=feature_names,
++                defaults=defaults,
++                max_age_seconds=max_age_seconds,
++            )
++            for ek in entity_keys
++        }
++
++
++@dataclass(frozen=True)
++class RedisTimeSeriesOnlineStoreSettings:
++    redis_url: str
++    key_prefix: str = "fs"
++    alert_sink: Optional[AlertSink] = None
++
++
++class RedisTimeSeriesOnlineStore:
++    """Online store using RedisTimeSeries module.
++
++    Data model:
++    - One time series per (feature_set, entity_key, feature_name)
++      key: {prefix}:{feature_set}:{entity_key}:ts:{feature_name}
++
++    This allows fetching the latest value (TS.GET) and validating freshness by
++    comparing timestamps.
++
++    Note: RedisTimeSeries must be loaded in the target Redis. For environments
++    where it isn't available, prefer `RedisOnlineStore`.
++    """
++
++    def __init__(self, settings: RedisTimeSeriesOnlineStoreSettings):
++        import redis
++
++        self._settings = settings
++        self._client = redis.Redis.from_url(settings.redis_url, decode_responses=True)
++        self._alert_sink = settings.alert_sink or NoopAlertSink()
++
++    def _ts_key(self, feature_set: str, entity_key: str, feature_name: str) -> str:
++        return f"{self._settings.key_prefix}:{feature_set}:{entity_key}:ts:{feature_name}"
++
++    def write_features(
++        self,
++        *,
++        feature_set: str,
++        entity_key: str,
++        values: Mapping[str, Any],
++        event_time: datetime,
++    ) -> None:
++        if event_time.tzinfo is None:
++            event_time = event_time.replace(tzinfo=timezone.utc)
++        ts_ms = int(event_time.timestamp() * 1000)
++
++        from redis.exceptions import ResponseError
++
++        for fname, val in values.items():
++            key = self._ts_key(feature_set, entity_key, fname)
++            try:
++                self._client.execute_command("TS.ADD", key, ts_ms, val if val is not None else "nan")
++            except ResponseError as e:
++                msg = str(e)
++                if "TSDB: the key does not exist" in msg or "does not exist" in msg:
++                    # Create then retry.
++                    try:
++                        self._client.execute_command("TS.CREATE", key, "DUPLICATE_POLICY", "last")
++                    except ResponseError:
++                        pass
++                    self._client.execute_command("TS.ADD", key, ts_ms, val if val is not None else "nan")
++                else:
++                    raise
++
++    def get_features(
++        self,
++        *,
++        feature_set: str,
++        entity_key: str,
++        feature_names: Sequence[str],
++        defaults: Optional[Mapping[str, Any]] = None,
++        max_age_seconds: Optional[int] = None,
++    ) -> Dict[str, Any]:
++        defaults = defaults or {}
++
++        now_ms = int(datetime.now(tz=timezone.utc).timestamp() * 1000)
++        out: Dict[str, Any] = {}
++
++        pipe = self._client.pipeline()
++        keys = [self._ts_key(feature_set, entity_key, n) for n in feature_names]
++        for k in keys:
++            pipe.execute_command("TS.GET", k)
++        results = pipe.execute()
++
++        for name, res in zip(feature_names, results):
++            if not res:
++                out[name] = defaults.get(name)
++                continue
++            ts_ms, value = res
++            if max_age_seconds is not None:
++                age_s = (now_ms - int(ts_ms)) / 1000.0
++                if age_s > max_age_seconds:
++                    self._alert_sink.emit(
++                        alert_type="feature_stale",
++                        payload={
++                            "feature_set": feature_set,
++                            "entity_key": entity_key,
++                            "age_seconds": age_s,
++                            "max_age_seconds": max_age_seconds,
++                            "feature_names": [name],
++                        },
++                    )
++                    out[name] = defaults.get(name)
++                    continue
++            out[name] = value
++        return out
++
++    def get_features_batch(
++        self,
++        *,
++        feature_set: str,
++        entity_keys: Sequence[str],
++        feature_names: Sequence[str],
++        defaults: Optional[Mapping[str, Any]] = None,
++        max_age_seconds: Optional[int] = None,
++    ) -> Dict[str, Dict[str, Any]]:
++        return {
++            ek: self.get_features(
++                feature_set=feature_set,
++                entity_key=ek,
++                feature_names=feature_names,
++                defaults=defaults,
++                max_age_seconds=max_age_seconds,
++            )
++            for ek in entity_keys
++        }
++
+diff --git a/repository_after/feature_store/validation.py b/repository_after/feature_store/validation.py
+new file mode 100644
+index 00000000..4aa8e6e3
+--- /dev/null
++++ b/repository_after/feature_store/validation.py
+@@ -0,0 +1,79 @@
++from __future__ import annotations
++
++from dataclasses import dataclass
++from typing import Any, Dict, Optional, Sequence
++
++import pandas as pd
++
++from .alerts import AlertSink, NoopAlertSink
++from .drift import DriftResult, population_stability_index
++
++
++@dataclass(frozen=True)
++class ValidationResult:
++    success: bool
++    details: Dict[str, Any]
++
++
++class FeatureValidator:
++    """Lightweight validation & monitoring.
++
++    This is a production-friendly baseline that avoids heavy optional
++    dependencies. It provides:
++    - automatic profiling (simple stats)
++    - schema enforcement (required columns + non-null)
++    - drift detection via PSI + alert sink
++
++    If you want full Great Expectations, integrate it as an optional layer on
++    top of this interface.
++    """
++
++    def __init__(self, *, alert_sink: Optional[AlertSink] = None):
++        self._alert_sink = alert_sink or NoopAlertSink()
++
++    def profile(self, df: pd.DataFrame) -> Dict[str, Any]:
++        profile: Dict[str, Any] = {"columns": {}}
++        for c in df.columns:
++            s = df[c]
++            col = {"dtype": str(s.dtype), "null_fraction": float(s.isna().mean())}
++            if pd.api.types.is_numeric_dtype(s):
++                col.update(
++                    {
++                        "min": float(s.min()),
++                        "max": float(s.max()),
++                        "mean": float(s.mean()),
++                        "std": float(s.std(ddof=0)),
++                    }
++                )
++            profile["columns"][c] = col
++        return profile
++
++    def validate_schema(self, df: pd.DataFrame, *, required_columns: Sequence[str]) -> ValidationResult:
++        missing = [c for c in required_columns if c not in df.columns]
++        if missing:
++            return ValidationResult(success=False, details={"missing_columns": missing})
++
++        nulls = [c for c in required_columns if df[c].isna().any()]
++        if nulls:
++            return ValidationResult(success=False, details={"nulls_in_required_columns": nulls})
++
++        return ValidationResult(success=True, details={"required_columns": list(required_columns)})
++
++    def detect_drift_psi(
++        self,
++        *,
++        training: pd.Series,
++        serving: pd.Series,
++        threshold: float,
++        bins: int = 10,
++        feature_name: str = "<feature>",
++    ) -> DriftResult:
++        value = population_stability_index(expected=training.dropna(), actual=serving.dropna(), bins=bins)
++        violated = (not pd.isna(value)) and value > threshold
++        result = DriftResult(metric="psi", value=value, threshold=threshold, violated=violated)
++        if violated:
++            self._alert_sink.emit(
++                alert_type="feature_drift",
++                payload={"feature": feature_name, "metric": "psi", "value": value, "threshold": threshold},
++            )
++        return result
+diff --git a/repository_after/feature_store/validation_ge.py b/repository_after/feature_store/validation_ge.py
+new file mode 100644
+index 00000000..8f1dd11d
+--- /dev/null
++++ b/repository_after/feature_store/validation_ge.py
+@@ -0,0 +1,182 @@
++from __future__ import annotations
++
++from dataclasses import dataclass
++from typing import Any, Dict, Optional, Sequence
++
++import pandas as pd
++
++from .alerts import AlertSink, NoopAlertSink
++from .drift import DriftResult, population_stability_index
++
++
++def _require_ge():
++    try:
++        import great_expectations as ge  # type: ignore
++
++        return ge
++    except Exception as e:  # pragma: no cover
++        raise RuntimeError(
++            "Great Expectations is required for this validator (dependency missing)."
++        ) from e
++
++
++@dataclass(frozen=True)
++class GEValidationResult:
++    success: bool
++    details: Dict[str, Any]
++
++
++class GreatExpectationsValidator:
++    """Great Expectations-based validation (optional dependency).
++
++    This adapter focuses on the core requirements:
++    - schema enforcement (required columns, non-null)
++    - automatic profiling (basic numeric bounds) into an expectation suite
++    - validation execution
++
++    For production, users can replace the suite generation with their own GE
++    DataContext + store-backed suites.
++    """
++
++    def __init__(self, *, alert_sink: Optional[AlertSink] = None):
++        self._alert_sink = alert_sink or NoopAlertSink()
++
++    def build_suite_from_profile(
++        self,
++        *,
++        df: pd.DataFrame,
++        suite_name: str,
++        required_columns: Optional[Sequence[str]] = None,
++    ):
++        ge = _require_ge()
++
++        required_columns = list(required_columns or [])
++
++        # Use a lightweight, in-memory GE dataset facade.
++        try:
++            ge_df = ge.from_pandas(df)
++        except Exception:
++            # Older GE versions
++            ge_df = ge.dataset.PandasDataset(df)
++
++        suite = ge_df.get_expectation_suite(discard_failed_expectations=True)
++        suite.expectation_suite_name = suite_name
++
++        for c in required_columns:
++            ge_df.expect_column_to_exist(c)
++            ge_df.expect_column_values_to_not_be_null(c)
++
++        # Minimal profiling: numeric columns -> min/max bounds.
++        for c in df.columns:
++            s = df[c]
++            if pd.api.types.is_numeric_dtype(s) and s.dropna().size:
++                lo = float(s.min())
++                hi = float(s.max())
++                ge_df.expect_column_values_to_be_between(c, min_value=lo, max_value=hi)
++
++        return ge_df.get_expectation_suite(discard_failed_expectations=False)
++
++    def validate(
++        self,
++        *,
++        df: pd.DataFrame,
++        suite,
++        feature_name: str = "<feature>",
++    ) -> GEValidationResult:
++        ge = _require_ge()
++
++        try:
++            ge_df = ge.from_pandas(df)
++        except Exception:
++            ge_df = ge.dataset.PandasDataset(df)
++
++        res = ge_df.validate(expectation_suite=suite)
++        success = bool(res.get("success"))
++        if not success:
++            self._alert_sink.emit(
++                alert_type="feature_validation_failed",
++                payload={"feature": feature_name, "result": res},
++            )
++        return GEValidationResult(success=success, details=res)
++
++
++class GreatExpectationsFeatureMonitor:
++    """GE-based feature validation + drift monitoring.
++
++    Implements the core lifecycle monitoring requirements:
++    - automatic profile generation -> expectation suite
++    - schema enforcement via expectations
++    - drift detection (PSI) comparing training vs serving distributions
++    - alerting via an AlertSink
++
++    GE remains optional: drift detection does not require GE, but suite creation
++    and validation do.
++    """
++
++    def __init__(self, *, alert_sink: Optional[AlertSink] = None):
++        self._alert_sink = alert_sink or NoopAlertSink()
++        self._validator = GreatExpectationsValidator(alert_sink=self._alert_sink)
++
++    def build_suite_from_training_profile(
++        self,
++        *,
++        training_df: pd.DataFrame,
++        suite_name: str,
++        required_columns: Optional[Sequence[str]] = None,
++    ):
++        return self._validator.build_suite_from_profile(
++            df=training_df,
++            suite_name=suite_name,
++            required_columns=required_columns,
++        )
++
++    def validate_serving(
++        self,
++        *,
++        serving_df: pd.DataFrame,
++        suite,
++        feature_name: str = "<feature>",
++    ) -> GEValidationResult:
++        return self._validator.validate(df=serving_df, suite=suite, feature_name=feature_name)
++
++    def detect_drift_psi(
++        self,
++        *,
++        training_df: pd.DataFrame,
++        serving_df: pd.DataFrame,
++        feature_columns: Sequence[str],
++        threshold: float,
++        bins: int = 10,
++        feature_set: str = "<feature_set>",
++    ) -> Dict[str, DriftResult]:
++        """Compute PSI drift for numeric feature columns and emit alerts if violated."""
++
++        out: Dict[str, DriftResult] = {}
++        for col in feature_columns:
++            if col not in training_df.columns or col not in serving_df.columns:
++                continue
++            tr = training_df[col]
++            sv = serving_df[col]
++            if not (pd.api.types.is_numeric_dtype(tr) and pd.api.types.is_numeric_dtype(sv)):
++                continue
++
++            value = population_stability_index(
++                expected=tr.dropna().tolist(),
++                actual=sv.dropna().tolist(),
++                bins=bins,
++            )
++            violated = (not pd.isna(value)) and value > threshold
++            res = DriftResult(metric="psi", value=value, threshold=threshold, violated=violated)
++            out[col] = res
++            if violated:
++                self._alert_sink.emit(
++                    alert_type="feature_drift",
++                    payload={
++                        "feature_set": feature_set,
++                        "feature": col,
++                        "metric": "psi",
++                        "value": value,
++                        "threshold": threshold,
++                    },
++                )
++        return out

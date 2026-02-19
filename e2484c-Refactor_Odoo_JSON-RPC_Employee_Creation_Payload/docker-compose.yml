@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  evaluation:
+    build: .
+    volumes:
+      - ./evaluation/reports:/app/evaluation/reports
+    command: python -m evaluation.evaluation
+
+  test-before:
+    build: .
+    environment:
+      - TEST_REPO_PATH=/app/repository_before
+    command: pytest -q tests
+
+  test-after:
+    build: .
+    environment:
+      - TEST_REPO_PATH=/app/repository_after
+    command: pytest -q tests

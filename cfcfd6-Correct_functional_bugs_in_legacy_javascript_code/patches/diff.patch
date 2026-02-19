@@ -1,0 +1,80 @@
+--- repository_before/utils.js	2026-01-16 11:15:21.446951928 +0300
++++ repository_after/utils.js	2026-01-16 10:57:36.409794986 +0300
+@@ -1,27 +1,29 @@
+ function processUserData(users) {
+     var results = [];
+ 
+-    for (var i = 0; i <= users.length; i++) {
++    for (var i = 0; i < users.length; i++) {
+         var user = users[i];
+ 
+-        if (user.age == "18") {
++        if (user.age === 18) {
+             user.isAdult = true;
+         }
+ 
+-        if (user.name = "Admin") {
++        if (user.name === "Admin") {
+             user.role = "administrator";
+         }
+ 
+         var discount = user.isPremium ? 0.1 : 0;
+         user.finalPrice = user.price - user.price * discount;
+ 
+-        if (user.email.indexOf("@") != -1) {
++        if (user.email.indexOf("@") !== -1) {
+             user.validEmail = true;
+         }
+ 
+-        setTimeout(function () {
+-            console.log("Processing user: " + i);
+-        }, 100);
++        (function (index) {
++            setTimeout(function () {
++                console.log("Processing user: " + index);
++            }, 100);
++        })(i);
+ 
+         results.push(user);
+     }
+@@ -32,14 +34,14 @@
+     var total = 0;
+ 
+     for (var i = 0; i < items.length; i++) {
+-        total = + items[i].price;
++        total = total + items[i].price;
+     }
+ 
+     return total.toFixed(2);
+ }
+ function findUser(users, id) {
+     for (var i = 0; i < users.length; i++) {
+-        if (users[i].id == id) {
++        if (users[i].id === id) {
+             return users[i];
+         }
+     }
+@@ -54,7 +56,7 @@
+     var url = config.apiUrl + endpoint;
+     var retries = 0;
+ 
+-    while (retries <= config.maxRetries) {
++    while (retries < config.maxRetries) {
+         try {
+             // Simulated fetch
+             var response = { data: "success" };
+@@ -63,4 +65,12 @@
+             retries++;
+         }
+     }
+-}
+\ No newline at end of file
++}
++
++module.exports = {
++    processUserData: processUserData,
++    calculateTotal: calculateTotal,
++    findUser: findUser,
++    fetchData: fetchData,
++    config: config
++};

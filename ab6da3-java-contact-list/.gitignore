@@ -1,0 +1,8 @@
+# Java build artifacts
+*.class
+
+# Evaluation output
+report.json
+evaluation/reports/
+# Old historical evaluation folders (should never be committed)
+evaluation/[0-9][0-9][0-9][0-9]-*/

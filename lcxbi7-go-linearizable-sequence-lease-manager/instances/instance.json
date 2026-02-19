@@ -1,0 +1,11 @@
+{
+            "instance_id": "LCXBI7",
+            "problem_statement": "The system lacks a mechanism to order distributed operations, leading to state corruption when late-arriving writes from 'zombie' workers are processed after a new lock holder has already committed changes. The goal is to implement a sequence-aware lease manager that utilizes fencing tokens and watch-based notification to ensure strict linearizability and high-efficiency resource contention.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/lcxbi7-go-linearizable-sequence-lease-manager",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

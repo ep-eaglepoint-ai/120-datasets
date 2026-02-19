@@ -1,0 +1,11 @@
+{
+            "instance_id": "U6E4G1",
+            "problem_statement": "Build a responsive, frontend-only voting application that allows users to create, manage, and participate in polls with real-time results, persistent state, and a smooth user experience without using any backend services.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/u6e4g1-frontend-only-voting-application-vue-3",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

@@ -1,0 +1,10 @@
+{
+  "name": "dom-extractor-before",
+  "version": "1.0.0",
+  "description": "DOM Extractor - repository_before (no implementation)",
+  "main": "domExtractor.js",
+  "dependencies": {
+    "jsdom": "^23.0.1",
+    "uuid": "^9.0.1"
+  }
+}

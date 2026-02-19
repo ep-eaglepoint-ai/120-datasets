@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: raffle-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=raffle_test
+    volumes:
+      - postgres_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  app:
+    build: .
+    container_name: raffle-app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=test
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/raffle_test
+      - ADMIN_SECRET=test-admin-secret
+    # Run all tests (server + UI + functional) and generate report
+    command: ["sh", "-c", "npm test -- --runInBand && npx ts-node evaluation/evaluation.ts"]
+    volumes:
+      - ./evaluation:/app/evaluation
+
+volumes:
+  postgres_data:

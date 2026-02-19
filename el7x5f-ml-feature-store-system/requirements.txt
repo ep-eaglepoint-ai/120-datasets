@@ -1,0 +1,26 @@
+fastapi==0.115.6
+uvicorn==0.34.0
+sqlalchemy==2.0.36
+psycopg2-binary==2.9.10
+pydantic==2.10.4
+networkx==3.4.2
+redis==5.2.1
+fakeredis==2.26.2
+pandas==2.2.3
+numpy==1.26.4
+httpx==0.28.1
+pytest==8.3.4
+
+# --- Optional dependencies (uncomment when needed) ---
+#
+# Spark batch processing:
+# pyspark>=3.4
+#
+# Kafka/Faust stream processing (maintained fork is commonly faust-streaming):
+# faust-streaming>=0.10
+#
+# Great Expectations validation:
+great-expectations==0.18.21
+#
+# MLflow experiment tracking integration:
+mlflow-skinny==2.12.2

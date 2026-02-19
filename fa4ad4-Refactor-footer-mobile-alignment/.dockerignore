@@ -1,0 +1,11 @@
+node_modules
+**/node_modules
+.git
+.gitignore
+Dockerfile
+docker-compose.yml
+evaluation/reports
+test-results
+*.log
+*.tmp
+report.json

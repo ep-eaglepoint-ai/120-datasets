@@ -1,0 +1,8 @@
+services:
+  app:
+    build: .
+    environment:
+      - REPO_PATH=${REPO_PATH:-repository_after}
+    volumes:
+      - .:/app
+    command: node --test tests/processContentStream.test.js

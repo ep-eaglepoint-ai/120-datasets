@@ -1,0 +1,8 @@
+{
+  "instance_id": "24a0ff",
+  "problem_statement": "The legacy HFT bridge requires a reduction in code duplication within its transaction parsing logic. However, because downstream systems perform live memory-scraping of global state, the refactor must maintain absolute behavioral parity, preserving all intentional side effects, specific rounding errors, and execution timing without altering the public API.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/24a0ff-HFT_bridge_bit-perfect_mechanical_refactor",
+  "environment_setup": "Dockerfile"
+}

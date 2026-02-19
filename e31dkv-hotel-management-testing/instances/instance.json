@@ -1,0 +1,11 @@
+{
+            "instance_id": "E31DKV",
+            "problem_statement": "Create a comprehensive test suite for a Java Swing Hotel Management System that validates all core modules Login, Rooms, and Bookings including database CRUD operations, GUI interactions, navigation flows, input validation, and edge cases such as SQL injection and concurrent access, using JUnit 5, AssertJ Swing, H2 Database, and Mockito. Implement metatests using ArchUnit for architectural validation and PIT for mutation testing to ensure test quality, coverage, and correctness, verifying that tests fail when code is intentionally broken and that assertions are meaningful and non-trivial. The test suite must enforce proper setup/teardown of database state, mock verification, and full path coverage while preventing test leakage and ensuring the suite catches real regressions in production code.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/e31dkv-hotel-management-testing",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

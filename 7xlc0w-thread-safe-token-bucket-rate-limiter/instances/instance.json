@@ -1,0 +1,11 @@
+{
+            "instance_id": "7XLC0W",
+            "problem_statement": "The API gateway infrastructure requires a high-performance, thread-safe rate limiting module to manage traffic surges without inducing latency. A robust implementation of the Token Bucket algorithm is needed to handle thousands of concurrent validation requests with absolute mathematical precision. The solution must ensure zero race conditions and constant memory usage under load, eliminating the performance drift and resource contention associated with background worker-based approaches.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/7xlc0w-thread-safe-token-bucket-rate-limiter",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

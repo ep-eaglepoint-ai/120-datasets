@@ -1,0 +1,27 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Build argument for the repository path
+ARG REPO_PATH
+
+# Copy package.json and install dependencies
+COPY ${REPO_PATH}/package*.json ./
+RUN npm install
+
+# Copy repository content
+COPY ${REPO_PATH}/ .
+
+# Copy the common test suite
+COPY tests/ ./tests/
+
+# Ensure dependencies for testing are present (mocha, mongoose)
+RUN npm install mocha mongoose
+
+# Set environment variable for the test suite
+# In the container, the repo is at /app, and tests are at /app/tests.
+# BASE_PATH should point to /app from the perspective of /app/tests.
+ENV BASE_PATH=..
+
+# Default command to run tests
+CMD ["npx", "mocha", "tests/cartService.test.js", "--timeout", "30000"]

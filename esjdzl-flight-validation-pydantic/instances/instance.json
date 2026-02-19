@@ -1,0 +1,10 @@
+{
+  "instance_id": "ESJDZL",
+  "problem_statement": "Refactor a buggy flight booking Python codebase (using @dataclass + manual post_init validation) to Pydantic v2. Fix multiple validation errors, silent failures, unsafe mutation & wrong cross-field rules while keeping business logic intact.",
+  "base_commit": "repository_before/",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/esjdzl-flight-validation-pydantic",
+  "environment_setup": "Dockerfile",
+  "FAIL_TO_PASS": [],
+  "PASS_TO_PASS": []
+}

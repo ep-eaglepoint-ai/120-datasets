@@ -1,0 +1,210 @@
+const { ObjectId } = require("mongodb");
+
+class PromoCodeService {
+  constructor(db) {
+    this.db = db;
+    this.promoCodes = db.collection("promo_codes");
+    this.promoUsage = db.collection("promo_usage");
+    this.users = db.collection("users");
+  }
+
+  async createPromoCode(promoData, adminId) {
+    const promoCode = {
+      code: promoData.code,
+      discountType: promoData.discountType,
+      discountValue: promoData.discountValue,
+      maxUses: promoData.maxUses || null,
+      currentUses: 0,
+      maxUsesPerUser: promoData.maxUsesPerUser || 1,
+      minOrderAmount: promoData.minOrderAmount || 0,
+      validFrom: new Date(promoData.validFrom),
+      validUntil: new Date(promoData.validUntil),
+      applicableOrderTypes: promoData.applicableOrderTypes || ["all"],
+      applicableMerchants: promoData.applicableMerchants || [],
+      isActive: true,
+      createdBy: adminId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const result = await this.promoCodes.insertOne(promoCode);
+    return { ...promoCode, _id: result.insertedId };
+  }
+
+  async validateAndApplyPromoCode(
+    code,
+    userId,
+    orderAmount,
+    orderType,
+    merchantId = null,
+    options = {}
+  ) {
+    const promo = await this.promoCodes.findOne({ code: code });
+
+    if (!promo) {
+      throw new Error("Invalid promo code");
+    }
+
+    const now = new Date();
+    if (!promo.isActive) {
+      throw new Error("Promo code is inactive");
+    }
+    if (promo.validUntil < now) {
+      throw new Error("Promo code has expired");
+    }
+    if (promo.validFrom > now) {
+      throw new Error("Promo code is not yet active");
+    }
+    if (orderAmount < promo.minOrderAmount) {
+      throw new Error(
+        `Minimum order amount of $${promo.minOrderAmount} required`
+      );
+    }
+    if (!promo.applicableOrderTypes.includes(orderType)) {
+      throw new Error("Promo code not valid for this order type");
+    }
+    if (promo.applicableMerchants.length > 0 && merchantId) {
+      if (!promo.applicableMerchants.includes(merchantId)) {
+        throw new Error("Promo code not valid for this merchant");
+      }
+    }
+
+    const userUsageCount = await this.promoUsage.countDocuments({
+      promoId: promo._id,
+      userId: new ObjectId(userId),
+    });
+
+    if (userUsageCount >= promo.maxUsesPerUser) {
+      throw new Error(
+        "You have already used this promo code the maximum number of times"
+      );
+    }
+
+    if (promo.maxUses !== null) {
+      const updateResult = await this.promoCodes.updateOne(
+        {
+          _id: promo._id,
+          currentUses: { $lt: promo.maxUses },
+        },
+        {
+          $inc: { currentUses: 1 },
+          $set: { updatedAt: new Date() },
+        }
+      );
+
+      if (updateResult.modifiedCount === 0) {
+        throw new Error("Promo code usage limit reached");
+      }
+    } else {
+      await this.promoCodes.updateOne(
+        { _id: promo._id },
+        { $inc: { currentUses: 1 } }
+      );
+    }
+
+    const discount = this.calculateDiscount(promo, orderAmount);
+
+    const usageRecord = {
+      promoId: promo._id,
+      userId: new ObjectId(userId),
+      orderId: options.orderId || null,
+      usedAt: new Date(),
+      orderAmount: orderAmount,
+      discountApplied: discount,
+    };
+
+    await this.promoUsage.insertOne(usageRecord);
+
+    return {
+      success: true,
+      promoCode: promo.code,
+      discountType: promo.discountType,
+      discountValue: promo.discountValue,
+      discountAmount: discount,
+      finalAmount: orderAmount - discount,
+    };
+  }
+
+  calculateDiscount(promo, orderAmount) {
+    switch (promo.discountType) {
+      case "percentage":
+        return (orderAmount * promo.discountValue) / 100;
+      case "flat":
+        return promo.discountValue;
+      case "free_shipping":
+        return 0;
+      default:
+        return 0;
+    }
+  }
+
+  async getPromoCodeByCode(code) {
+    return await this.promoCodes.findOne({ code: code });
+  }
+
+  async getPromoCodeStats(promoId) {
+    const promo = await this.promoCodes.findOne({ _id: new ObjectId(promoId) });
+
+    if (!promo) {
+      throw new Error("Promo code not found");
+    }
+
+    const stats = await this.promoUsage
+      .aggregate([
+        { $match: { promoId: promo._id } },
+        {
+          $group: {
+            _id: null,
+            totalDiscount: { $sum: "$discountApplied" },
+            totalOrderAmount: { $sum: "$orderAmount" },
+            count: { $sum: 1 },
+          },
+        },
+      ])
+      .toArray();
+
+    const result = stats[0] || {
+      totalDiscount: 0,
+      totalOrderAmount: 0,
+      count: 0,
+    };
+
+    return {
+      code: promo.code,
+      totalUses: result.count,
+      maxUses: promo.maxUses,
+      totalDiscountGiven: result.totalDiscount,
+      totalOrderAmount: result.totalOrderAmount,
+      usageRate: promo.maxUses
+        ? ((result.count / promo.maxUses) * 100).toFixed(2) + "%"
+        : "Unlimited",
+    };
+  }
+
+  async deactivatePromoCode(promoId, adminId) {
+    const result = await this.promoCodes.updateOne(
+      { _id: new ObjectId(promoId) },
+      {
+        $set: {
+          isActive: false,
+          deactivatedBy: adminId,
+          deactivatedAt: new Date(),
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    return result.modifiedCount > 0;
+  }
+
+  async getAllActivePromoCodes() {
+    return await this.promoCodes.find({ isActive: true }).toArray();
+  }
+
+  async isFirstTimeUser(userId) {
+    const user = await this.users.findOne({ _id: new ObjectId(userId) });
+    return user && user.orderCount === 0;
+  }
+}
+
+module.exports = PromoCodeService;

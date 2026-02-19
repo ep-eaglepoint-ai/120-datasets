@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
+
+# Node
+node_modules/
+
+# Java/Maven
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+.idea/
+*.iml
+
+# Evaluation reports (keep structure, ignore generated files)
+evaluation/**/report.json
+evaluation/latest_report.json
+
+# Source directories (generated during build)
+src/
+
+# OS
+.DS_Store

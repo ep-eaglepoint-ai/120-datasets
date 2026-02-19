@@ -1,0 +1,7 @@
+evaluation/reports
+report.json
+**/__pycache__
+**/*.pyc
+.pytest_cache
+venv
+**/node_modules

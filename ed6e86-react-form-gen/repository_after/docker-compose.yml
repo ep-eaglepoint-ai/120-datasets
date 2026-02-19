@@ -1,0 +1,21 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    # For development with hot reload, use volumes. For production, remove volumes.
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    # Use 'npm run dev' for development or 'npm start' for production
+    # If using volumes, switch to development mode:
+    command: npm run dev
+    environment:
+      - NODE_ENV=development
+  test:
+    build: .
+    command: npm test
+    volumes:
+      - .:/app
+      - /app/node_modules

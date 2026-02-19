@@ -1,0 +1,11 @@
+services:
+  rbac-system:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_PATH=/app
+      - REPO_PATH=${REPO_PATH:-repository_after}

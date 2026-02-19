@@ -1,0 +1,32 @@
+services:
+  test-before:
+    build: .
+    command: pytest -v tests/test_count_transaction_ranges.py --tb=short
+    volumes:
+      - ./repository_before:/app
+      - ./tests:/app/tests
+    working_dir: /app
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+
+  test-after:
+    build: .
+    command: pytest -v tests/test_count_transaction_ranges.py --tb=short
+    volumes:
+      - ./repository_after:/app
+      - ./tests:/app/tests
+    working_dir: /app
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+
+  evaluation:
+    build: .
+    command: python evaluation/evaluation.py
+    volumes:
+      - ./:/app
+    working_dir: /app
+    environment:
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1

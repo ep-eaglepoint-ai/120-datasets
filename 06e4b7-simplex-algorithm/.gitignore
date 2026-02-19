@@ -1,0 +1,6 @@
+evaluation/reports
+evaluation/20*
+__pycache__/
+*.pyc
+.vscode/
+.idea/

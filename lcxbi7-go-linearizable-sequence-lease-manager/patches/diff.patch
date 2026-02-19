@@ -1,0 +1,358 @@
+diff --git a/repository_before/main.go b/repository_after/main.go
+index 12936818..5cc9348b 100644
+--- a/repository_before/main.go
++++ b/repository_after/main.go
+@@ -1,28 +1,342 @@
+-package before
++// Package lease implements a linearizable lease manager suitable for
++// distributed task schedulers.
++//
++// Key properties:
++//   - Strict fencing tokens: every successful acquisition returns a monotonically
++//     increasing token derived from the storage layer revision counter.
++//   - Watch-based waiting: contenders block on Watch instead of polling.
++//   - Atomic revocation: if renewal fails or the lease is preempted, the worker
++//     context is canceled and the heartbeat loop exits permanently for that token.
++//
++// Preemption / priority note:
++// "Administrative preemption" is represented by any external overwrite that
++// changes the key's revision. The manager treats any revision mismatch as a
++// higher-priority takeover and revokes the local lease immediately.
++//
++// Timing notes:
++// This package uses Go's monotonic time behavior by measuring elapsed time via
++// time.Since / time.Until against time.Time values obtained from time.Now.
++// This avoids sensitivity to wall-clock adjustments (e.g., NTP slews).
++package lease
+ 
+ import (
+ 	"context"
++	"errors"
++	"math/rand"
++	"sync"
+ 	"time"
+ )
+ 
+-// KeyValueStore represents a strongly-consistent distributed backend.
+ type KeyValueStore interface {
+-	// PutIfAbsent returns the current revision and success flag.
+ 	PutIfAbsent(ctx context.Context, key string, val []byte, ttl time.Duration) (int64, bool, error)
+-	// CompareAndSwap updates only if the current revision matches 'oldRevision'.
+ 	CompareAndSwap(ctx context.Context, key string, oldRevision int64, newVal []byte) (bool, error)
+-	// Watch blocks until the key is deleted or modified.
+ 	Watch(ctx context.Context, key string) <-chan struct{}
+-	// Get returns the value and the current revision.
+ 	Get(ctx context.Context, key string) ([]byte, int64, error)
+ }
+ 
+ type LeaseManager struct {
+-	store KeyValueStore
++	store    KeyValueStore
++	clientID string
++	ttl      time.Duration
++
++	mu     sync.Mutex
++	leases map[string]*activeLease
++}
++
++type activeLease struct {
++	token int64
++
++	cancel context.CancelFunc
++
++	stopOnce sync.Once
++	stopCh   chan struct{}
++	doneCh   chan struct{}
+ }
+ 
+-// Current implementation: Naive and lacks fencing or watch-based waiting.
++func NewLeaseManager(store KeyValueStore, clientID string, ttl time.Duration) *LeaseManager {
++	return &LeaseManager{
++		store:    store,
++		clientID: clientID,
++		ttl:      ttl,
++		leases:   make(map[string]*activeLease),
++	}
++}
++
++// AcquireAndHold attempts to acquire the resource lease and, on success, returns:
++// - a worker context that will be canceled if the lease is lost/revoked
++// - a fencing token (storage revision) that must be attached to all subsequent I/O
+ func (lm *LeaseManager) AcquireAndHold(ctx context.Context, resourceID string) (context.Context, int64, error) {
+-	// TODO: Implement linearizable acquisition with fencing tokens and background renewal.
+-	return ctx, 0, nil
++	// Backoff used only for transient store errors on acquisition. Kept outside the
++	// loop so it actually grows across consecutive failures.
++	acquireBackoff := 50 * time.Millisecond
++	maxAcquireBackoff := 500 * time.Millisecond
++
++	for {
++		select {
++		case <-ctx.Done():
++			return nil, 0, ctx.Err()
++		default:
++		}
++
++		// 1) Attempt acquire.
++		rev, success, err := lm.store.PutIfAbsent(ctx, resourceID, []byte(lm.clientID), lm.ttl)
++		if err != nil {
++			// Backoff on transient errors in a context-aware way to avoid hammering
++			// the store during outages, while still respecting the caller's deadline.
++			timer := time.NewTimer(acquireBackoff)
++			select {
++			case <-ctx.Done():
++				if !timer.Stop() {
++					<-timer.C
++				}
++				return nil, 0, ctx.Err()
++			case <-timer.C:
++			}
++			if acquireBackoff < maxAcquireBackoff {
++				acquireBackoff *= 2
++				if acquireBackoff > maxAcquireBackoff {
++					acquireBackoff = maxAcquireBackoff
++				}
++			}
++			continue
++		}
++
++		// Store is reachable again; reset backoff.
++		acquireBackoff = 50 * time.Millisecond
++
++		if success {
++			return lm.startLease(ctx, resourceID, rev)
++		}
++
++		// 2) Busy: register a watcher, then immediately re-check acquisition to avoid
++		// the lost-notification race (release between failed acquire and watch).
++		watchCtx, watchCancel := context.WithCancel(ctx)
++		watchCh := lm.store.Watch(watchCtx, resourceID)
++
++		rev2, success2, err2 := lm.store.PutIfAbsent(ctx, resourceID, []byte(lm.clientID), lm.ttl)
++		if err2 != nil {
++			watchCancel()
++			// Treat as transient acquire error.
++			timer := time.NewTimer(acquireBackoff)
++			select {
++			case <-ctx.Done():
++				if !timer.Stop() {
++					<-timer.C
++				}
++				return nil, 0, ctx.Err()
++			case <-timer.C:
++			}
++			if acquireBackoff < maxAcquireBackoff {
++				acquireBackoff *= 2
++				if acquireBackoff > maxAcquireBackoff {
++					acquireBackoff = maxAcquireBackoff
++				}
++			}
++			continue
++		}
++		// Store is reachable again; reset backoff.
++		acquireBackoff = 50 * time.Millisecond
++
++		if success2 {
++			watchCancel()
++			return lm.startLease(ctx, resourceID, rev2)
++		}
++
++		// 3) Wait for a change event, respecting caller cancellation.
++		select {
++		case <-ctx.Done():
++			watchCancel()
++			return nil, 0, ctx.Err()
++		case <-watchCh:
++			watchCancel()
++			// Event received. Add random jitter to avoid thundering herd when
++			// multiple watchers are notified simultaneously.
++			jitter := time.Duration(rand.Int63n(45)+5) * time.Millisecond
++			timer := time.NewTimer(jitter)
++			select {
++			case <-ctx.Done():
++				if !timer.Stop() {
++					<-timer.C
++				}
++				return nil, 0, ctx.Err()
++			case <-timer.C:
++			}
++			continue
++		}
++	}
+ }
++
++// Release stops heartbeating for (resourceID, token) and attempts to delete the
++// key using a CAS-delete (CompareAndSwap with nil).
++func (lm *LeaseManager) Release(ctx context.Context, resourceID string, token int64) error {
++	lease := lm.getLease(resourceID)
++	if lease == nil || lease.token != token {
++		return errors.New("lease not held")
++	}
++
++	lease.stopOnce.Do(func() { close(lease.stopCh) })
++	lease.cancel()
++
++	select {
++	case <-lease.doneCh:
++	case <-ctx.Done():
++		lm.clearLease(resourceID, token)
++		return ctx.Err()
++	}
++
++	delCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
++	defer cancel()
++
++	ok, err := lm.store.CompareAndSwap(delCtx, resourceID, token, nil)
++	// Ensure we never leak local state even if delete fails.
++	lm.clearLease(resourceID, token)
++	if err != nil {
++		return err
++	}
++	if !ok {
++		return errors.New("lease lost during release")
++	}
++	return nil
++}
++
++func (lm *LeaseManager) startLease(parent context.Context, resourceID string, token int64) (context.Context, int64, error) {
++	workerCtx, workerCancel := context.WithCancel(parent)
++	lease := &activeLease{
++		token:  token,
++		cancel: workerCancel,
++		stopCh: make(chan struct{}),
++		doneCh: make(chan struct{}),
++	}
++
++	lm.mu.Lock()
++	lm.leases[resourceID] = lease
++	lm.mu.Unlock()
++
++	go lm.heartbeatLoop(workerCtx, resourceID, token, lease)
++	return workerCtx, token, nil
++}
++
++func (lm *LeaseManager) getLease(resourceID string) *activeLease {
++	lm.mu.Lock()
++	defer lm.mu.Unlock()
++	return lm.leases[resourceID]
++}
++
++func (lm *LeaseManager) clearLease(resourceID string, token int64) {
++	lm.mu.Lock()
++	defer lm.mu.Unlock()
++	if cur, ok := lm.leases[resourceID]; ok {
++		if cur.token == token {
++			delete(lm.leases, resourceID)
++		}
++	}
++}
++
++func (lm *LeaseManager) heartbeatLoop(ctx context.Context, key string, token int64, lease *activeLease) {
++	defer close(lease.doneCh)
++	defer lease.cancel()
++	defer lm.clearLease(key, token)
++
++	// Renew at 1/3 TTL
++	renewInterval := lm.ttl / 3
++	if renewInterval <= 0 {
++		renewInterval = lm.ttl
++	}
++	// Fail-fast at 50% TTL
++	safetyWindow := lm.ttl / 2
++	if safetyWindow <= 0 {
++		safetyWindow = lm.ttl
++	}
++
++	// lastSuccess tracks the last time we *successfully* renewed or
++	// acquired the lease. We start at acquisition time so the first
++	// renewal measures from that event.
++	lastSuccess := time.Now()
++
++	// helper performs a single renewal attempt with capped exponential
++	// backoff and safety-window enforcement. It returns true if the
++	// lease is still valid, or false if we should revoke it.
++	renewOnce := func() bool {
++		// Fail-fast if we've already exceeded the safety window.
++		if time.Since(lastSuccess) > safetyWindow {
++			return false
++		}
++
++		retryBackoff := 50 * time.Millisecond
++		maxBackoff := 500 * time.Millisecond
++
++		for {
++			// Abort if we've run out of safety budget.
++			if time.Since(lastSuccess) > safetyWindow {
++				return false
++			}
++
++			select {
++			case <-lease.stopCh:
++				return false
++			case <-ctx.Done():
++				return false
++			default:
++			}
++
++			// Ensure we never block beyond the remaining safety budget.
++			remaining := safetyWindow - time.Since(lastSuccess)
++			if remaining <= 0 {
++				return false
++			}
++			reqTimeout := 200 * time.Millisecond
++			if remaining < reqTimeout {
++				reqTimeout = remaining
++			}
++			reqCtx, cancel := context.WithTimeout(ctx, reqTimeout)
++			success, err := lm.store.CompareAndSwap(reqCtx, key, token, []byte(lm.clientID))
++			cancel()
++
++			if err == nil {
++				if success {
++					lastSuccess = time.Now()
++					return true
++				}
++				// revision mismatch -> lease was stolen; revoke immediately
++				return false
++			}
++
++			// transient error: back off (capped) but stay within safety window
++			select {
++			case <-lease.stopCh:
++				return false
++			case <-ctx.Done():
++				return false
++			case <-time.After(retryBackoff):
++			}
++
++			retryBackoff *= 2
++			if retryBackoff > maxBackoff {
++				retryBackoff = maxBackoff
++			}
++		}
++	}
++
++	// Perform an immediate heartbeat after acquisition so that any
++	// post-acquisition partitions are detected promptly, rather than
++	// waiting for the first ticker interval.
++	if !renewOnce() {
++		return
++	}
++
++	ticker := time.NewTicker(renewInterval)
++	defer ticker.Stop()
++
++	for {
++		select {
++		case <-lease.stopCh:
++			return
++		case <-ctx.Done():
++			return
++		case <-ticker.C:
++			if !renewOnce() {
++				return
++			}
++		}
++	}
++}
+\ No newline at end of file

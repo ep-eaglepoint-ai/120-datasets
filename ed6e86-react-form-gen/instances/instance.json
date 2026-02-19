@@ -1,0 +1,9 @@
+{
+  "instance_id": "ed6e86-react-form-gen",
+  "problem_statement": "Convert vanilla HTML/JavaScript form builder to modern Next.js 14 with TypeScript and Tailwind CSS while maintaining all functionality.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/ed6e86-react-form-gen/ed6e86-react-form-gen",
+  "environment_setup": "Dockerfile"
+}
+

@@ -1,0 +1,1182 @@
+diff --git a/repository_before/dist/recurrence.d.ts b/repository_before/dist/recurrence.d.ts
+deleted file mode 100644
+index 60487a05..00000000
+--- a/repository_before/dist/recurrence.d.ts
++++ /dev/null
+@@ -1,10 +0,0 @@
+-import { RecurrencePattern } from './types';
+-export declare class RecurrenceRule {
+-    private pattern;
+-    private timezoneOffset;
+-    constructor(pattern: RecurrencePattern, timezone: string);
+-    private calculateTimezoneOffset;
+-    getNextDate(currentDate: Date): Date | null;
+-    isValidDay(date: Date): boolean;
+-    adjustForTimezone(date: Date): Date;
+-}
+diff --git a/repository_before/dist/recurrence.js b/repository_after/dist/recurrence.js
+index b2ad7825..fcd7650a 100644
+--- a/repository_before/dist/recurrence.js
++++ b/repository_after/dist/recurrence.js
+@@ -1,53 +1,210 @@
+-"use strict";
+-Object.defineProperty(exports, "__esModule", { value: true });
+-exports.RecurrenceRule = void 0;
+-class RecurrenceRule {
++export class RecurrenceRule {
+     pattern;
+-    timezoneOffset;
+-    constructor(pattern, timezone) {
++    startDate;
++    timezone;
++    weekStartsOn;
++    constructor(pattern, startDate, timezone, weekStartsOn = 0) {
+         this.pattern = pattern;
+-        this.timezoneOffset = this.calculateTimezoneOffset(timezone);
++        this.startDate = startDate;
++        this.timezone = timezone;
++        this.weekStartsOn = weekStartsOn;
++        this.validateTimezone(timezone);
+     }
+-    calculateTimezoneOffset(timezone) {
+-        const now = new Date();
+-        const utcDate = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
+-        const tzDate = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+-        return (utcDate.getTime() - tzDate.getTime()) / (1000 * 60);
++    validateTimezone(timezone) {
++        try {
++            new Intl.DateTimeFormat("en-US", { timeZone: timezone });
++        }
++        catch (e) {
++            throw new Error(`Invalid timezone: ${timezone}`);
++        }
+     }
+     getNextDate(currentDate) {
+-        const next = new Date(currentDate);
++        // Special handling for weekly with daysOfWeek
++        if (this.pattern.frequency === "weekly" &&
++            this.pattern.daysOfWeek &&
++            this.pattern.daysOfWeek.length > 0) {
++            const nextDate = this.getNextWeeklyDate(currentDate);
++            if (this.pattern.endDate) {
++                const endParts = this.getZonedParts(this.pattern.endDate);
++                const nextParts = this.getZonedParts(nextDate);
++                const endDateValue = endParts.year * 10000 + endParts.month * 100 + endParts.day;
++                const nextDateValue = nextParts.year * 10000 + nextParts.month * 100 + nextParts.day;
++                if (nextDateValue > endDateValue)
++                    return null;
++            }
++            return nextDate;
++        }
++        // 1. Get current date parts in the target timezone
++        const parts = this.getZonedParts(currentDate);
++        // 2. Increment
++        let { year, month, day, hour, minute, second } = parts;
+         switch (this.pattern.frequency) {
+-            case 'daily':
+-                next.setTime(next.getTime() + 24 * 60 * 60 * 1000 * this.pattern.interval);
++            case "daily":
++                day += this.pattern.interval;
++                break;
++            case "weekly":
++                day += this.pattern.interval * 7;
+                 break;
+-            case 'weekly':
+-                next.setTime(next.getTime() + 7 * 24 * 60 * 60 * 1000 * this.pattern.interval);
++            case "monthly":
++                month += this.pattern.interval;
+                 break;
+-            case 'monthly':
+-                next.setMonth(next.getMonth() + this.pattern.interval);
+-                if (this.pattern.dayOfMonth) {
+-                    next.setDate(this.pattern.dayOfMonth);
+-                }
++            case "yearly":
++                year += this.pattern.interval;
+                 break;
+-            case 'yearly':
+-                next.setFullYear(next.getFullYear() + this.pattern.interval);
++        }
++        let nextDate;
++        if (this.pattern.frequency === "monthly" ||
++            this.pattern.frequency === "yearly") {
++            // Stateless Day Logic:
++            // Target Day is either pattern.dayOfMonth OR startDate's day
++            let targetDay = this.pattern.dayOfMonth;
++            if (!targetDay) {
++                const startParts = this.getZonedParts(this.startDate);
++                targetDay = startParts.day;
++            }
++            // Check if we are "recovering" the day (Snap back)
++            // If we just added to Month, 'day' (variable) is currently the *previous* occurrence's day.
++            // We want to force it to targetDay, then clamp.
++            day = targetDay;
++            const safeDate = this.constructSafeDate(year, month, day, hour, minute, second);
++            nextDate = safeDate;
++        }
++        else {
++            // Daily/Weekly
++            nextDate = this.createDateFromParts({
++                year,
++                month,
++                day,
++                hour,
++                minute,
++                second,
++            });
++        }
++        // Check End Date
++        if (this.pattern.endDate) {
++            const endParts = this.getZonedParts(this.pattern.endDate);
++            const nextParts = this.getZonedParts(nextDate);
++            // Lexicographical comparison of YYYYMMDD
++            const endDateValue = endParts.year * 10000 + endParts.month * 100 + endParts.day;
++            const nextDateValue = nextParts.year * 10000 + nextParts.month * 100 + nextParts.day;
++            // Requirement 5: inclusive comparison. If nextDate > endDate, stop.
++            if (nextDateValue > endDateValue) {
++                return null;
++            }
++        }
++        return nextDate;
++    }
++    getNextWeeklyDate(currentDate) {
++        const currentZoned = this.getZonedParts(currentDate);
++        const currentDw = this.getZonedDayOfWeek(currentDate);
++        const daysOfWeek = this.pattern.daysOfWeek || [];
++        // Normalize day index based on weekStartsOn
++        const normalize = (d) => (d - this.weekStartsOn + 7) % 7;
++        const currentIdx = normalize(currentDw);
++        // Sort based on normalized index
++        const sortedDays = [...daysOfWeek].sort((a, b) => normalize(a) - normalize(b));
++        // Find next day in current week
++        let nextDayDiff = -1;
++        for (const dw of sortedDays) {
++            const idx = normalize(dw);
++            if (idx > currentIdx) {
++                nextDayDiff = idx - currentIdx;
+                 break;
++            }
+         }
+-        if (this.pattern.endDate && next > this.pattern.endDate) {
+-            return null;
++        // Helper to reconstruct
++        const reconstruct = (addDays) => {
++            let { year, month, day, hour, minute, second } = currentZoned;
++            day += addDays;
++            return this.createDateFromParts({
++                year,
++                month,
++                day,
++                hour,
++                minute,
++                second,
++            });
++        };
++        if (nextDayDiff !== -1) {
++            return reconstruct(nextDayDiff);
+         }
+-        return next;
++        // Next interval
++        const firstDw = sortedDays[0];
++        const firstIdx = normalize(firstDw);
++        // Jump: (remainder of current week) + (interval-1)*7 + (index in next week)
++        const jumpDays = 7 - currentIdx + (this.pattern.interval - 1) * 7 + firstIdx;
++        return reconstruct(jumpDays);
+     }
+     isValidDay(date) {
+-        if (this.pattern.frequency === 'weekly' && this.pattern.daysOfWeek) {
+-            return this.pattern.daysOfWeek.includes(date.getDay());
++        if (this.pattern.frequency === "weekly" && this.pattern.daysOfWeek) {
++            const dayOfWeek = this.getZonedDayOfWeek(date);
++            return this.pattern.daysOfWeek.includes(dayOfWeek);
+         }
+         return true;
+     }
++    // --- Helper Methods ---
++    getZonedParts(date) {
++        const dtf = new Intl.DateTimeFormat("en-US", {
++            timeZone: this.timezone,
++            year: "numeric",
++            month: "numeric",
++            day: "numeric",
++            hour: "numeric",
++            minute: "numeric",
++            second: "numeric",
++            hour12: false,
++        });
++        const parts = dtf.formatToParts(date);
++        const getPart = (type) => parseInt(parts.find((p) => p.type === type)?.value || "0", 10);
++        return {
++            year: getPart("year"),
++            month: getPart("month"),
++            day: getPart("day"),
++            hour: getPart("hour"),
++            minute: getPart("minute"),
++            second: getPart("second"),
++        };
++    }
++    getZonedDayOfWeek(date) {
++        // Intl weekday: 'narrow' -> S, M, T... ambiguous.
++        // Helper: Create a UTC date from the Zoned Year-Month-Day and getUTCDay()
++        // This effectively treats the Zoned Date as a UTC Date to check the day of week.
++        const parts = this.getZonedParts(date);
++        const checkDate = new Date(Date.UTC(parts.year, parts.month - 1, parts.day));
++        return checkDate.getUTCDay();
++    }
++    createDateFromParts(parts) {
++        // Approximation helper
++        const utcDate = new Date(Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second));
++        let guess = utcDate.getTime();
++        for (let i = 0; i < 3; i++) {
++            const zonedParts = this.getZonedParts(new Date(guess));
++            const zonedAsUtc = Date.UTC(zonedParts.year, zonedParts.month - 1, zonedParts.day, zonedParts.hour, zonedParts.minute, zonedParts.second);
++            const diff = utcDate.getTime() - zonedAsUtc;
++            if (diff === 0)
++                return new Date(guess);
++            guess += diff;
++        }
++        return new Date(guess);
++    }
++    constructSafeDate(year, month, day, hour, minute, second) {
++        const targetDate = new Date(Date.UTC(year, month - 1, 1));
++        const finalYear = targetDate.getUTCFullYear();
++        const finalMonth = targetDate.getUTCMonth();
++        const daysInMonth = new Date(Date.UTC(finalYear, finalMonth + 1, 0)).getUTCDate();
++        // Clamp day
++        const clampedDay = Math.min(day, daysInMonth);
++        return this.createDateFromParts({
++            year: finalYear,
++            month: finalMonth + 1,
++            day: clampedDay,
++            hour,
++            minute,
++            second,
++        });
++    }
+     adjustForTimezone(date) {
+-        const adjusted = new Date(date);
+-        adjusted.setMinutes(adjusted.getMinutes() + this.timezoneOffset);
+-        return adjusted;
++        // No-op in new logic, returning date is enough as it is already the correct timestamp
++        return new Date(date);
+     }
+ }
+-exports.RecurrenceRule = RecurrenceRule;
+diff --git a/repository_before/dist/scheduler.d.ts b/repository_before/dist/scheduler.d.ts
+deleted file mode 100644
+index bdce442b..00000000
+--- a/repository_before/dist/scheduler.d.ts
++++ /dev/null
+@@ -1,11 +0,0 @@
+-import { Event, Occurrence, SchedulerOptions } from './types';
+-export declare class Scheduler {
+-    private options;
+-    private weekStartsOn;
+-    constructor(options?: SchedulerOptions);
+-    generateOccurrences(event: Event, startDate: Date, endDate: Date): Occurrence[];
+-    getNextOccurrence(event: Event, afterDate: Date): Occurrence | null;
+-    isOccurrenceOnDate(event: Event, targetDate: Date): boolean;
+-    addMonths(date: Date, months: number): Date;
+-    getDayOfWeek(date: Date): number;
+-}
+diff --git a/repository_before/dist/scheduler.js b/repository_after/dist/scheduler.js
+index de65f863..31581509 100644
+--- a/repository_before/dist/scheduler.js
++++ b/repository_after/dist/scheduler.js
+@@ -1,55 +1,105 @@
+-"use strict";
+-Object.defineProperty(exports, "__esModule", { value: true });
+-exports.Scheduler = void 0;
+-const recurrence_1 = require("./recurrence");
+-class Scheduler {
++import { RecurrenceRule } from "./recurrence.js";
++export class Scheduler {
+     options;
+-    weekStartsOn = 0;
++    weekStartsOn;
+     constructor(options = {}) {
+         this.options = options;
+-        this.weekStartsOn = 0;
++        // Requirement 6: Read weekStartsOn from options
++        this.weekStartsOn =
++            options.weekStartsOn !== undefined ? options.weekStartsOn : 0;
+     }
+     generateOccurrences(event, startDate, endDate) {
+         const occurrences = [];
++        // Requirement 9: Default limit of 1000
++        const limit = this.options.maxOccurrences || 1000;
+         if (!event.recurrence) {
+             if (event.startDate >= startDate && event.startDate <= endDate) {
+                 occurrences.push({
+                     eventId: event.id,
+                     date: event.startDate,
+                     originalDate: event.startDate,
+-                    isException: false
++                    isException: false,
+                 });
+             }
+             return occurrences;
+         }
+-        const rule = new recurrence_1.RecurrenceRule(event.recurrence, event.timezone);
+-        let currentDate = new Date(event.startDate);
++        const recurrence = event.recurrence;
++        const rule = new RecurrenceRule(recurrence, event.startDate, event.timezone, this.weekStartsOn);
++        // Requirement 12: Skip ahead
++        // Initialize currentDate close to startDate if possible
++        let currentDate;
++        if (event.startDate < startDate) {
++            // Jump logic
++            const interval = recurrence.interval;
++            if (recurrence.frequency === "daily" ||
++                recurrence.frequency === "weekly") {
++                // Calculate days diff
++                const msPerDay = 24 * 60 * 60 * 1000;
++                const diffMs = startDate.getTime() - event.startDate.getTime();
++                const diffDays = Math.floor(diffMs / msPerDay);
++                const cycles = Math.floor(diffDays / interval);
++                // Optimization threshold
++                if (cycles > 100) {
++                    // Conservative jump: 90% of estimated cycles to avoid overshooting
++                    // due to DST shifts or math approximations.
++                    const cyclesToSkip = Math.floor(cycles * 0.9);
++                    if (cyclesToSkip > 0) {
++                        currentDate = new Date(event.startDate);
++                        const multiplier = recurrence.frequency === "weekly" ? 7 : 1;
++                        const totalDaysToAdd = cyclesToSkip * interval * multiplier;
++                        currentDate.setDate(currentDate.getDate() + totalDaysToAdd);
++                    }
++                    else {
++                        currentDate = new Date(event.startDate);
++                    }
++                }
++                else {
++                    currentDate = new Date(event.startDate);
++                }
++            }
++            else {
++                currentDate = new Date(event.startDate);
++            }
++        }
++        else {
++            currentDate = new Date(event.startDate);
++        }
++        if (!currentDate)
++            currentDate = new Date(event.startDate);
+         while (currentDate <= endDate) {
+-            if (currentDate >= startDate && rule.isValidDay(currentDate)) {
+-                const adjustedDate = rule.adjustForTimezone(currentDate);
+-                occurrences.push({
+-                    eventId: event.id,
+-                    date: adjustedDate,
+-                    originalDate: new Date(currentDate),
+-                    isException: false
+-                });
++            if (occurrences.length >= limit)
++                break;
++            // Check if valid
++            if (rule.isValidDay(currentDate)) {
++                if (currentDate >= startDate) {
++                    occurrences.push({
++                        eventId: event.id,
++                        date: new Date(currentDate), // Return copy
++                        originalDate: new Date(currentDate),
++                        isException: false,
++                    });
++                }
+             }
++            // Next
+             const nextDate = rule.getNextDate(currentDate);
+-            if (nextDate === null) {
++            if (!nextDate)
+                 break;
+-            }
+             currentDate = nextDate;
+         }
+         return occurrences;
+     }
+     getNextOccurrence(event, afterDate) {
+-        const occurrences = this.generateOccurrences(event, afterDate, new Date(afterDate.getTime() + 365 * 24 * 60 * 60 * 1000));
+-        for (const occurrence of occurrences) {
+-            if (occurrence.date > afterDate) {
+-                return occurrence;
+-            }
+-        }
+-        return occurrences[occurrences.length - 1] || null;
++        // Requirement 7: Return null if no occurrence strictly after.
++        // Optimization: don't generate 1000 items if we just need 1.
++        // Use a small lookahead logic reusing generateOccurrences
++        const queryStart = new Date(afterDate.getTime() + 1);
++        const nextYear = new Date(queryStart);
++        nextYear.setFullYear(nextYear.getFullYear() + 2); // Look ahead 2 years
++        const optionsBackup = this.options.maxOccurrences;
++        this.options.maxOccurrences = 1;
++        const occurrences = this.generateOccurrences(event, queryStart, nextYear);
++        this.options.maxOccurrences = optionsBackup;
++        return occurrences.length > 0 ? occurrences[0] : null;
+     }
+     isOccurrenceOnDate(event, targetDate) {
+         const startOfDay = new Date(targetDate);
+@@ -60,12 +110,16 @@ class Scheduler {
+         return occurrences.length > 0;
+     }
+     addMonths(date, months) {
+-        const result = new Date(date);
+-        result.setMonth(result.getMonth() + months);
+-        return result;
+-    }
+-    getDayOfWeek(date) {
+-        return date.getDay();
++        const d = new Date(date);
++        const targetMonth = d.getMonth() + months;
++        const targetYear = d.getFullYear() + Math.floor(targetMonth / 12);
++        const newMonth = ((targetMonth % 12) + 12) % 12;
++        d.setDate(1);
++        d.setFullYear(targetYear);
++        d.setMonth(newMonth);
++        const originalDay = date.getDate();
++        const daysInMonth = new Date(targetYear, newMonth + 1, 0).getDate();
++        d.setDate(Math.min(originalDay, daysInMonth));
++        return d;
+     }
+ }
+-exports.Scheduler = Scheduler;
+diff --git a/repository_before/dist/types.d.ts b/repository_before/dist/types.d.ts
+deleted file mode 100644
+index 2bfcd681..00000000
+--- a/repository_before/dist/types.d.ts
++++ /dev/null
+@@ -1,28 +0,0 @@
+-export type RecurrenceFrequency = 'daily' | 'weekly' | 'monthly' | 'yearly';
+-export interface RecurrencePattern {
+-    frequency: RecurrenceFrequency;
+-    interval: number;
+-    daysOfWeek?: number[];
+-    dayOfMonth?: number;
+-    monthOfYear?: number;
+-    endDate?: Date;
+-    count?: number;
+-}
+-export interface Event {
+-    id: string;
+-    title: string;
+-    startDate: Date;
+-    startTime: string;
+-    timezone: string;
+-    recurrence?: RecurrencePattern;
+-}
+-export interface Occurrence {
+-    eventId: string;
+-    date: Date;
+-    originalDate: Date;
+-    isException: boolean;
+-}
+-export interface SchedulerOptions {
+-    maxOccurrences?: number;
+-    weekStartsOn?: number;
+-}
+diff --git a/repository_before/dist/types.js b/repository_after/dist/types.js
+index c8ad2e54..cb0ff5c3 100644
+--- a/repository_before/dist/types.js
++++ b/repository_after/dist/types.js
+@@ -1,2 +1 @@
+-"use strict";
+-Object.defineProperty(exports, "__esModule", { value: true });
++export {};
+diff --git a/repository_before/package-lock.json b/repository_after/package-lock.json
+index 6adb610a..7718347e 100644
+--- a/repository_before/package-lock.json
++++ b/repository_after/package-lock.json
+@@ -7,19 +7,9 @@
+     "": {
+       "name": "recurring-event-scheduler",
+       "version": "1.0.0",
++      "license": "ISC",
+       "devDependencies": {
+-        "@types/node": "^20.10.0",
+-        "typescript": "^5.3.0"
+-      }
+-    },
+-    "node_modules/@types/node": {
+-      "version": "20.19.30",
+-      "resolved": "https://registry.npmjs.org/@types/node/-/node-20.19.30.tgz",
+-      "integrity": "sha512-WJtwWJu7UdlvzEAUm484QNg5eAoq5QR08KDNx7g45Usrs2NtOPiX8ugDqmKdXkyL03rBqU5dYNYVQetEpBHq2g==",
+-      "dev": true,
+-      "license": "MIT",
+-      "dependencies": {
+-        "undici-types": "~6.21.0"
++        "typescript": "^5.0.0"
+       }
+     },
+     "node_modules/typescript": {
+@@ -35,13 +25,6 @@
+       "engines": {
+         "node": ">=14.17"
+       }
+-    },
+-    "node_modules/undici-types": {
+-      "version": "6.21.0",
+-      "resolved": "https://registry.npmjs.org/undici-types/-/undici-types-6.21.0.tgz",
+-      "integrity": "sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==",
+-      "dev": true,
+-      "license": "MIT"
+     }
+   }
+ }
+diff --git a/repository_before/package.json b/repository_after/package.json
+index 6b360bd4..87cac3fe 100644
+--- a/repository_before/package.json
++++ b/repository_after/package.json
+@@ -1,15 +1,17 @@
+ {
+   "name": "recurring-event-scheduler",
+   "version": "1.0.0",
+-  "description": "Recurring event scheduler with timezone support",
+-  "main": "dist/scheduler.js",
++  "type": "module",
++  "description": "A robust recurring event scheduler with proper timezone handling",
++  "main": "dist/index.js",
+   "scripts": {
+     "build": "tsc",
+-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
++    "test": "echo \"Error: no test specified\" && exit 1"
+   },
++  "keywords": [],
++  "author": "",
++  "license": "ISC",
+   "devDependencies": {
+-    "@types/node": "^20.10.0",
+-    "typescript": "^5.3.0"
++    "typescript": "^5.0.0"
+   }
+ }
+-
+diff --git a/repository_before/recurrence.ts b/repository_after/recurrence.ts
+index de02c2c9..3beca5fa 100644
+--- a/repository_before/recurrence.ts
++++ b/repository_after/recurrence.ts
+@@ -1,63 +1,300 @@
+-import { RecurrencePattern, RecurrenceFrequency } from './types';
++import { RecurrencePattern } from "./types.js";
+ 
+ export class RecurrenceRule {
+-    private pattern: RecurrencePattern;
+-    private timezoneOffset: number;
++  private pattern: RecurrencePattern;
++  private startDate: Date;
++  private timezone: string;
++  private weekStartsOn: number;
+ 
+-    constructor(pattern: RecurrencePattern, timezone: string) {
+-        this.pattern = pattern;
+-        this.timezoneOffset = this.calculateTimezoneOffset(timezone);
++  constructor(
++    pattern: RecurrencePattern,
++    startDate: Date,
++    timezone: string,
++    weekStartsOn: number = 0
++  ) {
++    this.pattern = pattern;
++    this.startDate = startDate;
++    this.timezone = timezone;
++    this.weekStartsOn = weekStartsOn;
++    this.validateTimezone(timezone);
++  }
++
++  private validateTimezone(timezone: string): void {
++    try {
++      new Intl.DateTimeFormat("en-US", { timeZone: timezone });
++    } catch (e) {
++      throw new Error(`Invalid timezone: ${timezone}`);
+     }
++  }
+ 
+-    private calculateTimezoneOffset(timezone: string): number {
+-        const now = new Date();
+-        const utcDate = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }));
+-        const tzDate = new Date(now.toLocaleString('en-US', { timeZone: timezone }));
+-        return (utcDate.getTime() - tzDate.getTime()) / (1000 * 60);
++  getNextDate(currentDate: Date): Date | null {
++    // Special handling for weekly with daysOfWeek
++    if (
++      this.pattern.frequency === "weekly" &&
++      this.pattern.daysOfWeek &&
++      this.pattern.daysOfWeek.length > 0
++    ) {
++      const nextDate = this.getNextWeeklyDate(currentDate);
++      if (this.pattern.endDate) {
++        const endParts = this.getZonedParts(this.pattern.endDate);
++        const nextParts = this.getZonedParts(nextDate);
++        const endDateValue =
++          endParts.year * 10000 + endParts.month * 100 + endParts.day;
++        const nextDateValue =
++          nextParts.year * 10000 + nextParts.month * 100 + nextParts.day;
++        if (nextDateValue > endDateValue) return null;
++      }
++      return nextDate;
+     }
+ 
+-    getNextDate(currentDate: Date): Date | null {
+-        const next = new Date(currentDate);
++    // 1. Get current date parts in the target timezone
++    const parts = this.getZonedParts(currentDate);
++
++    // 2. Increment
++    let { year, month, day, hour, minute, second } = parts;
++
++    switch (this.pattern.frequency) {
++      case "daily":
++        day += this.pattern.interval;
++        break;
++      case "weekly":
++        day += this.pattern.interval * 7;
++        break;
++      case "monthly":
++        month += this.pattern.interval;
++        break;
++      case "yearly":
++        year += this.pattern.interval;
++        break;
++    }
+ 
+-        switch (this.pattern.frequency) {
+-            case 'daily':
+-                next.setTime(next.getTime() + 24 * 60 * 60 * 1000 * this.pattern.interval);
+-                break;
++    let nextDate: Date;
+ 
+-            case 'weekly':
+-                next.setTime(next.getTime() + 7 * 24 * 60 * 60 * 1000 * this.pattern.interval);
+-                break;
++    if (
++      this.pattern.frequency === "monthly" ||
++      this.pattern.frequency === "yearly"
++    ) {
++      // Stateless Day Logic:
++      // Target Day is either pattern.dayOfMonth OR startDate's day
++      let targetDay = this.pattern.dayOfMonth;
++      if (!targetDay) {
++        const startParts = this.getZonedParts(this.startDate);
++        targetDay = startParts.day;
++      }
+ 
+-            case 'monthly':
+-                next.setMonth(next.getMonth() + this.pattern.interval);
+-                if (this.pattern.dayOfMonth) {
+-                    next.setDate(this.pattern.dayOfMonth);
+-                }
+-                break;
++      // Check if we are "recovering" the day (Snap back)
++      // If we just added to Month, 'day' (variable) is currently the *previous* occurrence's day.
++      // We want to force it to targetDay, then clamp.
++
++      day = targetDay;
++
++      const safeDate = this.constructSafeDate(
++        year,
++        month,
++        day,
++        hour,
++        minute,
++        second
++      );
++      nextDate = safeDate;
++    } else {
++      // Daily/Weekly
++      nextDate = this.createDateFromParts({
++        year,
++        month,
++        day,
++        hour,
++        minute,
++        second,
++      });
++    }
+ 
+-            case 'yearly':
+-                next.setFullYear(next.getFullYear() + this.pattern.interval);
+-                break;
+-        }
++    // Check End Date
++    if (this.pattern.endDate) {
++      const endParts = this.getZonedParts(this.pattern.endDate);
++      const nextParts = this.getZonedParts(nextDate);
+ 
+-        if (this.pattern.endDate && next > this.pattern.endDate) {
+-            return null;
+-        }
++      // Lexicographical comparison of YYYYMMDD
++      const endDateValue =
++        endParts.year * 10000 + endParts.month * 100 + endParts.day;
++      const nextDateValue =
++        nextParts.year * 10000 + nextParts.month * 100 + nextParts.day;
+ 
+-        return next;
++      // Requirement 5: inclusive comparison. If nextDate > endDate, stop.
++      if (nextDateValue > endDateValue) {
++        return null;
++      }
+     }
+ 
+-    isValidDay(date: Date): boolean {
+-        if (this.pattern.frequency === 'weekly' && this.pattern.daysOfWeek) {
+-            return this.pattern.daysOfWeek.includes(date.getDay());
+-        }
+-        return true;
++    return nextDate;
++  }
++
++  private getNextWeeklyDate(currentDate: Date): Date {
++    const currentZoned = this.getZonedParts(currentDate);
++    const currentDw = this.getZonedDayOfWeek(currentDate);
++    const daysOfWeek = this.pattern.daysOfWeek || [];
++
++    // Normalize day index based on weekStartsOn
++    const normalize = (d: number) => (d - this.weekStartsOn + 7) % 7;
++    const currentIdx = normalize(currentDw);
++
++    // Sort based on normalized index
++    const sortedDays = [...daysOfWeek].sort(
++      (a, b) => normalize(a) - normalize(b)
++    );
++
++    // Find next day in current week
++    let nextDayDiff = -1;
++    for (const dw of sortedDays) {
++      const idx = normalize(dw);
++      if (idx > currentIdx) {
++        nextDayDiff = idx - currentIdx;
++        break;
++      }
+     }
+ 
+-    adjustForTimezone(date: Date): Date {
+-        const adjusted = new Date(date);
+-        adjusted.setMinutes(adjusted.getMinutes() + this.timezoneOffset);
+-        return adjusted;
++    // Helper to reconstruct
++    const reconstruct = (addDays: number) => {
++      let { year, month, day, hour, minute, second } = currentZoned;
++      day += addDays;
++      return this.createDateFromParts({
++        year,
++        month,
++        day,
++        hour,
++        minute,
++        second,
++      });
++    };
++
++    if (nextDayDiff !== -1) {
++      return reconstruct(nextDayDiff);
+     }
+-}
+ 
++    // Next interval
++    const firstDw = sortedDays[0];
++    const firstIdx = normalize(firstDw);
++
++    // Jump: (remainder of current week) + (interval-1)*7 + (index in next week)
++    const jumpDays =
++      7 - currentIdx + (this.pattern.interval - 1) * 7 + firstIdx;
++
++    return reconstruct(jumpDays);
++  }
++
++  isValidDay(date: Date): boolean {
++    if (this.pattern.frequency === "weekly" && this.pattern.daysOfWeek) {
++      const dayOfWeek = this.getZonedDayOfWeek(date);
++      return this.pattern.daysOfWeek.includes(dayOfWeek);
++    }
++    return true;
++  }
++
++  // --- Helper Methods ---
++
++  private getZonedParts(date: Date) {
++    const dtf = new Intl.DateTimeFormat("en-US", {
++      timeZone: this.timezone,
++      year: "numeric",
++      month: "numeric",
++      day: "numeric",
++      hour: "numeric",
++      minute: "numeric",
++      second: "numeric",
++      hour12: false,
++    });
++    const parts = dtf.formatToParts(date);
++    const getPart = (type: string) =>
++      parseInt(parts.find((p) => p.type === type)?.value || "0", 10);
++    return {
++      year: getPart("year"),
++      month: getPart("month"),
++      day: getPart("day"),
++      hour: getPart("hour"),
++      minute: getPart("minute"),
++      second: getPart("second"),
++    };
++  }
++
++  private getZonedDayOfWeek(date: Date): number {
++    // Intl weekday: 'narrow' -> S, M, T... ambiguous.
++    // Helper: Create a UTC date from the Zoned Year-Month-Day and getUTCDay()
++    // This effectively treats the Zoned Date as a UTC Date to check the day of week.
++    const parts = this.getZonedParts(date);
++    const checkDate = new Date(
++      Date.UTC(parts.year, parts.month - 1, parts.day)
++    );
++    return checkDate.getUTCDay();
++  }
++
++  private createDateFromParts(parts: {
++    year: number;
++    month: number;
++    day: number;
++    hour: number;
++    minute: number;
++    second: number;
++  }): Date {
++    // Approximation helper
++    const utcDate = new Date(
++      Date.UTC(
++        parts.year,
++        parts.month - 1,
++        parts.day,
++        parts.hour,
++        parts.minute,
++        parts.second
++      )
++    );
++    let guess = utcDate.getTime();
++
++    for (let i = 0; i < 3; i++) {
++      const zonedParts = this.getZonedParts(new Date(guess));
++      const zonedAsUtc = Date.UTC(
++        zonedParts.year,
++        zonedParts.month - 1,
++        zonedParts.day,
++        zonedParts.hour,
++        zonedParts.minute,
++        zonedParts.second
++      );
++      const diff = utcDate.getTime() - zonedAsUtc;
++      if (diff === 0) return new Date(guess);
++      guess += diff;
++    }
++    return new Date(guess);
++  }
++
++  private constructSafeDate(
++    year: number,
++    month: number,
++    day: number,
++    hour: number,
++    minute: number,
++    second: number
++  ): Date {
++    const targetDate = new Date(Date.UTC(year, month - 1, 1));
++    const finalYear = targetDate.getUTCFullYear();
++    const finalMonth = targetDate.getUTCMonth();
++    const daysInMonth = new Date(
++      Date.UTC(finalYear, finalMonth + 1, 0)
++    ).getUTCDate();
++
++    // Clamp day
++    const clampedDay = Math.min(day, daysInMonth);
++
++    return this.createDateFromParts({
++      year: finalYear,
++      month: finalMonth + 1,
++      day: clampedDay,
++      hour,
++      minute,
++      second,
++    });
++  }
++
++  adjustForTimezone(date: Date): Date {
++    // No-op in new logic, returning date is enough as it is already the correct timestamp
++    return new Date(date);
++  }
++}
+diff --git a/repository_before/scheduler.ts b/repository_after/scheduler.ts
+index 6b1ae83f..39a182e7 100644
+--- a/repository_before/scheduler.ts
++++ b/repository_after/scheduler.ts
+@@ -1,93 +1,159 @@
+-import { Event, Occurrence, SchedulerOptions, RecurrencePattern } from './types';
+-import { RecurrenceRule } from './recurrence';
++import { Event, Occurrence, SchedulerOptions } from "./types.js";
++import { RecurrenceRule } from "./recurrence.js";
+ 
+ export class Scheduler {
+-    private options: SchedulerOptions;
+-    private weekStartsOn: number = 0;
+-
+-    constructor(options: SchedulerOptions = {}) {
+-        this.options = options;
+-        this.weekStartsOn = 0;
++  private options: SchedulerOptions;
++  private weekStartsOn: number;
++
++  constructor(options: SchedulerOptions = {}) {
++    this.options = options;
++    // Requirement 6: Read weekStartsOn from options
++    this.weekStartsOn =
++      options.weekStartsOn !== undefined ? options.weekStartsOn : 0;
++  }
++
++  generateOccurrences(
++    event: Event,
++    startDate: Date,
++    endDate: Date
++  ): Occurrence[] {
++    const occurrences: Occurrence[] = [];
++    // Requirement 9: Default limit of 1000
++    const limit = this.options.maxOccurrences || 1000;
++
++    if (!event.recurrence) {
++      if (event.startDate >= startDate && event.startDate <= endDate) {
++        occurrences.push({
++          eventId: event.id,
++          date: event.startDate,
++          originalDate: event.startDate,
++          isException: false,
++        });
++      }
++      return occurrences;
+     }
+ 
+-    generateOccurrences(
+-        event: Event,
+-        startDate: Date,
+-        endDate: Date
+-    ): Occurrence[] {
+-        const occurrences: Occurrence[] = [];
+-
+-        if (!event.recurrence) {
+-            if (event.startDate >= startDate && event.startDate <= endDate) {
+-                occurrences.push({
+-                    eventId: event.id,
+-                    date: event.startDate,
+-                    originalDate: event.startDate,
+-                    isException: false
+-                });
+-            }
+-            return occurrences;
++    const recurrence = event.recurrence;
++    const rule = new RecurrenceRule(
++      recurrence,
++      event.startDate,
++      event.timezone,
++      this.weekStartsOn
++    );
++
++    // Requirement 12: Skip ahead
++    // Initialize currentDate close to startDate if possible
++    let currentDate: Date;
++
++    if (event.startDate < startDate) {
++      // Jump logic
++      const interval = recurrence.interval;
++
++      if (
++        recurrence.frequency === "daily" ||
++        recurrence.frequency === "weekly"
++      ) {
++        // Calculate days diff
++        const msPerDay = 24 * 60 * 60 * 1000;
++        const diffMs = startDate.getTime() - event.startDate.getTime();
++        const diffDays = Math.floor(diffMs / msPerDay);
++
++        const cycles = Math.floor(diffDays / interval);
++
++        // Optimization threshold
++        if (cycles > 100) {
++          // Conservative jump: 90% of estimated cycles to avoid overshooting
++          // due to DST shifts or math approximations.
++          const cyclesToSkip = Math.floor(cycles * 0.9);
++
++          if (cyclesToSkip > 0) {
++            currentDate = new Date(event.startDate);
++            const multiplier = recurrence.frequency === "weekly" ? 7 : 1;
++            const totalDaysToAdd = cyclesToSkip * interval * multiplier;
++
++            currentDate.setDate(currentDate.getDate() + totalDaysToAdd);
++          } else {
++            currentDate = new Date(event.startDate);
++          }
++        } else {
++          currentDate = new Date(event.startDate);
+         }
++      } else {
++        currentDate = new Date(event.startDate);
++      }
++    } else {
++      currentDate = new Date(event.startDate);
++    }
+ 
+-        const rule = new RecurrenceRule(event.recurrence, event.timezone);
+-        let currentDate = new Date(event.startDate);
+-
+-        while (currentDate <= endDate) {
+-            if (currentDate >= startDate && rule.isValidDay(currentDate)) {
+-                const adjustedDate = rule.adjustForTimezone(currentDate);
+-                occurrences.push({
+-                    eventId: event.id,
+-                    date: adjustedDate,
+-                    originalDate: new Date(currentDate),
+-                    isException: false
+-                });
+-            }
+-
+-            const nextDate = rule.getNextDate(currentDate);
+-            if (nextDate === null) {
+-                break;
+-            }
+-            currentDate = nextDate;
+-        }
++    if (!currentDate) currentDate = new Date(event.startDate);
+ 
+-        return occurrences;
+-    }
++    while (currentDate <= endDate) {
++      if (occurrences.length >= limit) break;
+ 
+-    getNextOccurrence(event: Event, afterDate: Date): Occurrence | null {
+-        const occurrences = this.generateOccurrences(
+-            event,
+-            afterDate,
+-            new Date(afterDate.getTime() + 365 * 24 * 60 * 60 * 1000)
+-        );
+-
+-        for (const occurrence of occurrences) {
+-            if (occurrence.date > afterDate) {
+-                return occurrence;
+-            }
++      // Check if valid
++      if (rule.isValidDay(currentDate)) {
++        if (currentDate >= startDate) {
++          occurrences.push({
++            eventId: event.id,
++            date: new Date(currentDate), // Return copy
++            originalDate: new Date(currentDate),
++            isException: false,
++          });
+         }
++      }
+ 
+-        return occurrences[occurrences.length - 1] || null;
++      // Next
++      const nextDate = rule.getNextDate(currentDate);
++      if (!nextDate) break;
++      currentDate = nextDate;
+     }
+ 
+-    isOccurrenceOnDate(event: Event, targetDate: Date): boolean {
+-        const startOfDay = new Date(targetDate);
+-        startOfDay.setHours(0, 0, 0, 0);
++    return occurrences;
++  }
+ 
+-        const endOfDay = new Date(targetDate);
+-        endOfDay.setHours(23, 59, 59, 999);
++  getNextOccurrence(event: Event, afterDate: Date): Occurrence | null {
++    // Requirement 7: Return null if no occurrence strictly after.
++    // Optimization: don't generate 1000 items if we just need 1.
+ 
+-        const occurrences = this.generateOccurrences(event, startOfDay, endOfDay);
+-        return occurrences.length > 0;
+-    }
++    // Use a small lookahead logic reusing generateOccurrences
++    const queryStart = new Date(afterDate.getTime() + 1);
++    const nextYear = new Date(queryStart);
++    nextYear.setFullYear(nextYear.getFullYear() + 2); // Look ahead 2 years
+ 
+-    addMonths(date: Date, months: number): Date {
+-        const result = new Date(date);
+-        result.setMonth(result.getMonth() + months);
+-        return result;
+-    }
++    const optionsBackup = this.options.maxOccurrences;
++    this.options.maxOccurrences = 1;
+ 
+-    getDayOfWeek(date: Date): number {
+-        return date.getDay();
+-    }
+-}
++    const occurrences = this.generateOccurrences(event, queryStart, nextYear);
+ 
++    this.options.maxOccurrences = optionsBackup;
++
++    return occurrences.length > 0 ? occurrences[0] : null;
++  }
++
++  isOccurrenceOnDate(event: Event, targetDate: Date): boolean {
++    const startOfDay = new Date(targetDate);
++    startOfDay.setHours(0, 0, 0, 0);
++
++    const endOfDay = new Date(targetDate);
++    endOfDay.setHours(23, 59, 59, 999);
++
++    const occurrences = this.generateOccurrences(event, startOfDay, endOfDay);
++    return occurrences.length > 0;
++  }
++
++  addMonths(date: Date, months: number): Date {
++    const d = new Date(date);
++    const targetMonth = d.getMonth() + months;
++    const targetYear = d.getFullYear() + Math.floor(targetMonth / 12);
++    const newMonth = ((targetMonth % 12) + 12) % 12;
++
++    d.setDate(1);
++    d.setFullYear(targetYear);
++    d.setMonth(newMonth);
++
++    const originalDay = date.getDate();
++    const daysInMonth = new Date(targetYear, newMonth + 1, 0).getDate();
++    d.setDate(Math.min(originalDay, daysInMonth));
++    return d;
++  }
++}
+diff --git a/repository_before/tsconfig.json b/repository_after/tsconfig.json
+index 44261f58..056c31af 100644
+--- a/repository_before/tsconfig.json
++++ b/repository_after/tsconfig.json
+@@ -1,18 +1,15 @@
+ {
+   "compilerOptions": {
+     "target": "ES2022",
+-    "module": "CommonJS",
+-    "moduleResolution": "node",
+-    "lib": ["ES2022"],
+-    "outDir": "./dist",
+-    "rootDir": "./",
++    "module": "NodeNext",
++    "moduleResolution": "NodeNext",
+     "strict": true,
+     "esModuleInterop": true,
+     "skipLibCheck": true,
+     "forceConsistentCasingInFileNames": true,
+-    "declaration": true
++    "outDir": "./dist",
++    "rootDir": "."
+   },
+-  "include": ["*.ts"],
+-  "exclude": ["node_modules", "dist"]
++  "include": ["**/*.ts"],
++  "exclude": ["node_modules", "**/*.test.ts"]
+ }
+-
+diff --git a/repository_before/types.ts b/repository_after/types.ts
+index 43ff70f7..8f437748 100644
+--- a/repository_before/types.ts
++++ b/repository_after/types.ts
+@@ -28,6 +28,5 @@ export interface Occurrence {
+ 
+ export interface SchedulerOptions {
+     maxOccurrences?: number;
+-    weekStartsOn?: number;
++    weekStartsOn?: number; // 0 = Sunday, 1 = Monday, etc.
+ }
+-

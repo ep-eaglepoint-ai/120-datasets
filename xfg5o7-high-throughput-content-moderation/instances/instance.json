@@ -1,0 +1,11 @@
+{
+            "instance_id": "XFG5O7",
+            "problem_statement": "The live chat moderation service suffers severe performance degradation because its content filtering function uses inefficient rule-matching logic that scales poorly with the number of safety rules. Under peak traffic, this causes 100% CPU usage, event backlogs, and latency spikes. The task is to redesign the content processing logic to achieve near-linear performance per event, support tens of thousands of rules without slowdown, eliminate unnecessary memory allocations in hot paths, and preserve exact rule-matching behavior within a standard Node.js environment.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/xfg5o7-high-throughput-content-moderation",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

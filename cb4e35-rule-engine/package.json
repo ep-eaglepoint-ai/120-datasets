@@ -1,0 +1,9 @@
+{
+  "name": "cb4e35-rule-engine",
+  "version": "1.0.0",
+  "description": "Rule Engine dataset task",
+  "scripts": {
+    "evaluate": "node evaluation/evaluation.js",
+    "test": "cd repository_after && npm test"
+  }
+}

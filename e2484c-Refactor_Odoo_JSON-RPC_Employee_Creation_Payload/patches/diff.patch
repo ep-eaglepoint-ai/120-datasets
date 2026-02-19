@@ -1,0 +1,29 @@
+--- repository_before/rpc-payload.json	2026-01-17 21:05:38.467238230 +0300
++++ repository_after/rpc-payload.json	2026-01-17 21:05:38.466688799 +0300
+@@ -2,19 +2,19 @@
+   "id": "abc",
+   "params": {
+     "args": [
++      "rd-demo",
++      2,
++      "password",
++      "hr.employee",
++      "create",
+       {
+-        "mobile_phone": "4522245546",
++        "mobile_phone": "+4522245546",
+         "job_title": "Engineer",
+         "work_phone": "905",
+         "name": "Solomon",
+         "company_id": 3,
+         "work_email": "solomon@example.com"
+-      },
+-      "create",
+-      "hr.employee",
+-      "password",
+-      2,
+-      "rd-demo"
++      }
+     ],
+     "method": "execute",
+     "service": "object"

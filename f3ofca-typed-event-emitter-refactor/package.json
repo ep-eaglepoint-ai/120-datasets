@@ -1,0 +1,20 @@
+{
+  "name": "f3ofca-typed-event-emitter-refactor",
+  "version": "1.0.0",
+  "description": "**Category:** sft",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "run-before": "node tests/run-before.js",
+    "run-after": "node tests/run-after.js",
+    "evaluate": "node evaluation/evaluation.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "events": "3.3.0"
+  }
+}

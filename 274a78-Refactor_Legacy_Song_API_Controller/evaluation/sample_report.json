@@ -1,0 +1,94 @@
+{
+  "run_id": "a1b2c3d4",
+  "started_at": "2024-01-15T10:30:00.000Z",
+  "finished_at": "2024-01-15T10:30:01.250Z",
+  "duration_seconds": 1.25,
+  "success": true,
+  "error": null,
+  "environment": {
+    "node_version": "v18.17.0",
+    "platform": "win32",
+    "os": "Windows_NT",
+    "os_release": "10.0.22621",
+    "architecture": "x64",
+    "hostname": "dev-machine",
+    "git_commit": "abc12345",
+    "git_branch": "main"
+  },
+  "results": {
+    "before": {
+      "success": false,
+      "exit_code": 1,
+      "tests": [
+        {
+          "nodeid": "repository_before::test_1",
+          "name": "Service Layer Exists",
+          "outcome": "failed",
+          "message": "FAIL: No dedicated service layer found"
+        },
+        {
+          "nodeid": "repository_before::test_2",
+          "name": "No Direct Mongoose Calls in Controller",
+          "outcome": "failed",
+          "message": "FAIL: Controller contains direct Mongoose model calls"
+        },
+        {
+          "nodeid": "repository_before::test_3",
+          "name": "Standardized Response Format",
+          "outcome": "failed",
+          "message": "FAIL: Responses not standardized to { message, data } format"
+        }
+      ],
+      "summary": {
+        "total": 16,
+        "passed": 5,
+        "failed": 11,
+        "errors": 0,
+        "skipped": 0
+      },
+      "error": null
+    },
+    "after": {
+      "success": true,
+      "exit_code": 0,
+      "tests": [
+        {
+          "nodeid": "repository_after::test_1",
+          "name": "Service Layer Exists",
+          "outcome": "passed",
+          "message": "PASS"
+        },
+        {
+          "nodeid": "repository_after::test_2",
+          "name": "No Direct Mongoose Calls in Controller",
+          "outcome": "passed",
+          "message": "PASS"
+        },
+        {
+          "nodeid": "repository_after::test_3",
+          "name": "Standardized Response Format",
+          "outcome": "passed",
+          "message": "PASS"
+        }
+      ],
+      "summary": {
+        "total": 16,
+        "passed": 16,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "error": null
+    },
+    "comparison": {
+      "before_tests_passed": false,
+      "after_tests_passed": true,
+      "before_total": 16,
+      "before_passed": 5,
+      "before_failed": 11,
+      "after_total": 16,
+      "after_passed": 16,
+      "after_failed": 0
+    }
+  }
+}

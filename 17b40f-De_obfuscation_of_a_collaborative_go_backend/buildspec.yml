@@ -1,0 +1,33 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - echo Build started on `date`
+      - echo Starting MongoDB and preparing environment...
+      - docker compose up -d db
+      - sleep 10  # Wait for MongoDB to be ready
+
+  build:
+    commands:
+      - echo Build phase started on `date`
+      - echo Cleaning database...
+      - docker compose exec db mongosh godoc --eval "db.users.deleteMany({}); db.documents.deleteMany({})" || true
+      - echo Running evaluation to generate report.json...
+      - docker compose run --rm tests sh -c "cd ../evaluation && go mod download && go run evaluation.go"
+      - echo Verifying report.json was created...
+      - ls -la report.json
+      - echo Report.json content preview:
+      - head -20 report.json
+
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Cleaning up containers...
+      - docker compose down || true
+
+artifacts:
+  files:
+    - report.json
+  name: evaluation-report

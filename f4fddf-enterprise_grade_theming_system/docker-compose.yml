@@ -1,0 +1,31 @@
+services:
+  tests-before:
+    build:
+      context: .
+      target: tests-before
+    volumes:
+      - .:/workspace
+    command: bash -c "mkdir -p src/test && cp /workspace/tests/setup.js src/test/ && cp /workspace/tests/App.test.jsx src/test/ 2>/dev/null && cp /workspace/tests/Requirements.test.jsx src/test/ 2>/dev/null || true; bun run test"
+    environment:
+      - CI=true
+
+  tests-after:
+    build:
+      context: .
+      target: tests-after
+    volumes:
+      - .:/workspace
+    command: bash -c "mkdir -p src/test && cp /workspace/tests/setup.js src/test/ && cp /workspace/tests/ThemeContext.test.jsx src/test/ && cp /workspace/tests/ThemeToggle.test.jsx src/test/ && cp /workspace/tests/ThemedComponents.test.jsx src/test/ 2>/dev/null || true; bun run test"
+    environment:
+      - CI=true
+
+  evaluation:
+    build:
+      context: .
+      target: evaluation
+    volumes:
+      - .:/workspace
+      - ./evaluation:/app/evaluation
+    environment:
+      - CI=true
+      - RUNNING_IN_DOCKER=true

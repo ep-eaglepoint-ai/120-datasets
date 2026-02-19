@@ -1,0 +1,11 @@
+{
+            "instance_id": "7BIU2Q",
+            "problem_statement": "The current Python code creates a separate multiprocessing.Process for each of approximately 2000 items, overwhelming system resources and causing crashes due to excessive concurrent process creation. A refactored solution is required that strictly uses multiprocessing not threading to limit concurrent processes, minimize creation/teardown overhead, efficiently utilize CPU cores, and ensure predictable scaling, while preventing CPU and memory oversubscription",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/7biu2q-parallelizing-collection-of-inputs",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

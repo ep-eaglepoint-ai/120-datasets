@@ -1,0 +1,180 @@
+diff --git a/repository_before/order.service.js b/repository_after/order.service.js
+index b0e25a0..f6fb87d 100644
+--- a/repository_before/order.service.js
++++ b/repository_after/order.service.js
+@@ -5,75 +5,110 @@ class OrderService {
+     this.pool = pool;
+   }
+ 
++  // Solves N+1 problem. Fetches all data in one query and maps it.
+   async getOrdersWithItems(userId) {
+-    const [orders] = await this.pool.query(
+-      "SELECT * FROM orders WHERE user_id = ?",
+-      [userId]
+-    );
+-
+-    for (const order of orders) {
+-      const [items] = await this.pool.query(
+-        "SELECT * FROM order_items WHERE order_id = ?",
+-        [order.id]
+-      );
+-      order.items = items;
++    const query = `
++      SELECT o.id as order_id, o.user_id, o.status, o.created_at,
++             oi.id as item_id, oi.product_id, oi.quantity, oi.price
++      FROM orders o
++      LEFT JOIN order_items oi ON o.id = oi.order_id
++      WHERE o.user_id = ?
++    `;
++
++    const [rows] = await this.pool.query(query, [userId]);
++
++    const ordersMap = new Map();
++
++    for (const row of rows) {
++      if (!ordersMap.has(row.order_id)) {
++        ordersMap.set(row.order_id, {
++          id: row.order_id,
++          user_id: row.user_id,
++          status: row.status,
++          created_at: row.created_at,
++          items: [],
++        });
++      }
++
++      if (row.item_id) {
++        ordersMap.get(row.order_id).items.push({
++          id: row.item_id,
++          order_id: row.order_id,
++          product_id: row.product_id,
++          quantity: row.quantity,
++          price: row.price,
++        });
++      }
+     }
+ 
+-    return orders;
++    return Array.from(ordersMap.values());
+   }
+ 
++  // Prevents SQL Injection on sortBy
+   async searchOrders(status, sortBy) {
+-    const query = `SELECT * FROM orders WHERE status = '${status}' ORDER BY ${sortBy}`;
+-    const [orders] = await this.pool.query(query);
++    const validSortColumns = ["created_at", "id", "total_amount", "status"];
++    const safeSortBy = validSortColumns.includes(sortBy)
++      ? sortBy
++      : "created_at";
++
++    // Use parameterized query for status
++    const query = `SELECT * FROM orders WHERE status = ? ORDER BY ${safeSortBy}`;
++    const [orders] = await this.pool.query(query, [status]);
+     return orders;
+   }
+ 
++  // Uses Transaction & Atomic Stock Updates
+   async createOrder(userId, items) {
+-    const [orderResult] = await this.pool.query(
+-      "INSERT INTO orders (user_id, status, created_at) VALUES (?, ?, NOW())",
+-      [userId, "pending"]
+-    );
+-    const orderId = orderResult.insertId;
++    const connection = await this.pool.getConnection();
+ 
+-    for (const item of items) {
+-      await this.pool.query(
+-        "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)",
+-        [orderId, item.productId, item.quantity, item.price]
+-      );
++    try {
++      await connection.beginTransaction();
+ 
+-      await this.pool.query(
+-        "UPDATE products SET stock = stock - ? WHERE id = ?",
+-        [item.quantity, item.productId]
++      const [orderResult] = await connection.query(
++        "INSERT INTO orders (user_id, status, created_at) VALUES (?, ?, NOW())",
++        [userId, "pending"]
+       );
++      const orderId = orderResult.insertId;
++
++      for (const item of items) {
++        // Atomic update: only update if stock is sufficient
++        const [updateResult] = await connection.query(
++          "UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?",
++          [item.quantity, item.productId, item.quantity]
++        );
++
++        if (updateResult.affectedRows === 0) {
++          throw new Error(`Product ${item.productId} out of stock`);
++        }
++
++        await connection.query(
++          "INSERT INTO order_items (order_id, product_id, quantity, price) VALUES (?, ?, ?, ?)",
++          [orderId, item.productId, item.quantity, item.price]
++        );
++      }
++
++      await connection.commit();
++      return { orderId, status: "pending" };
++    } catch (error) {
++      await connection.rollback();
++      throw error;
++    } finally {
++      connection.release();
+     }
+-
+-    return { orderId, status: "pending" };
+   }
+ 
++  // Atomic update + Single Query
+   async reserveStock(productId, quantity) {
+-    const [rows] = await this.pool.query(
+-      "SELECT stock FROM products WHERE id = ?",
+-      [productId]
++    const [result] = await this.pool.query(
++      "UPDATE products SET stock = stock - ? WHERE id = ? AND stock >= ?",
++      [quantity, productId, quantity]
+     );
+-
+-    if (rows.length === 0) {
+-      throw new Error("Product not found");
+-    }
+-
+-    if (rows[0].stock >= quantity) {
+-      await this.pool.query(
+-        "UPDATE products SET stock = stock - ? WHERE id = ?",
+-        [quantity, productId]
+-      );
+-      return true;
+-    }
+-
+-    return false;
++    return result.affectedRows > 0;
+   }
+ 
++  // Connection Leak (Removed explicit getConnection, pool.query handles release)
+   async getOrderStats() {
+-    const connection = await this.pool.getConnection();
+-    const [stats] = await connection.query(`
++    const [stats] = await this.pool.query(`
+       SELECT
+         COUNT(*) as total_orders,
+         SUM(total_amount) as revenue,
+@@ -86,10 +121,14 @@ class OrderService {
+ 
+   async getAllOrders(status) {
+     let query = "SELECT * FROM orders";
++    const params = [];
++
+     if (status) {
+-      query += ` WHERE status = '${status}'`;
++      query += " WHERE status = ?";
++      params.push(status);
+     }
+-    const [orders] = await this.pool.query(query);
++
++    const [orders] = await this.pool.query(query, params);
+     return orders;
+   }
+ 

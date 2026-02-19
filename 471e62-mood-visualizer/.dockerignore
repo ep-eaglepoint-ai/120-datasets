@@ -1,0 +1,12 @@
+node_modules/
+**/node_modules/
+repository_after/node_modules/
+repository_before/node_modules/
+dist/
+build/
+.git/
+.gitignore
+*.log
+.DS_Store
+evaluation/reports/
+evaluation/2025-*/

@@ -1,0 +1,8 @@
+{
+    "instance_id": "274a78",
+    "problem_statement": "The existing controller implementation mixes HTTP handling, validation logic, and direct database operations in a single layer, making the code difficult to maintain, test, and extend as the application grows. Responses are inconsistent in structure, with ad-hoc keys and formats that violate REST conventions and make client integration unpredictable. Error handling is scattered and repetitive, leading to duplicated logic and unclear behavior across endpoints. Several operations lack robustness, such as partial updates that can unintentionally overwrite fields with undefined values, missing pagination for large datasets, and delete operations that do not follow proper HTTP semantics. Additionally, validation of input and ObjectIds is inconsistent, increasing the risk of runtime errors and security issues. These shortcomings reduce code readability, scalability, and reliability, making a structured refactor essential to introduce a service layer, standardize responses, enforce consistent error handling, and bring the controller in line with modern production-grade Node.js and REST API best practices.",
+    "base_commit": "repository_before",
+    "test_patch": "tests/",
+    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/274a78-Refactor_Legacy_Song_API_Controller",
+    "environment_setup": "Dockerfile"
+}

@@ -1,0 +1,301 @@
+diff --git a/repository_after/.env b/repository_after/.env
+new file mode 100644
+index 0000000..239c94e
+--- /dev/null
++++ b/repository_after/.env
+@@ -0,0 +1,11 @@
++# PostgreSQL Configuration
++POSTGRES_USER=postgres
++POSTGRES_PASSWORD=post4321
++POSTGRES_DB=coffeedb
++POSTGRES_PORT=5432
++
++# Redis Configuration
++REDIS_PORT=6379
++
++# Application Configuration
++SERVER_PORT=8080
+\ No newline at end of file
+diff --git a/repository_before/.gitkeep b/repository_after/__init__.py
+similarity index 100%
+rename from repository_before/.gitkeep
+rename to repository_after/__init__.py
+diff --git a/repository_after/cmd/server/main.go b/repository_after/cmd/server/main.go
+new file mode 100644
+index 0000000..608246b
+--- /dev/null
++++ b/repository_after/cmd/server/main.go
+@@ -0,0 +1,67 @@
++package main
++
++import (
++	"context"
++	"log"
++	"net/http"
++	"os"
++	"os/signal"
++	"syscall"
++	"time"
++
++	"coffee-shop/repository_after/config"
++	"coffee-shop/repository_after/health"
++	"coffee-shop/repository_after/storage"
++)
++
++func main() {
++	cfg, err := config.Load()
++	if err != nil {
++		log.Fatalf("Failed to load config: %v", err)
++	}
++
++	db, err := storage.NewPostgresDB(cfg.PostgresDSN())
++	if err != nil {
++		log.Fatalf("Failed to connect to postgres: %v", err)
++	}
++	defer db.Close()
++	log.Println("Connected to PostgreSQL")
++
++	redis, err := storage.NewRedisClient(cfg.RedisAddr())
++	if err != nil {
++		log.Fatalf("Failed to connect to redis: %v", err)
++	}
++	log.Println("Connected to Redis")
++
++	mux := http.NewServeMux()
++	mux.HandleFunc("/health", health.Handler(db, redis))
++
++	server := &http.Server{
++		Addr:         ":" + cfg.ServerPort,
++		Handler:      mux,
++		ReadTimeout:  10 * time.Second,
++		WriteTimeout: 10 * time.Second,
++	}
++
++	go func() {
++		log.Printf("Server starting on port %s", cfg.ServerPort)
++		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
++			log.Fatalf("Server error: %v", err)
++		}
++	}()
++
++	quit := make(chan os.Signal, 1)
++	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
++	<-quit
++
++	log.Println("Shutting down server...")
++
++	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
++	defer cancel()
++
++	if err := server.Shutdown(ctx); err != nil {
++		log.Fatalf("Server forced to shutdown: %v", err)
++	}
++
++	log.Println("Server stopped")
++}
+\ No newline at end of file
+diff --git a/repository_after/config/config.go b/repository_after/config/config.go
+new file mode 100644
+index 0000000..cd9eccd
+--- /dev/null
++++ b/repository_after/config/config.go
+@@ -0,0 +1,55 @@
++package config
++
++import (
++	"fmt"
++	"os"
++)
++
++type Config struct {
++	ServerPort     string
++	PostgresHost   string
++	PostgresPort   string
++	PostgresUser   string
++	PostgresPass   string
++	PostgresDB     string
++	RedisHost      string
++	RedisPort      string
++}
++
++func Load() (*Config, error) {
++	cfg := &Config{
++		ServerPort:     getEnv("SERVER_PORT", "8080"),
++		PostgresHost:   getEnv("POSTGRES_HOST", "postgres"),
++		PostgresPort:   getEnv("POSTGRES_PORT", "5432"),
++		PostgresUser:   getEnv("POSTGRES_USER", ""),
++		PostgresPass:   getEnv("POSTGRES_PASSWORD", ""),
++		PostgresDB:     getEnv("POSTGRES_DB", "coffeedb"),
++		RedisHost:      getEnv("REDIS_HOST", "redis"),
++		RedisPort:      getEnv("REDIS_PORT", "6379"),
++	}
++
++	if cfg.PostgresUser == "" {
++		return nil, fmt.Errorf("POSTGRES_USER is required")
++	}
++	if cfg.PostgresPass == "" {
++		return nil, fmt.Errorf("POSTGRES_PASSWORD is required")
++	}
++
++	return cfg, nil
++}
++
++func getEnv(key, defaultValue string) string {
++	if value := os.Getenv(key); value != "" {
++		return value
++	}
++	return defaultValue
++}
++
++func (c *Config) PostgresDSN() string {
++	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
++		c.PostgresHost, c.PostgresPort, c.PostgresUser, c.PostgresPass, c.PostgresDB)
++}
++
++func (c *Config) RedisAddr() string {
++	return fmt.Sprintf("%s:%s", c.RedisHost, c.RedisPort)
++}
+\ No newline at end of file
+diff --git a/repository_after/health/handler.go b/repository_after/health/handler.go
+new file mode 100644
+index 0000000..96dda9b
+--- /dev/null
++++ b/repository_after/health/handler.go
+@@ -0,0 +1,41 @@
++package health
++
++import (
++	"database/sql"
++	"encoding/json"
++	"net/http"
++)
++
++type RedisChecker interface {
++	Ping() error
++}
++
++func Handler(db *sql.DB, redis RedisChecker) http.HandlerFunc {
++	return func(w http.ResponseWriter, r *http.Request) {
++		response := map[string]string{
++			"status":   "healthy",
++			"postgres": "up",
++			"redis":    "up",
++		}
++
++		if err := db.Ping(); err != nil {
++			response["status"] = "unhealthy"
++			response["postgres"] = "down"
++		}
++
++		if err := redis.Ping(); err != nil {
++			response["status"] = "unhealthy"
++			response["redis"] = "down"
++		}
++
++		w.Header().Set("Content-Type", "application/json")
++
++		if response["status"] == "unhealthy" {
++			w.WriteHeader(http.StatusServiceUnavailable)
++		} else {
++			w.WriteHeader(http.StatusOK)
++		}
++
++		json.NewEncoder(w).Encode(response)
++	}
++}
+\ No newline at end of file
+diff --git a/repository_after/storage/postgres.go b/repository_after/storage/postgres.go
+new file mode 100644
+index 0000000..ef0fb3b
+--- /dev/null
++++ b/repository_after/storage/postgres.go
+@@ -0,0 +1,37 @@
++package storage
++
++import (
++	"context"
++	"database/sql"
++	"fmt"
++	"time"
++
++	_ "github.com/lib/pq"
++)
++
++func NewPostgresDB(dsn string) (*sql.DB, error) {
++	db, err := sql.Open("postgres", dsn)
++	if err != nil {
++		return nil, fmt.Errorf("failed to open postgres: %w", err)
++	}
++
++	db.SetMaxOpenConns(25)
++	db.SetMaxIdleConns(5)
++	db.SetConnMaxLifetime(5 * time.Minute)
++
++	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
++	defer cancel()
++
++	if err := db.PingContext(ctx); err != nil {
++		db.Close()
++		return nil, fmt.Errorf("failed to ping postgres: %w", err)
++	}
++
++	return db, nil
++}
++
++func PingPostgres(db *sql.DB) error {
++	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
++	defer cancel()
++	return db.PingContext(ctx)
++}
+\ No newline at end of file
+diff --git a/repository_after/storage/redis.go b/repository_after/storage/redis.go
+new file mode 100644
+index 0000000..a4c0375
+--- /dev/null
++++ b/repository_after/storage/redis.go
+@@ -0,0 +1,44 @@
++package storage
++
++import (
++	"context"
++	"fmt"
++	"net"
++	"time"
++)
++
++type RedisClient struct {
++	addr string
++}
++
++func NewRedisClient(addr string) (*RedisClient, error) {
++	client := &RedisClient{addr: addr}
++
++	if err := client.Ping(); err != nil {
++		return nil, fmt.Errorf("failed to connect to redis: %w", err)
++	}
++
++	return client, nil
++}
++
++func (r *RedisClient) Ping() error {
++	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
++	defer cancel()
++
++	var d net.Dialer
++	conn, err := d.DialContext(ctx, "tcp", r.addr)
++	if err != nil {
++		return err
++	}
++	defer conn.Close()
++
++	_, err = conn.Write([]byte("PING\r\n"))
++	if err != nil {
++		return err
++	}
++
++	buf := make([]byte, 1024)
++	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
++	_, err = conn.Read(buf)
++	return err
++}
+\ No newline at end of file

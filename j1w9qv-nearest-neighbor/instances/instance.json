@@ -1,0 +1,11 @@
+{
+            "instance_id": "J1W9QV",
+            "problem_statement": "This project requires a comprehensive refactoring of the provided KD-Tree implementation to achieve maximum performance and scalability for large multidimensional datasets. The current implementation suffers from algorithmic inefficiencies particularly the O(n log n) sorting at each recursion level during construction that prevent it from meeting the required O(n log n) average-case time and O(n) space complexity. The solution must optimize both tree construction and nearest neighbor search to achieve O(log n) average-case query time with minimal auxiliary space while maintaining correctness for production use with millions of points.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/j1w9qv-nearest-neighbor",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

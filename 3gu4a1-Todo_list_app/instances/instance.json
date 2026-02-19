@@ -1,0 +1,8 @@
+{
+  "instance_id": "3gu4a1-Todo_list_app",
+  "problem_statement": "I want to create a complete, folder structured, production-structured FastAPI Todo API with CRUD operations.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/3gu4a1-Todo_list_app",
+  "environment_setup": "Dockerfile"
+}

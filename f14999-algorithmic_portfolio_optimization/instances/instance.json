@@ -1,0 +1,9 @@
+{
+    "instance_id": "5g27e7",
+    "problem_statement": "The current subset selection logic exhibits exponential performance degradation as portfolio size grows, causing frequent timeouts during peak trading hours. New regulatory requirements mandate real-time evaluation for significantly larger portfolios, rendering the existing approach operationally infeasible.",
+    "base_commit": "repository_before",
+    "test_patch": "tests/",
+    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main",
+    "environment_setup": "Dockerfile"
+  }
+  

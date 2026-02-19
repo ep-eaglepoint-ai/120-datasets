@@ -1,0 +1,25 @@
+{
+  "name": "ehhfj9-urban-cargo-capacity-manager",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "repository_after"
+  ],
+  "scripts": {
+    "prisma:generate": "prisma generate --schema repository_after/prisma/schema.prisma",
+    "test": "npm run test:after",
+    "test:after": "npm run prisma:generate && vitest run",
+    "test:before": "TARGET_REPO=repository_before npm run prisma:generate && TARGET_REPO=repository_before vitest run",
+    "evaluate": "tsx evaluation/evaluation.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.6",
+    "prisma": "^6.2.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^2.1.8"
+  }
+}

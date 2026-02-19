@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  evaluation:
+    build: .
+    volumes:
+      - ./evaluation/reports:/app/evaluation/reports
+    command: cargo run --release --manifest-path evaluation/Cargo.toml
+
+  test-before:
+    build: .
+    environment:
+      - TEST_REPO_PATH=/app/repository_before
+    command: cargo run --release --manifest-path evaluation/Cargo.toml -- --single before
+
+  test-after:
+    build: .
+    environment:
+      - TEST_REPO_PATH=/app/repository_after
+    command: cargo run --release --manifest-path evaluation/Cargo.toml -- --single after
+

@@ -1,0 +1,25 @@
+services:
+  evaluation:
+    build: .
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: >
+      sh -c "cd repository_after && bun install;
+             cd ../repository_before && bun install;
+             cd /app;
+             node evaluation/evaluation.js || exit 0"
+
+  tests-after:
+    build: .
+    volumes:
+      - .:/app
+    working_dir: /app/repository_after
+    command: sh -c "bun install && bun run test"
+
+  tests-before:
+    build: .
+    volumes:
+      - .:/app
+    working_dir: /app/repository_before
+    command: sh -c "bun install && bun run test"

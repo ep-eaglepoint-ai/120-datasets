@@ -1,0 +1,19 @@
+{
+  "instance_id": "cb4e35",
+  "problem_statement": "Build a full-stack Next.js application where users can define customizable IF-THEN rules as personal laws, which can conflict and override each other. The system must algorithmically evaluate scenarios by applying all relevant rules, detecting conflicts, and resolving overrides to produce a single, deterministic outcome with a transparent reasoning path showing which rules fired and how conflicts were resolved.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/cb4e35-rule-engine",
+  "environment_setup": "Dockerfile",
+  "FAIL_TO_PASS": [
+    "tests/rule-engine.test.ts::Rule Creation",
+    "tests/rule-engine.test.ts::Rule Conflicts and Overrides",
+    "tests/rule-engine.test.ts::Scenario Evaluation",
+    "tests/rule-engine.test.ts::Conflict Detection",
+    "tests/rule-engine.test.ts::Reasoning Path Generation",
+    "tests/rule-engine.test.ts::Outcome Display",
+    "tests/rule-engine.test.ts::No Auth Required",
+    "tests/rule-engine.test.ts::Minimal UI"
+  ],
+  "PASS_TO_PASS": []
+}

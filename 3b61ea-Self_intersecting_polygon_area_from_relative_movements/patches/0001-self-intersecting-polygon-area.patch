@@ -1,0 +1,231 @@
+diff --git a/repository_after/__pycache__/__init__.cpython-311.pyc b/repository_after/__pycache__/__init__.cpython-311.pyc
+new file mode 100644
+index 0000000..9e32a13
+Binary files /dev/null and b/repository_after/__pycache__/__init__.cpython-311.pyc differ
+diff --git a/repository_after/__pycache__/__init__.cpython-312.pyc b/repository_after/__pycache__/__init__.cpython-312.pyc
+new file mode 100644
+index 0000000..2a5ba55
+Binary files /dev/null and b/repository_after/__pycache__/__init__.cpython-312.pyc differ
+diff --git a/repository_after/__pycache__/self_intersecting_polygon_area.cpython-311.pyc b/repository_after/__pycache__/self_intersecting_polygon_area.cpython-311.pyc
+new file mode 100644
+index 0000000..12d6103
+Binary files /dev/null and b/repository_after/__pycache__/self_intersecting_polygon_area.cpython-311.pyc differ
+diff --git a/repository_after/__pycache__/self_intersecting_polygon_area.cpython-312.pyc b/repository_after/__pycache__/self_intersecting_polygon_area.cpython-312.pyc
+new file mode 100644
+index 0000000..62201b5
+Binary files /dev/null and b/repository_after/__pycache__/self_intersecting_polygon_area.cpython-312.pyc differ
+diff --git a/repository_after/self_intersecting_polygon_area.py b/repository_after/self_intersecting_polygon_area.py
+new file mode 100644
+index 0000000..233037e
+--- /dev/null
++++ b/repository_after/self_intersecting_polygon_area.py
+@@ -0,0 +1,209 @@
++def expand_movements(movements):
++    """
++    Expand movement tuples into individual step directions.
++
++    Args:
++        movements: List of (direction, distance) tuples
++
++    Returns:
++        List of individual direction strings
++    """
++    steps = []
++    for direction, distance in movements:
++        for _ in range(distance):
++            steps.append(direction)
++    return steps
++
++
++def steps_to_vertices(steps):
++    """
++    Convert step directions into a list of (x, y) vertices.
++
++    Args:
++        steps: List of direction strings (UP, DOWN, LEFT, RIGHT)
++
++    Returns:
++        List of (x, y) coordinate tuples starting from (0, 0)
++    """
++    x, y = 0, 0
++    vertices = [(x, y)]
++
++    for step in steps:
++        if step == "UP":
++            y += 1
++        elif step == "DOWN":
++            y -= 1
++        elif step == "LEFT":
++            x -= 1
++        elif step == "RIGHT":
++            x += 1
++        else:
++            raise ValueError(f"Invalid direction: {step}")
++        vertices.append((x, y))
++
++    return vertices
++
++
++def shoelace_area(vertices):
++    """
++    Calculate the area of a polygon using the Shoelace formula.
++
++    Args:
++        vertices: List of (x, y) coordinate tuples forming a closed polygon
++
++    Returns:
++        Absolute area of the polygon
++    """
++    area = 0
++    n = len(vertices)
++    for i in range(n):
++        x1, y1 = vertices[i]
++        x2, y2 = vertices[(i + 1) % n]
++        area += x1 * y2 - y1 * x2
++    return abs(area) / 2
++
++
++def segments_intersect_proper(s1, s2):
++    """
++    Check if two segments have a proper intersection (crossing, not just touching).
++    Returns the intersection point if they cross, None otherwise.
++    """
++    (x1, y1), (x2, y2) = s1
++    (x3, y3), (x4, y4) = s2
++
++    denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
++    if denom == 0:
++        return None  # Parallel or collinear
++
++    t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom
++    u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom
++
++    # Proper intersection: strictly between endpoints (not at endpoints)
++    if 0 < t < 1 and 0 < u < 1:
++        px = x1 + t * (x2 - x1)
++        py = y1 + t * (y2 - y1)
++        return (px, py)
++
++    return None
++
++
++def find_all_loops(vertices):
++    """
++    Find all closed loops in a path.
++
++    A closed loop is formed ONLY when the path returns to the origin (0, 0).
++    This ensures we only count properly enclosed regions.
++
++    For self-intersecting paths that return to origin multiple times,
++    each return creates a separate closed loop.
++
++    Revisiting non-origin vertices on an open path does not count as
++    enclosing an area.
++
++    Args:
++        vertices: List of (x, y) coordinate tuples representing the path
++
++    Returns:
++        List of closed loop vertex sequences
++    """
++    if len(vertices) < 4:
++        return []
++
++    loops = []
++    origin = (0, 0)
++    current_loop_start = 0
++
++    # Find all returns to origin
++    for i in range(1, len(vertices)):
++        if vertices[i] == origin:
++            # Found a return to origin - extract this closed loop
++            loop = vertices[current_loop_start:i]  # Exclude the duplicate origin
++
++            if len(loop) >= 3:
++                # For self-intersecting loops within this segment,
++                # we need to handle them specially
++                sub_loops = extract_sub_loops(loop)
++                loops.extend(sub_loops)
++
++            current_loop_start = i  # Next loop starts from this origin
++
++    return loops
++
++
++def extract_sub_loops(loop_vertices):
++    """
++    Extract sub-loops from a closed loop that may self-intersect.
++
++    For a simple loop (no self-intersection), returns the loop as-is.
++    For a figure-8 or similar, returns multiple sub-loops.
++
++    Args:
++        loop_vertices: List of vertices forming a closed loop (not including
++                      the return to origin)
++
++    Returns:
++        List of sub-loops
++    """
++    if len(loop_vertices) < 3:
++        return []
++
++    loops = []
++    position_to_index = {}
++    current_path = []
++
++    for vertex in loop_vertices:
++        if vertex in position_to_index:
++            # Found a self-intersection - extract the inner loop
++            loop_start_idx = position_to_index[vertex]
++            inner_loop = current_path[loop_start_idx:]
++
++            if len(inner_loop) >= 3:
++                loops.append(inner_loop)
++
++            # Remove inner loop vertices from tracking
++            for i in range(loop_start_idx + 1, len(current_path)):
++                pos = current_path[i]
++                if pos in position_to_index:
++                    del position_to_index[pos]
++
++            current_path = current_path[:loop_start_idx + 1]
++        else:
++            position_to_index[vertex] = len(current_path)
++            current_path.append(vertex)
++
++    # The remaining path forms the outer loop
++    if len(current_path) >= 3:
++        loops.append(current_path)
++
++    return loops
++
++
++def total_enclosed_area(movements):
++    """
++    Calculate total enclosed area from relative movements.
++
++    Handles self-intersecting paths by finding all closed loops
++    and summing their individual areas.
++
++    Args:
++        movements: List of (direction, distance) tuples
++
++    Returns:
++        Total absolute enclosed area of all loops
++    """
++    if not movements:
++        return 0
++
++    steps = expand_movements(movements)
++    vertices = steps_to_vertices(steps)
++
++    # Find all closed loops in the path
++    loops = find_all_loops(vertices)
++
++    # Sum up areas of all closed loops
++    total = 0
++    for loop in loops:
++        if len(loop) >= 3:
++            total += shoelace_area(loop)
++
++    return total

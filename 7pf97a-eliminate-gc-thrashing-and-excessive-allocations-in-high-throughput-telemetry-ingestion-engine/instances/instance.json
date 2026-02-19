@@ -1,0 +1,11 @@
+{
+            "instance_id": "7PF97A",
+            "problem_statement": "The telemetry ingestion engine is required to process 1,000,000 packets per second, but performance testing shows that it is CPU-bound by Garbage Collection rather than business logic. Profiling reveals hundreds of thousands of heap allocations per second, frequent GC stalls that reduce throughput, and memory spikes caused by repeated slice reallocation during burst traffic. These issues result in unstable memory usage and poor performance, especially under sustained load. The current implementation dynamically grows and reallocates slices during Push and Flush operations, leading to excessive allocations and GC pressure. The system must be optimized to achieve predictable, flat memory usage and significantly higher throughput without changing the TelemetryPacket structure or relying on unsafe memory operations.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/7pf97a-eliminate-gc-thrashing-and-excessive-allocations-in-high-throughput-telemetry-ingestion-engine",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

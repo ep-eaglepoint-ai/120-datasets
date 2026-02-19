@@ -1,0 +1,24 @@
+{
+  "name": "raffle-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Jest test suite for raffle client and server",
+  "scripts": {
+    "test": "jest --config jest.config.js --runInBand",
+    "test:watch": "jest --config jest.config.js --watch",
+    "test:coverage": "jest --config jest.config.js --coverage",
+    "test:ci": "jest --config jest.config.js --json --no-coverage --runInBand"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.1.5",
+    "@testing-library/react": "^14.1.2",
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.11.5",
+    "@types/supertest": "^2.0.16",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "supertest": "^6.3.4",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.3.3"
+  }
+}

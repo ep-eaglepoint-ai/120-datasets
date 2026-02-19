@@ -1,0 +1,9 @@
+{
+  "instance_id": "c8f2a3",
+  "problem_statement": "Noticed a feature gap when testing checkout flow that requires combining multiple discount codes. Customers want to stack loyalty rewards with promotional offers. The task involves extending promocode.service.js to support applying up to 3 codes per order with conflict detection, proper discount ordering, and atomic operations - while maintaining backward compatibility with existing single-code API.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/c8f2a3-Stackable_Promo_Codes_Feature",
+  "environment_setup": "Dockerfile"
+}
+

@@ -1,0 +1,40 @@
+{
+  "name": "regex-playground-nextjs",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev repository_after",
+    "build": "next build repository_after",
+    "start": "next start repository_after",
+    "lint": "echo \"lint disabled\"",
+    "lint:fix": "echo \"lint disabled\"",
+    "test": "npx jest --config tests/jest.config.js --runInBand",
+    "test:watch": "npx jest --config tests/jest.config.js --watch",
+    "test:coverage": "npx jest --config tests/jest.config.js --coverage",
+    "evaluate": "npx ts-node evaluation/evaluation.ts"
+  },
+  "dependencies": {
+    "@tailwindcss/forms": "^0.5.9",
+    "autoprefixer": "^10.4.20",
+    "next": "^14.2.5",
+    "postcss": "^8.4.47",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.14"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.0.1",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/jest": "^29.5.13",
+    "@types/node": "^20.17.6",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^30.2.0",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.3"
+  }
+}

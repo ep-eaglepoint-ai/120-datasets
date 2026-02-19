@@ -1,0 +1,8 @@
+{
+  "instance_id": "cd41ba",
+  "problem_statement": "The legacy DataProcessor uses blocking calls (time.sleep) and a global list to store results, which prevents true asynchronous execution and risks uncontrolled memory growth. The task is to refactor this system for modern Python 3.12+, enabling fully non-blocking, concurrent data processing with strict type safety, memory-bounded storage, and encapsulated state, while avoiding traditional loops.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/cd41ba-Async_circular_data_processing_with_type_safety",
+  "environment_setup": "Dockerfile"
+}

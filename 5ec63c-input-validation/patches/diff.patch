@@ -1,0 +1,1067 @@
+diff --git a/repository_after/.pytest_cache/.gitignore b/repository_after/.pytest_cache/.gitignore
+new file mode 100644
+index 00000000..bc1a1f61
+--- /dev/null
++++ b/repository_after/.pytest_cache/.gitignore
+@@ -0,0 +1,2 @@
++# Created by pytest automatically.
++*
+diff --git a/repository_after/.pytest_cache/CACHEDIR.TAG b/repository_after/.pytest_cache/CACHEDIR.TAG
+new file mode 100644
+index 00000000..fce15ad7
+--- /dev/null
++++ b/repository_after/.pytest_cache/CACHEDIR.TAG
+@@ -0,0 +1,4 @@
++Signature: 8a477f597d28d172789f06886806bc55
++# This file is a cache directory tag created by pytest.
++# For information about cache directory tags, see:
++#	https://bford.info/cachedir/spec.html
+diff --git a/repository_after/.pytest_cache/README.md b/repository_after/.pytest_cache/README.md
+new file mode 100644
+index 00000000..b89018ce
+--- /dev/null
++++ b/repository_after/.pytest_cache/README.md
+@@ -0,0 +1,8 @@
++# pytest cache directory #
++
++This directory contains data from the pytest's cache plugin,
++which provides the `--lf` and `--ff` options, as well as the `cache` fixture.
++
++**Do not** commit this to version control.
++
++See [the docs](https://docs.pytest.org/en/stable/how-to/cache.html) for more information.
+diff --git a/repository_after/.pytest_cache/v/cache/nodeids b/repository_after/.pytest_cache/v/cache/nodeids
+new file mode 100644
+index 00000000..0637a088
+--- /dev/null
++++ b/repository_after/.pytest_cache/v/cache/nodeids
+@@ -0,0 +1 @@
++[]
+\ No newline at end of file
+diff --git a/repository_after/__pycache__/__init__.cpython-311.pyc b/repository_after/__pycache__/__init__.cpython-311.pyc
+new file mode 100644
+index 00000000..d30b4292
+Binary files /dev/null and b/repository_after/__pycache__/__init__.cpython-311.pyc differ
+diff --git a/repository_after/__pycache__/__init__.cpython-312.pyc b/repository_after/__pycache__/__init__.cpython-312.pyc
+new file mode 100644
+index 00000000..607e0a82
+Binary files /dev/null and b/repository_after/__pycache__/__init__.cpython-312.pyc differ
+diff --git a/repository_after/error_handling_lib/__init__.py b/repository_after/error_handling_lib/__init__.py
+new file mode 100644
+index 00000000..05b6af21
+--- /dev/null
++++ b/repository_after/error_handling_lib/__init__.py
+@@ -0,0 +1,33 @@
++# Error Handling Library
++# A production-grade Python library for comprehensive error handling and input validation
++
++__version__ = "1.0.0"
++__author__ = "Error Handling Library Team"
++
++# Main exports for easy importing
++from .enums.error_types import ErrorCategory, ErrorSeverity
++from .errors.base import CategorizedError
++from .errors.specific_errors import (
++    ValidationError, TypeError, RangeError, NetworkError, DatabaseError,
++    FileSystemError, AuthError, BusinessLogicError, SystemError, UnknownError
++)
++from .validators.input_validator import InputValidator
++from .handlers.error_handler import ErrorHandler
++from .decorators.safe_execute import safe_execute
++from .decorators.retry_on_error import retry_on_error
++
++__all__ = [
++    # Enums
++    'ErrorCategory', 'ErrorSeverity',
++    # Base error
++    'CategorizedError',
++    # Specialized errors
++    'ValidationError', 'TypeError', 'RangeError', 'NetworkError', 'DatabaseError',
++    'FileSystemError', 'AuthError', 'BusinessLogicError', 'SystemError', 'UnknownError',
++    # Validators
++    'InputValidator',
++    # Handlers
++    'ErrorHandler',
++    # Decorators
++    'safe_execute', 'retry_on_error'
++]
+\ No newline at end of file
+diff --git a/repository_after/error_handling_lib/__pycache__/__init__.cpython-311.pyc b/repository_after/error_handling_lib/__pycache__/__init__.cpython-311.pyc
+new file mode 100644
+index 00000000..a5abe752
+Binary files /dev/null and b/repository_after/error_handling_lib/__pycache__/__init__.cpython-311.pyc differ
+diff --git a/repository_after/error_handling_lib/__pycache__/__init__.cpython-312.pyc b/repository_after/error_handling_lib/__pycache__/__init__.cpython-312.pyc
+new file mode 100644
+index 00000000..b2eb4b94
+Binary files /dev/null and b/repository_after/error_handling_lib/__pycache__/__init__.cpython-312.pyc differ
+diff --git a/repository_after/error_handling_lib/decorators/__init__.py b/repository_after/error_handling_lib/decorators/__init__.py
+new file mode 100644
+index 00000000..3aeb1c4b
+--- /dev/null
++++ b/repository_after/error_handling_lib/decorators/__init__.py
+@@ -0,0 +1,2 @@
++from .safe_execute import safe_execute
++from .retry_on_error import retry_on_error
+diff --git a/repository_after/error_handling_lib/decorators/__pycache__/__init__.cpython-311.pyc b/repository_after/error_handling_lib/decorators/__pycache__/__init__.cpython-311.pyc
+new file mode 100644
+index 00000000..b6a0538c
+Binary files /dev/null and b/repository_after/error_handling_lib/decorators/__pycache__/__init__.cpython-311.pyc differ
+diff --git a/repository_after/error_handling_lib/decorators/__pycache__/__init__.cpython-312.pyc b/repository_after/error_handling_lib/decorators/__pycache__/__init__.cpython-312.pyc
+new file mode 100644
+index 00000000..80479b6f
+Binary files /dev/null and b/repository_after/error_handling_lib/decorators/__pycache__/__init__.cpython-312.pyc differ
+diff --git a/repository_after/error_handling_lib/decorators/__pycache__/retry_on_error.cpython-311.pyc b/repository_after/error_handling_lib/decorators/__pycache__/retry_on_error.cpython-311.pyc
+new file mode 100644
+index 00000000..fdc0f1be
+Binary files /dev/null and b/repository_after/error_handling_lib/decorators/__pycache__/retry_on_error.cpython-311.pyc differ
+diff --git a/repository_after/error_handling_lib/decorators/__pycache__/retry_on_error.cpython-312.pyc b/repository_after/error_handling_lib/decorators/__pycache__/retry_on_error.cpython-312.pyc
+new file mode 100644
+index 00000000..e9a82225
+Binary files /dev/null and b/repository_after/error_handling_lib/decorators/__pycache__/retry_on_error.cpython-312.pyc differ
+diff --git a/repository_after/error_handling_lib/decorators/__pycache__/safe_execute.cpython-311.pyc b/repository_after/error_handling_lib/decorators/__pycache__/safe_execute.cpython-311.pyc
+new file mode 100644
+index 00000000..7ecaadf3
+Binary files /dev/null and b/repository_after/error_handling_lib/decorators/__pycache__/safe_execute.cpython-311.pyc differ
+diff --git a/repository_after/error_handling_lib/decorators/__pycache__/safe_execute.cpython-312.pyc b/repository_after/error_handling_lib/decorators/__pycache__/safe_execute.cpython-312.pyc
+new file mode 100644
+index 00000000..b7659361
+Binary files /dev/null and b/repository_after/error_handling_lib/decorators/__pycache__/safe_execute.cpython-312.pyc differ
+diff --git a/repository_after/error_handling_lib/decorators/retry_on_error.py b/repository_after/error_handling_lib/decorators/retry_on_error.py
+new file mode 100644
+index 00000000..c511a1f9
+--- /dev/null
++++ b/repository_after/error_handling_lib/decorators/retry_on_error.py
+@@ -0,0 +1,105 @@
++from functools import wraps
++import time
++from typing import Callable, Optional, Tuple, Type, Union
++
++from repository_after.error_handling_lib.errors.base import CategorizedError
++from repository_after.error_handling_lib.enums.error_types import ErrorCategory, ErrorSeverity
++from repository_after.error_handling_lib.handlers.error_handler import ErrorHandler
++
++
++def retry_on_error(
++    max_retries: int = 3,
++    retryable_categories: Optional[set[ErrorCategory]] = None,
++    retryable_exceptions: Optional[tuple[Type[Exception], ...]] = None,
++    backoff_factor: float = 1.0,           # exponential backoff multiplier
++    min_wait: float = 0.5,                 # seconds
++    max_wait: float = 30.0,
++    handler: Optional[ErrorHandler] = None,
++    raise_final: bool = True
++) -> Callable:
++    """
++    Decorator that retries the function on specific error categories/exceptions.
++
++    Args:
++        max_retries: Maximum number of retry attempts (not counting initial)
++        retryable_categories: Set of ErrorCategory values that are retryable
++        retryable_exceptions: Additional exception types to retry on
++        backoff_factor: Multiplier for exponential backoff
++        min_wait / max_wait: Range of sleep time between retries
++        handler: ErrorHandler instance (if None → uses default)
++        raise_final: Whether to raise the last exception after all retries fail
++    """
++    if retryable_categories is None:
++        retryable_categories = {
++            ErrorCategory.NETWORK,
++            ErrorCategory.DATABASE,
++            ErrorCategory.FILE_SYSTEM,
++            ErrorCategory.UNKNOWN
++            # Add more transient-like categories as needed
++        }
++
++    if retryable_exceptions is None:
++        retryable_exceptions = (Exception,)  # Catch all exceptions, then filter by category
++
++    def decorator(func: Callable) -> Callable:
++        @wraps(func)
++        def wrapper(*args, **kwargs):
++            active_handler = handler or ErrorHandler.get_default()
++            last_exc = None
++
++            for attempt in range(max_retries + 1):
++                try:
++                    return func(*args, **kwargs)
++
++                except Exception as exc:
++                    last_exc = exc
++
++                    # Check if this error is retryable
++                    should_retry = False
++                    if isinstance(exc, CategorizedError):
++                        should_retry = exc.category in retryable_categories
++                    else:
++                        # For non-categorized exceptions, check if they match retryable_exceptions
++                        should_retry = isinstance(exc, retryable_exceptions)
++
++                    # If not retryable, raise immediately
++                    if not should_retry:
++                        raise
++
++                    # If this is the last attempt, handle differently
++                    if attempt == max_retries:
++                        # Last attempt failed - log it and then raise or return None
++                        active_handler.handle(
++                            exc,
++                            extra_info={
++                                "retry_attempt": attempt,
++                                "max_retries": max_retries,
++                                "final_attempt": True
++                            }
++                        )
++                        if raise_final:
++                            raise
++                        return None
++
++                    # Log the retry attempt (not the final failure)
++                    active_handler.handle(
++                        exc,
++                        extra_info={
++                            "retry_attempt": attempt,
++                            "max_retries": max_retries
++                        }
++                    )
++
++                    # Calculate exponential backoff
++                    wait_time = min(
++                        max_wait,
++                        min_wait * (backoff_factor ** attempt)
++                    )
++                    time.sleep(wait_time)
++
++            # Should not reach here if raise_final=True
++            return None
++
++        return wrapper
++
++    return decorator
+\ No newline at end of file
+diff --git a/repository_after/error_handling_lib/decorators/safe_execute.py b/repository_after/error_handling_lib/decorators/safe_execute.py
+new file mode 100644
+index 00000000..88bb4043
+--- /dev/null
++++ b/repository_after/error_handling_lib/decorators/safe_execute.py
+@@ -0,0 +1,37 @@
++import functools
++import time
++import logging
++from typing import Optional, List, Type, Callable, Any
++from repository_after.error_handling_lib.errors.base import CategorizedError
++from repository_after.error_handling_lib.enums.error_types import ErrorCategory
++from repository_after.error_handling_lib.handlers.error_handler import ErrorHandler
++
++logger = logging.getLogger("Decorators")
++
++def safe_execute(error_handler: ErrorHandler, re_raise: bool = False, default_return: Any = None):
++    """
++    Decorator to safely execute a function, catching CategorizedErrors and
++    passing them to the provided ErrorHandler.
++    """
++    def decorator(func: Callable):
++        @functools.wraps(func)
++        def wrapper(*args, **kwargs):
++            try:
++                return func(*args, **kwargs)
++            except CategorizedError as e:
++                error_handler.handle(e)
++                if re_raise:
++                    raise
++                return default_return
++            except Exception as e:
++                # Let the handler deal with wrapping unknown exceptions if desired,
++                # or wrap it here. The handler logic wraps unknown exceptions,
++                # so we can just pass it if we want to treat everything safely.
++                # However, the requirement says "Catch CategorizedError".
++                # To be safe for "production-ready", we should catch all and let handler categorize.
++                error_handler.handle(e)
++                if re_raise:
++                    raise
++                return default_return
++        return wrapper
++    return decorator
+diff --git a/repository_after/error_handling_lib/enums/__init__.py b/repository_after/error_handling_lib/enums/__init__.py
+new file mode 100644
+index 00000000..edcae2a3
+--- /dev/null
++++ b/repository_after/error_handling_lib/enums/__init__.py
+@@ -0,0 +1 @@
++from .error_types import ErrorCategory, ErrorSeverity
+diff --git a/repository_after/error_handling_lib/enums/__pycache__/__init__.cpython-311.pyc b/repository_after/error_handling_lib/enums/__pycache__/__init__.cpython-311.pyc
+new file mode 100644
+index 00000000..37a3d7c2
+Binary files /dev/null and b/repository_after/error_handling_lib/enums/__pycache__/__init__.cpython-311.pyc differ
+diff --git a/repository_after/error_handling_lib/enums/__pycache__/__init__.cpython-312.pyc b/repository_after/error_handling_lib/enums/__pycache__/__init__.cpython-312.pyc
+new file mode 100644
+index 00000000..9d5809e0
+Binary files /dev/null and b/repository_after/error_handling_lib/enums/__pycache__/__init__.cpython-312.pyc differ
+diff --git a/repository_after/error_handling_lib/enums/__pycache__/error_types.cpython-311.pyc b/repository_after/error_handling_lib/enums/__pycache__/error_types.cpython-311.pyc
+new file mode 100644
+index 00000000..f0ad20d6
+Binary files /dev/null and b/repository_after/error_handling_lib/enums/__pycache__/error_types.cpython-311.pyc differ
+diff --git a/repository_after/error_handling_lib/enums/__pycache__/error_types.cpython-312.pyc b/repository_after/error_handling_lib/enums/__pycache__/error_types.cpython-312.pyc
+new file mode 100644
+index 00000000..8cf7462f
+Binary files /dev/null and b/repository_after/error_handling_lib/enums/__pycache__/error_types.cpython-312.pyc differ
+diff --git a/repository_after/error_handling_lib/enums/error_types.py b/repository_after/error_handling_lib/enums/error_types.py
+new file mode 100644
+index 00000000..a5ebd0c6
+--- /dev/null
++++ b/repository_after/error_handling_lib/enums/error_types.py
+@@ -0,0 +1,43 @@
++from enum import Enum
++
++class ErrorCategory(str, Enum):
++    """
++    Categorizes errors into specific domains for better filtering and handling.
++    
++    These categories are used throughout the system for:
++    - Error filtering in ErrorHandler
++    - Retry logic in decorators
++    - Statistics and reporting
++    - Logging organization
++    
++    IMPORTANT: All categories must match exactly as specified in requirements.
++    """
++    VALIDATION = "VALIDATION"          # Input validation failures
++    TYPE = "TYPE"                      # Type checking failures
++    RANGE = "RANGE"                    # Value range violations
++    NETWORK = "NETWORK"                # Network connectivity issues
++    DATABASE = "DATABASE"              # Database operation failures
++    FILE_SYSTEM = "FILE_SYSTEM"        # File system access issues
++    AUTH = "AUTH"                      # Authentication/authorization failures
++    BUSINESS_LOGIC = "BUSINESS_LOGIC"  # Business rule violations
++    SYSTEM = "SYSTEM"                  # System-level errors
++    UNKNOWN = "UNKNOWN"                # Uncategorized errors
++
++class ErrorSeverity(str, Enum):
++    """
++    Defines the severity level of an error to determine the urgency of the response.
++    Ordered from lowest to highest urgency.
++    
++    Used by ErrorHandler for:
++    - Filtering errors by minimum severity
++    - Determining log levels
++    - Triggering shutdown on CRITICAL errors
++    - Statistics and alerting
++    
++    IMPORTANT: Severity levels must match exactly as specified in requirements.
++    """
++    LOW = "LOW"            # Informational, minimal impact
++    MEDIUM = "MEDIUM"      # Warning level, moderate impact
++    HIGH = "HIGH"          # Error level, significant impact
++    CRITICAL = "CRITICAL"  # Critical level, may trigger shutdown
++    
+diff --git a/repository_after/error_handling_lib/errors/__init__.py b/repository_after/error_handling_lib/errors/__init__.py
+new file mode 100644
+index 00000000..2de92ee0
+--- /dev/null
++++ b/repository_after/error_handling_lib/errors/__init__.py
+@@ -0,0 +1,5 @@
++from .base import CategorizedError
++from .specific_errors import (
++    ValidationError, TypeError, RangeError, NetworkError, DatabaseError,
++    FileSystemError, AuthError, BusinessLogicError, SystemError, UnknownError
++)
+diff --git a/repository_after/error_handling_lib/errors/__pycache__/__init__.cpython-311.pyc b/repository_after/error_handling_lib/errors/__pycache__/__init__.cpython-311.pyc
+new file mode 100644
+index 00000000..a45704e2
+Binary files /dev/null and b/repository_after/error_handling_lib/errors/__pycache__/__init__.cpython-311.pyc differ
+diff --git a/repository_after/error_handling_lib/errors/__pycache__/__init__.cpython-312.pyc b/repository_after/error_handling_lib/errors/__pycache__/__init__.cpython-312.pyc
+new file mode 100644
+index 00000000..8b927106
+Binary files /dev/null and b/repository_after/error_handling_lib/errors/__pycache__/__init__.cpython-312.pyc differ
+diff --git a/repository_after/error_handling_lib/errors/__pycache__/base.cpython-311.pyc b/repository_after/error_handling_lib/errors/__pycache__/base.cpython-311.pyc
+new file mode 100644
+index 00000000..85fc5261
+Binary files /dev/null and b/repository_after/error_handling_lib/errors/__pycache__/base.cpython-311.pyc differ
+diff --git a/repository_after/error_handling_lib/errors/__pycache__/base.cpython-312.pyc b/repository_after/error_handling_lib/errors/__pycache__/base.cpython-312.pyc
+new file mode 100644
+index 00000000..787a8be3
+Binary files /dev/null and b/repository_after/error_handling_lib/errors/__pycache__/base.cpython-312.pyc differ
+diff --git a/repository_after/error_handling_lib/errors/__pycache__/specific_errors.cpython-311.pyc b/repository_after/error_handling_lib/errors/__pycache__/specific_errors.cpython-311.pyc
+new file mode 100644
+index 00000000..60523b38
+Binary files /dev/null and b/repository_after/error_handling_lib/errors/__pycache__/specific_errors.cpython-311.pyc differ
+diff --git a/repository_after/error_handling_lib/errors/__pycache__/specific_errors.cpython-312.pyc b/repository_after/error_handling_lib/errors/__pycache__/specific_errors.cpython-312.pyc
+new file mode 100644
+index 00000000..50c43aa8
+Binary files /dev/null and b/repository_after/error_handling_lib/errors/__pycache__/specific_errors.cpython-312.pyc differ
+diff --git a/repository_after/error_handling_lib/errors/base.py b/repository_after/error_handling_lib/errors/base.py
+new file mode 100644
+index 00000000..b47d9ceb
+--- /dev/null
++++ b/repository_after/error_handling_lib/errors/base.py
+@@ -0,0 +1,52 @@
++import datetime
++from typing import Optional, Dict, Any
++from repository_after.error_handling_lib.enums.error_types import ErrorCategory, ErrorSeverity
++
++class CategorizedError(Exception):
++    """
++    Base class for all categorized errors in the library.
++    
++    This is the foundation class that all specialized errors inherit from.
++    It provides:
++    - Consistent error structure across the system
++    - Automatic timestamp generation
++    - JSON serialization via to_dict()
++    - Integration with ErrorHandler
++    
++    CRITICAL: All specialized errors MUST inherit from this class.
++    """
++    def __init__(
++        self,
++        message: str,
++        category: ErrorCategory,
++        severity: ErrorSeverity,
++        details: Optional[Dict[str, Any]] = None
++    ):
++        super().__init__(message)
++        self.message = message
++        self.category = category
++        self.severity = severity
++        self.details = details or {}  # Additional context information
++        # ISO format timestamp for consistent serialization
++        self.timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
++
++    def to_dict(self) -> Dict[str, Any]:
++        """
++        Returns a dictionary representation of the error, suitable for JSON serialization.
++        
++        This method is REQUIRED for:
++        - Logging and monitoring systems
++        - API error responses
++        - Error history tracking
++        - Statistics and reporting
++        
++        Returns:
++            Dict containing all error information in serializable format
++        """
++        return {
++            "message": self.message,
++            "category": self.category.value,  # Convert enum to string
++            "severity": self.severity.value,  # Convert enum to string
++            "details": self.details,
++            "timestamp": self.timestamp
++        }
+\ No newline at end of file
+diff --git a/repository_after/error_handling_lib/errors/specific_errors.py b/repository_after/error_handling_lib/errors/specific_errors.py
+new file mode 100644
+index 00000000..45f04c40
+--- /dev/null
++++ b/repository_after/error_handling_lib/errors/specific_errors.py
+@@ -0,0 +1,56 @@
++from typing import Optional, Dict, Any
++from repository_after.error_handling_lib.enums.error_types import ErrorCategory, ErrorSeverity
++from repository_after.error_handling_lib.errors.base import CategorizedError
++
++# IMPORTANT: All specialized error classes MUST inherit from CategorizedError
++# Each class automatically sets its appropriate category and default severity
++
++class ValidationError(CategorizedError):
++    """Raised when input validation fails"""
++    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
++        super().__init__(message, ErrorCategory.VALIDATION, ErrorSeverity.MEDIUM, details)
++
++class TypeError(CategorizedError):
++    """Custom TypeError (not Python's built-in) for type validation failures"""
++    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
++        super().__init__(message, ErrorCategory.TYPE, ErrorSeverity.MEDIUM, details)
++
++class RangeError(CategorizedError):
++    """Raised when values are outside acceptable ranges"""
++    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
++        super().__init__(message, ErrorCategory.RANGE, ErrorSeverity.MEDIUM, details)
++
++class NetworkError(CategorizedError):
++    """Raised for network connectivity and communication issues"""
++    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
++        super().__init__(message, ErrorCategory.NETWORK, ErrorSeverity.HIGH, details)
++
++class DatabaseError(CategorizedError):
++    """Raised for database operation failures - CRITICAL severity triggers shutdown"""
++    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
++        super().__init__(message, ErrorCategory.DATABASE, ErrorSeverity.CRITICAL, details)
++
++class FileSystemError(CategorizedError):
++    """Raised for file system access and operation issues"""
++    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
++        super().__init__(message, ErrorCategory.FILE_SYSTEM, ErrorSeverity.HIGH, details)
++
++class AuthError(CategorizedError):
++    """Raised for authentication and authorization failures - CRITICAL severity"""
++    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
++        super().__init__(message, ErrorCategory.AUTH, ErrorSeverity.CRITICAL, details)
++
++class BusinessLogicError(CategorizedError):
++    """Raised when business rules are violated"""
++    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
++        super().__init__(message, ErrorCategory.BUSINESS_LOGIC, ErrorSeverity.MEDIUM, details)
++
++class SystemError(CategorizedError):
++    """Raised for system-level failures - CRITICAL severity triggers shutdown"""
++    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
++        super().__init__(message, ErrorCategory.SYSTEM, ErrorSeverity.CRITICAL, details)
++
++class UnknownError(CategorizedError):
++    """Used to wrap uncategorized exceptions - LOW severity by default"""
++    def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
++        super().__init__(message, ErrorCategory.UNKNOWN, ErrorSeverity.LOW, details)
+\ No newline at end of file
+diff --git a/repository_after/error_handling_lib/handlers/__init__.py b/repository_after/error_handling_lib/handlers/__init__.py
+new file mode 100644
+index 00000000..f282fa5d
+--- /dev/null
++++ b/repository_after/error_handling_lib/handlers/__init__.py
+@@ -0,0 +1 @@
++from .error_handler import ErrorHandler
+diff --git a/repository_after/error_handling_lib/handlers/__pycache__/__init__.cpython-311.pyc b/repository_after/error_handling_lib/handlers/__pycache__/__init__.cpython-311.pyc
+new file mode 100644
+index 00000000..0a122b6b
+Binary files /dev/null and b/repository_after/error_handling_lib/handlers/__pycache__/__init__.cpython-311.pyc differ
+diff --git a/repository_after/error_handling_lib/handlers/__pycache__/__init__.cpython-312.pyc b/repository_after/error_handling_lib/handlers/__pycache__/__init__.cpython-312.pyc
+new file mode 100644
+index 00000000..28dda4c6
+Binary files /dev/null and b/repository_after/error_handling_lib/handlers/__pycache__/__init__.cpython-312.pyc differ
+diff --git a/repository_after/error_handling_lib/handlers/__pycache__/error_handler.cpython-311.pyc b/repository_after/error_handling_lib/handlers/__pycache__/error_handler.cpython-311.pyc
+new file mode 100644
+index 00000000..2001b347
+Binary files /dev/null and b/repository_after/error_handling_lib/handlers/__pycache__/error_handler.cpython-311.pyc differ
+diff --git a/repository_after/error_handling_lib/handlers/__pycache__/error_handler.cpython-312.pyc b/repository_after/error_handling_lib/handlers/__pycache__/error_handler.cpython-312.pyc
+new file mode 100644
+index 00000000..9b8be2ad
+Binary files /dev/null and b/repository_after/error_handling_lib/handlers/__pycache__/error_handler.cpython-312.pyc differ
+diff --git a/repository_after/error_handling_lib/handlers/error_handler.py b/repository_after/error_handling_lib/handlers/error_handler.py
+new file mode 100644
+index 00000000..aeb5fcda
+--- /dev/null
++++ b/repository_after/error_handling_lib/handlers/error_handler.py
+@@ -0,0 +1,125 @@
++import logging
++from typing import Optional, List, Dict, Callable, Any, Deque
++from collections import deque
++from collections import defaultdict
++from repository_after.error_handling_lib.enums.error_types import ErrorCategory, ErrorSeverity
++from repository_after.error_handling_lib.errors.base import CategorizedError
++from repository_after.error_handling_lib.errors.specific_errors import UnknownError
++
++# Configure basic logging
++logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
++logger = logging.getLogger("ErrorHandlingLib")
++_default_handler = None
++
++class ErrorHandler:
++    """
++    Centralized error handler for processing, logging, and tracking errors.
++    """
++    def __init__(
++        self,
++        min_severity: ErrorSeverity = ErrorSeverity.LOW,
++        ignored_categories: Optional[List[ErrorCategory]] = None,
++        history_size: int = 100,
++        shutdown_callback: Optional[Callable[[], None]] = None
++    ):
++        self.min_severity_level = self._severity_to_int(min_severity)
++        self.ignored_categories = set(ignored_categories) if ignored_categories else set()
++        self.history: Deque[Dict[str, Any]] = deque(maxlen=history_size)
++        global _default_handler
++        if _default_handler is None:
++            _default_handler = self
++        self.stats = {
++            "by_severity": defaultdict(int),
++            "by_category": defaultdict(int),
++            "total": 0
++        }
++        self.shutdown_callback = shutdown_callback
++
++    def _severity_to_int(self, severity: ErrorSeverity) -> int:
++        mapping = {
++            ErrorSeverity.LOW: 10,
++            ErrorSeverity.MEDIUM: 20,
++            ErrorSeverity.HIGH: 30,
++            ErrorSeverity.CRITICAL: 40
++        }
++        return mapping.get(severity, 0)
++
++    @staticmethod
++    def get_default() -> "ErrorHandler":
++        global _default_handler
++        if _default_handler is None:
++            _default_handler = ErrorHandler()
++        return _default_handler
++
++    def handle(self, error: Exception, extra_info: Optional[Dict[str, Any]] = None) -> None:
++        """
++        Process an error: categorize, filter, log, track, and potentially trigger shutdown.
++        """
++        if not isinstance(error, CategorizedError):
++            # Wrap unknown exceptions
++            error = UnknownError(f"Uncategorized exception: {str(error)}", details={"original_error": str(type(error))})
++
++        if error.category in self.ignored_categories:
++            return
++
++        error_severity_level = self._severity_to_int(error.severity)
++        if error_severity_level < self.min_severity_level:
++            return
++
++        # Update stats
++        self.stats["total"] += 1
++        self.stats["by_severity"][error.severity.value] += 1
++        self.stats["by_category"][error.category.value] += 1
++
++        # Add to history
++        self.history.append(error.to_dict())
++
++        # Log error
++        self._log_error(error, extra_info)
++
++        # Check for Critical Shutdown
++        if error.severity == ErrorSeverity.CRITICAL:
++            self._trigger_shutdown(error)
++
++    def _log_error(self, error: CategorizedError, extra_info: Optional[Dict[str, Any]] = None) -> None:
++        details_str = str(error.details)
++        if extra_info:
++             details_str += f" | Context: {extra_info}"
++        log_msg = f"[{error.category.value}] {error.message} (Details: {details_str})"
++        if error.severity == ErrorSeverity.CRITICAL:
++            logger.critical(log_msg)
++        elif error.severity == ErrorSeverity.HIGH:
++            logger.error(log_msg)
++        elif error.severity == ErrorSeverity.MEDIUM:
++            logger.warning(log_msg)
++        else:
++            logger.info(log_msg)
++
++    def _trigger_shutdown(self, error: CategorizedError) -> None:
++        logger.critical("CRITICAL ERROR DETECTED. Initiating graceful shutdown.")
++        if self.shutdown_callback:
++            try:
++                self.shutdown_callback()
++            except Exception as e:
++                logger.error(f"Error during shutdown callback: {e}")
++                
++        else:
++            logger.critical("No shutdown callback provided. Exiting due to critical error.")
++            exit(1)
++
++    def get_stats(self) -> Dict[str, Any]:
++        """
++        Return a copy of the current error statistics.
++        """
++        return {
++            "total": self.stats["total"],
++            "by_severity": dict(self.stats["by_severity"]),
++            "by_category": dict(self.stats["by_category"])
++        }
++
++    def get_history(self) -> List[Dict[str, Any]]:
++        """
++        Return a list of recent errors.
++        """
++        return list(self.history)
++    
+diff --git a/repository_after/error_handling_lib/validators/__init__.py b/repository_after/error_handling_lib/validators/__init__.py
+new file mode 100644
+index 00000000..b78bac9d
+--- /dev/null
++++ b/repository_after/error_handling_lib/validators/__init__.py
+@@ -0,0 +1 @@
++from .input_validator import InputValidator
+diff --git a/repository_after/error_handling_lib/validators/__pycache__/__init__.cpython-311.pyc b/repository_after/error_handling_lib/validators/__pycache__/__init__.cpython-311.pyc
+new file mode 100644
+index 00000000..00b4b85c
+Binary files /dev/null and b/repository_after/error_handling_lib/validators/__pycache__/__init__.cpython-311.pyc differ
+diff --git a/repository_after/error_handling_lib/validators/__pycache__/__init__.cpython-312.pyc b/repository_after/error_handling_lib/validators/__pycache__/__init__.cpython-312.pyc
+new file mode 100644
+index 00000000..45cf9fbe
+Binary files /dev/null and b/repository_after/error_handling_lib/validators/__pycache__/__init__.cpython-312.pyc differ
+diff --git a/repository_after/error_handling_lib/validators/__pycache__/input_validator.cpython-311.pyc b/repository_after/error_handling_lib/validators/__pycache__/input_validator.cpython-311.pyc
+new file mode 100644
+index 00000000..858445cc
+Binary files /dev/null and b/repository_after/error_handling_lib/validators/__pycache__/input_validator.cpython-311.pyc differ
+diff --git a/repository_after/error_handling_lib/validators/__pycache__/input_validator.cpython-312.pyc b/repository_after/error_handling_lib/validators/__pycache__/input_validator.cpython-312.pyc
+new file mode 100644
+index 00000000..00ed7032
+Binary files /dev/null and b/repository_after/error_handling_lib/validators/__pycache__/input_validator.cpython-312.pyc differ
+diff --git a/repository_after/error_handling_lib/validators/input_validation.py b/repository_after/error_handling_lib/validators/input_validation.py
+new file mode 100644
+index 00000000..3bbd3f6e
+--- /dev/null
++++ b/repository_after/error_handling_lib/validators/input_validation.py
+@@ -0,0 +1,181 @@
++import re
++from typing import Any, Optional, Union
++
++from ..errors.specific_errors import ValidationError, RangeError, TypeError
++
++
++def not_none(value: Any, field_name: str = "value") -> None:
++    """Ensure the value is not None."""
++    if value is None:
++        raise ValidationError(
++            f"{field_name} cannot be None",
++            details={
++                "field": field_name,
++                "received_value": None,
++                "expected": "not None",
++                "type_received": type(value).__name__
++            }
++        )
++
++
++def not_empty(value: Any, field_name: str = "value") -> None:
++    """Ensure the value is neither None nor empty (for types with length)."""
++    not_none(value, field_name)
++
++    if hasattr(value, "__len__") and len(value) == 0:
++        raise ValidationError(
++            f"{field_name} cannot be empty",
++            details={
++                "field": field_name,
++                "received_value": value,
++                "received_length": 0,
++                "expected": "non-empty",
++                "type": type(value).__name__
++            }
++        )
++
++
++def type_check(
++    value: Any,
++    expected_type: Union[type, tuple[type, ...]],
++    field_name: str = "value"
++) -> None:
++    """Verify that value is of the expected type(s)."""
++    if not isinstance(value, expected_type):
++        expected_str = (
++            str(expected_type)
++            if isinstance(expected_type, type)
++            else f"one of {tuple(t.__name__ for t in expected_type)}"
++        )
++
++        raise TypeError(
++            f"Invalid type for {field_name}: expected {expected_str}, got {type(value).__name__}",
++            details={
++                "field": field_name,
++                "received_value": value,
++                "received_type": type(value).__name__,
++                "expected_type": expected_str
++            }
++        )
++
++
++def positive(
++    value: Union[int, float],
++    field_name: str = "value",
++    strict: bool = False  # False → ≥ 0, True → > 0
++) -> None:
++    """Check if value is positive (or non-negative if not strict)."""
++    type_check(value, (int, float), field_name)
++
++    limit = 0 if not strict else 0.0000000001  # small epsilon for float comparison
++
++    if value < limit:
++        message = f"{field_name} must be strictly positive (> 0)" if strict else f"{field_name} must be non-negative (≥ 0)"
++
++        raise RangeError(
++            message,
++            details={
++                "field": field_name,
++                "received_value": value,
++                "minimum_allowed": 0 if not strict else "greater than 0",
++                "strict": strict
++            }
++        )
++
++
++def in_range(
++    value: Union[int, float],
++    min_val: Optional[Union[int, float]] = None,
++    max_val: Optional[Union[int, float]] = None,
++    field_name: str = "value",
++    inclusive: bool = True
++) -> None:
++    """Check if value is within the specified range [min_val, max_val]."""
++    type_check(value, (int, float), field_name)
++
++    if min_val is not None:
++        if (inclusive and value < min_val) or (not inclusive and value <= min_val):
++            raise RangeError(
++                f"{field_name} is below the minimum ({min_val})",
++                details={
++                    "field": field_name,
++                    "received_value": value,
++                    "minimum_allowed": min_val,
++                    "inclusive": inclusive
++                }
++            )
++
++    if max_val is not None:
++        if (inclusive and value > max_val) or (not inclusive and value >= max_val):
++            raise RangeError(
++                f"{field_name} exceeds the maximum ({max_val})",
++                details={
++                    "field": field_name,
++                    "received_value": value,
++                    "maximum_allowed": max_val,
++                    "inclusive": inclusive
++                }
++            )
++
++
++def length(
++    value: Any,
++    min_len: Optional[int] = None,
++    max_len: Optional[int] = None,
++    field_name: str = "value"
++) -> None:
++    """Validate length of a value that supports len()."""
++    if not hasattr(value, "__len__"):
++        raise TypeError(
++            f"Cannot check length of {field_name} (type has no __len__)",
++            details={"field": field_name, "type_received": type(value).__name__}
++        )
++
++    current_len = len(value)
++
++    if min_len is not None and current_len < min_len:
++        raise ValidationError(
++            f"{field_name} is too short (length {current_len}, minimum {min_len})",
++            details={
++                "field": field_name,
++                "received_value": value,
++                "received_length": current_len,
++                "minimum_length": min_len
++            }
++        )
++
++    if max_len is not None and current_len > max_len:
++        raise ValidationError(
++            f"{field_name} is too long (length {current_len}, maximum {max_len})",
++            details={
++                "field": field_name,
++                "received_value": value,
++                "received_length": current_len,
++                "maximum_length": max_len
++            }
++        )
++
++
++EMAIL_REGEX = re.compile(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
++
++
++def email(value: str, field_name: str = "email") -> None:
++    """Validate email format."""
++    type_check(value, str, field_name)
++
++    if not EMAIL_REGEX.match(value):
++        raise ValidationError(
++            f"Invalid email format for {field_name}",
++            details={
++                "field": field_name,
++                "received_value": value,
++                "expected_format": "standard email (user@domain.tld)"
++            }
++        )
++
++
++# You can follow the same pattern for:
++# - url
++# - phone_number
++# - alphanumeric
++# - etc.
+\ No newline at end of file
+diff --git a/repository_after/error_handling_lib/validators/input_validator.py b/repository_after/error_handling_lib/validators/input_validator.py
+new file mode 100644
+index 00000000..e4545359
+--- /dev/null
++++ b/repository_after/error_handling_lib/validators/input_validator.py
+@@ -0,0 +1,100 @@
++import re
++from typing import Any, Type, List, Optional, Union
++from repository_after.error_handling_lib.errors.specific_errors import ValidationError
++
++class InputValidator:
++    """
++    A utility class for validating input values.
++    Raises ValidationError if validation fails.
++    """
++
++    @staticmethod
++    def not_none(value: Any, name: str) -> None:
++        if value is None:
++            raise ValidationError(f"{name} cannot be None.", details={"name": name, "value": value})
++
++    @staticmethod
++    def type_check(value: Any, expected_type: Type, name: str) -> None:
++        if not isinstance(value, expected_type):
++            raise ValidationError(
++                f"{name} must be of type {expected_type.__name__}.",
++                details={"name": name, "value": value, "expected_type": expected_type.__name__}
++            )
++
++    @staticmethod
++    def not_empty(value: Any, name: str) -> None:
++        if not value:
++            raise ValidationError(f"{name} cannot be empty.", details={"name": name, "value": value})
++
++    @staticmethod
++    def positive(value: Union[int, float], name: str) -> None:
++        if value <= 0:
++            raise ValidationError(f"{name} must be positive.", details={"name": name, "value": value})
++
++    @staticmethod
++    def range(value: Union[int, float], min_val: Union[int, float], max_val: Union[int, float], name: str) -> None:
++        if not (min_val <= value <= max_val):
++            raise ValidationError(
++                f"{name} must be between {min_val} and {max_val}.",
++                details={"name": name, "value": value, "min": min_val, "max": max_val}
++            )
++
++    @staticmethod
++    def length(value: Any, min_len: int, max_len: Optional[int], name: str) -> None:
++        length = len(value)
++        if length < min_len:
++            raise ValidationError(
++                f"{name} must have at least {min_len} characters.",
++                details={"name": name, "value": value, "min_length": min_len, "length": length}
++            )
++        if max_len is not None and length > max_len:
++            raise ValidationError(
++                f"{name} must have at most {max_len} characters.",
++                details={"name": name, "value": value, "max_length": max_len, "length": length}
++            )
++
++    @staticmethod
++    def in_choices(value: Any, choices: List[Any], name: str) -> None:
++        if value not in choices:
++            raise ValidationError(
++                f"{name} must be one of {choices}.",
++                details={"name": name, "value": value, "choices": choices}
++            )
++
++    @staticmethod
++    def email(value: str, name: str) -> None:
++        # Simple regex for email validation
++        email_regex = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
++        if not re.match(email_regex, value):
++            raise ValidationError(
++                f"{name} must be a valid email address.",
++                details={"name": name, "value": value}
++            )
++
++    @staticmethod
++    def url(value: str, name: str) -> None:
++        # Simple regex for URL validation
++        url_regex = r"^(http|https)://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(/.*)?$"
++        if not re.match(url_regex, value):
++            raise ValidationError(
++                f"{name} must be a valid URL.",
++                details={"name": name, "value": value}
++            )
++
++    @staticmethod
++    def phone(value: str, name: str) -> None:
++        # Simple regex for phone validation (digits, spaces, dashes, plus)
++        phone_regex = r"^\+?[0-9\s-]+$"
++        if not re.match(phone_regex, value) or len(re.sub(r"\D", "", value)) < 7:
++             raise ValidationError(
++                f"{name} must be a valid phone number.",
++                details={"name": name, "value": value}
++            )
++
++    @staticmethod
++    def alphanumeric(value: str, name: str) -> None:
++        if not value.isalnum():
++            raise ValidationError(
++                f"{name} must be alphanumeric.",
++                details={"name": name, "value": value}
++            )
+diff --git a/repository_after/main.py b/repository_after/main.py
+new file mode 100644
+index 00000000..4c28e8a3
+--- /dev/null
++++ b/repository_after/main.py
+@@ -0,0 +1,77 @@
++import random
++import time
++from error_handling_lib.enums import ErrorCategory, ErrorSeverity
++from error_handling_lib.handlers import ErrorHandler
++from error_handling_lib.validators import InputValidator
++from error_handling_lib.decorators import safe_execute, retry_on_error
++from error_handling_lib.errors import NetworkError, ValidationError, DatabaseError
++
++# Initialize Central Handler
++handler = ErrorHandler(min_severity=ErrorSeverity.LOW)
++
++def graceful_shutdown_mock():
++    print("\n[!!!] System performing graceful shutdown cleanup...\n")
++
++# Attach shutdown callback
++handler.shutdown_callback = graceful_shutdown_mock
++
++# Example 1: Validation
++def register_user(email: str, age: int, password: str):
++    print(f"\n--- Registering User: {email} ---")
++    
++    # Using InputValidator
++    InputValidator.email(email, "Email")
++    InputValidator.range(age, 18, 120, "Age")
++    InputValidator.length(password, 8, None, "Password")
++    
++    print("User registered successfully!")
++
++# Example 2: Retry Logic for Network Operations
++@retry_on_error(max_retries=2, backoff_factor=0.5, retryable_categories={ErrorCategory.NETWORK})
++def fetch_data_from_api():
++    print("Fetching data from API...")
++    if random.choice([True, False]):
++        raise NetworkError("Connection timed out", details={"url": "http://api.example.com", "timeout": 5000})
++    print("Data fetched successfully!")
++
++# Example 3: Safe Execution with Error Handling
++@safe_execute(error_handler=handler)
++def risky_database_operation():
++    print("Performing database query...")
++    # Simulate a critical error
++    raise DatabaseError("Connection pool exhausted", details={"db_host": "localhost", "pool_size": 0})
++
++def run_demo():
++    print("=== Python Error Handling Lib Demo ===")
++
++    # Test Validation (Valid)
++    try:
++        register_user("test@example.com", 25, "securepassword")
++    except Exception as e:
++        handler.handle(e)
++
++    # Test Validation (Invalid)
++    try:
++        register_user("invalid-email", 150, "short")
++    except Exception as e:
++        handler.handle(e) # Should log VALIDATION errors
++
++    # Test Retry Logic
++    try:
++        fetch_data_from_api()
++    except Exception as e:
++        handler.handle(e)
++
++    # Test Safe Execution (Critical Error)
++    risky_database_operation()
++
++    # Show Stats
++    print("\n--- Error Statistics ---")
++    print(handler.get_stats())
++    
++    print("\n--- Error History (Last 5) ---")
++    for err in handler.get_history()[-5:]:
++        print(f"[{err['timestamp']}] {err['severity']} {err['category']}: {err['message']}")
++
++if __name__ == "__main__":
++    run_demo()
+\ No newline at end of file

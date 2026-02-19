@@ -1,0 +1,9 @@
+{
+  "name": "3c78c3-dom-mapping-and-extracting",
+  "version": "1.0.0",
+  "description": "DOM Mapping and Extracting dataset task",
+  "scripts": {
+    "evaluate": "node evaluation/evaluation.js",
+    "test": "cd repository_after && npm test"
+  }
+}

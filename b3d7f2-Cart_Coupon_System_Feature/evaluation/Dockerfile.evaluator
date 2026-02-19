@@ -1,0 +1,16 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Install Docker CLI to allow running docker commands from within this container (Docker-out-of-Docker)
+RUN apk add --no-cache docker-cli docker-compose
+
+# Copy root dependency manifest
+COPY package*.json ./
+RUN npm install
+
+# Copy all project files
+COPY . .
+
+# Set entrypoint to the evaluation script
+CMD ["node", "evaluation/evaluation.js"]

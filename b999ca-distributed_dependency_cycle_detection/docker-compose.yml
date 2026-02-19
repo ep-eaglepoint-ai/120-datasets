@@ -1,0 +1,22 @@
+services:
+  test-before:
+    build: .
+    environment:
+      - TEST_REPO_PATH=/app/repository_before
+    command: python -m pytest tests/test_cycle_detection.py -v
+    volumes:
+      - .:/app
+
+  test-after:
+    build: .
+    environment:
+      - TEST_REPO_PATH=/app/repository_after
+    command: python -m pytest tests/test_cycle_detection.py -v
+    volumes:
+      - .:/app
+
+  evaluation:
+    build: .
+    command: python evaluation/evaluation.py
+    volumes:
+      - .:/app

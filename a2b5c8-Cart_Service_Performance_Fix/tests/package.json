@@ -1,0 +1,12 @@
+{
+  "name": "a2b5c8-cartservice-tests",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "test": "node test_all.js"
+  },
+  "dependencies": {
+    "mongoose": "^8.0.0"
+  }
+}
+

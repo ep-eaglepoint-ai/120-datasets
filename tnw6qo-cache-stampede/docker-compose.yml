@@ -1,0 +1,21 @@
+services:
+  evaluation:
+    build: .
+    working_dir: /app/evaluation
+    volumes:
+      - ./evaluation:/app/evaluation
+      - ./tests:/app/tests
+      - ./repository_after:/app/repository_after
+      - ./reports:/app/evaluation/reports
+    environment:
+      - REPORT_DIR=/app/evaluation/reports
+      - MVN_CMD=/usr/share/maven/bin/mvn
+    command: mvn exec:java -q
+
+  test:
+    build: .
+    working_dir: /app
+    volumes:
+      - ./tests:/app/tests
+      - ./repository_after:/app/repository_after
+    command: mvn -f /app/tests/pom.xml test

@@ -1,0 +1,20 @@
+services:
+  tests-before:
+    build: .
+    volumes:
+      - .:/app
+    command: sh -c "echo 'repository_before is empty (code generation task - expected to fail)' && exit 1"
+
+  tests-after:
+    build: .
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: sh -c "cd repository_after && PYTHONPATH=/app/repository_after pytest /app/tests/ -q"
+
+  evaluation:
+    build: .
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: sh -c "PYTHONPATH=/app/repository_after python evaluation/evaluation.py"

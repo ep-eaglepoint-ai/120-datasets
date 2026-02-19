@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    volumes:
+      - .:/app:rw
+    working_dir: /app
+    environment:
+      - PYTHONUNBUFFERED=1
+    stdin_open: true
+    tty: true

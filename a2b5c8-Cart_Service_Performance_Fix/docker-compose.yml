@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  evaluation:
+    build: .
+    volumes:
+      - ./evaluation/reports:/app/evaluation/reports
+    command: node evaluation/evaluation.js
+
+  test-before:
+    build: .
+    environment:
+      - TEST_REPO_PATH=/app/repository_before
+    command: sh -c "cd tests && npm test"
+
+  test-after:
+    build: .
+    environment:
+      - TEST_REPO_PATH=/app/repository_after
+    command: sh -c "cd tests && npm test"
+

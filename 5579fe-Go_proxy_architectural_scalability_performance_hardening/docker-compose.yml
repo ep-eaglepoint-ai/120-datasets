@@ -1,0 +1,7 @@
+services:
+  tests:
+    build: .
+    volumes:
+      - .:/app
+    environment:
+      - GO111MODULE=on

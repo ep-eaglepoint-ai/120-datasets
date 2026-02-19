@@ -1,0 +1,389 @@
+diff --git a/repository_before/SongController.js b/repository_after/SongController.js
+index c1d027e0..2123e673 100644
+--- a/repository_before/SongController.js
++++ b/repository_after/SongController.js
+@@ -1,76 +1,80 @@
+ const mongoose = require('mongoose');
+ const db = require('../utils/db');
++const SongService = require('./SongService');
+ 
+ const Song = db.defineSongModel();
++const songService = new SongService(Song);
++
++const validateObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
+ 
+ const SongController = {
+   getStatus: (req, res) => res.status(200).json({ status: db.status }),
++
+   createSong: async (req, res) => {
+-    const {
+-      title, artist, album, genre,
+-    } = req.body;
++    const { title, artist, album, genre } = req.body;
++
+     if (!title) {
+-      return res.status(400).json({ error: 'Missing title' });
++      return res.status(400).json({ message: 'Missing title', data: null });
+     }
+-
+     if (!artist) {
+-      return res.status(400).json({ error: 'Missing artist' });
++      return res.status(400).json({ message: 'Missing artist', data: null });
+     }
+-
+     if (!album) {
+-      return res.status(400).json({ error: 'Missing album' });
++      return res.status(400).json({ message: 'Missing album', data: null });
+     }
+-
+     if (!genre) {
+-      return res.status(400).json({ error: 'Missing genre' });
++      return res.status(400).json({ message: 'Missing genre', data: null });
+     }
+ 
+     try {
+-      const songData = {
+-        title, artist, album, genre,
+-      };
+-      const song = new Song(songData);
+-      await song.save();
+-      return res.status(201).json({ 'Recorded Successfully!': song });
++      const song = await songService.createSong({ title, artist, album, genre });
++      return res.status(201).json({ message: 'Song created successfully', data: song });
+     } catch (err) {
+       console.error('Failed to record song:', err);
+-      return res.status(500).json({ error: 'Failed to record song' });
++      return res.status(500).json({ message: 'Failed to record song', data: null });
+     }
+   },
+ 
+   getSongs: async (req, res) => {
+     try {
+-      const songs = await Song.find();
+-      return res.json(songs);
++      const page = parseInt(req.query.page) || 1;
++      const limit = parseInt(req.query.limit) || 10;
++      const result = await songService.getSongs(page, limit);
++      return res.json({
++        message: 'Songs retrieved successfully',
++        data: {
++          songs: result.songs,
++          pagination: result.pagination,
++        },
++      });
+     } catch (err) {
+       console.error('Failed to retrieve songs:', err);
+-      return res.status(500).json({ error: 'Failed to retrieve songs' });
++      return res.status(500).json({ message: 'Failed to retrieve songs', data: null });
+     }
+   },
+ 
+   updateSong: async (req, res) => {
+     const { id } = req.params;
++
+     if (!id) {
+-      return res.status(400).json({ error: 'Missing id' });
++      return res.status(400).json({ message: 'Missing id', data: null });
+     }
+-
+-    if (!mongoose.Types.ObjectId.isValid(id)) {
+-      return res.status(400).json({ error: 'Invalid id' });
++    if (!validateObjectId(id)) {
++      return res.status(400).json({ message: 'Invalid id', data: null });
+     }
+ 
+     try {
+-      const {
+-        title, artist, album, genre,
+-      } = req.body;
+-      const songData = {
+-        title, artist, album, genre,
+-      };
+-
+-      const song = await Song.findByIdAndUpdate(id, songData, { new: true });
+-      return res.status(200).json({ 'Song updated successfully!': song });
++      const { title, artist, album, genre } = req.body;
++      const song = await songService.updateSong(id, { title, artist, album, genre });
++
++      if (!song) {
++        return res.status(404).json({ message: 'Song not found', data: null });
++      }
++
++      return res.status(200).json({ message: 'Song updated successfully', data: song });
+     } catch (err) {
+       console.error('Failed to update song:', err);
+-      return res.status(500).json({ error: 'Failed to update song' });
++      return res.status(500).json({ message: 'Failed to update song', data: null });
+     }
+   },
+ 
+@@ -78,106 +82,63 @@ const SongController = {
+     const { id } = req.params;
+ 
+     if (!id) {
+-      return res.status(400).json({ error: 'Missing id' });
++      return res.status(400).json({ message: 'Missing id', data: null });
++    }
++    if (!validateObjectId(id)) {
++      return res.status(400).json({ message: 'Invalid id', data: null });
+     }
+ 
+     try {
+-      await Song.findByIdAndDelete(id);
+-      return res.status(204).json({ message: 'Song deleted successfully!' });
++      const song = await songService.deleteSong(id);
++
++      if (!song) {
++        return res.status(404).json({ message: 'Song not found', data: null });
++      }
++
++      return res.status(204).send();
+     } catch (err) {
+       console.error('Failed to delete song:', err);
+-      return res.status(500).json({ error: 'Failed to delete song' });
++      return res.status(500).json({ message: 'Failed to delete song', data: null });
+     }
+   },
+ 
+   getTotal: async (req, res) => {
+     try {
+-      const statistics = await Song.aggregate([
+-        {
+-          $group: {
+-            _id: null,
+-            totalSongs: { $sum: 1 },
+-            totalArtists: { $addToSet: '$artist' },
+-            totalAlbums: { $addToSet: '$album' },
+-            totalGenres: { $addToSet: '$genre' },
+-          },
+-        },
+-        {
+-          $project: {
+-            _id: 0,
+-            totalSongs: 1,
+-            totalArtists: { $size: '$totalArtists' },
+-            totalAlbums: { $size: '$totalAlbums' },
+-            totalGenres: { $size: '$totalGenres' },
+-          },
+-        },
+-      ]);
+-      return res.json(statistics[0]);
++      const statistics = await songService.getTotal();
++      return res.json({ message: 'Statistics retrieved successfully', data: statistics });
+     } catch (err) {
+       console.error('Failed to retrieve total statistics:', err);
+-      return res.status(500).json({ error: 'Failed to retrieve total statistics' });
++      return res.status(500).json({ message: 'Failed to retrieve total statistics', data: null });
+     }
+   },
+ 
+   getGenre: async (req, res) => {
+     try {
+-      // Get the number of songs in every genre
+-      const genreStats = await Song.aggregate([
+-        {
+-          $group: {
+-            _id: '$genre',
+-            count: { $sum: 1 },
+-          },
+-        },
+-      ]);
+-      return res.json(genreStats);
++      const genreStats = await songService.getGenre();
++      return res.json({ message: 'Genre statistics retrieved successfully', data: genreStats });
+     } catch (err) {
+       console.error('Failed to retrieve genre statistics:', err);
+-      return res.status(500).json({ error: 'Failed to retrieve genre statistics' });
++      return res.status(500).json({ message: 'Failed to retrieve genre statistics', data: null });
+     }
+   },
+ 
+   getAlbums: async (req, res) => {
+-    // Get the number of songs in each album
+     try {
+-      const albumStats = await Song.aggregate([
+-        {
+-          $group: {
+-            _id: '$album',
+-            count: { $sum: 1 },
+-          },
+-        },
+-      ]);
+-      return res.json(albumStats);
++      const albumStats = await songService.getAlbums();
++      return res.json({ message: 'Album statistics retrieved successfully', data: albumStats });
+     } catch (err) {
+       console.error('Failed to retrieve album statistics:', err);
+-      return res.status(500).json({ error: 'Failed to retrieve album statistics' });
++      return res.status(500).json({ message: 'Failed to retrieve album statistics', data: null });
+     }
+   },
+ 
+   getArtists: async (req, res) => {
+-    // Get the number of songs and albums each artist has
+     try {
+-      const artistStats = await Song.aggregate([
+-        {
+-          $group: {
+-            _id: '$artist',
+-            songs: { $sum: 1 },
+-            albumNames: { $addToSet: '$album' },
+-          },
+-        },
+-        {
+-          $addFields: {
+-            NumberofAlbum: {
+-              $size: '$albumNames',
+-            },
+-          },
+-        },
+-      ]);
+-      return res.json(artistStats);
++      const artistStats = await songService.getArtists();
++      return res.json({ message: 'Artist statistics retrieved successfully', data: artistStats });
+     } catch (err) {
+       console.error('Failed to retrieve artist statistics:', err);
+-      return res.status(500).json({ error: 'Failed to retrieve artist statistics' });
++      return res.status(500).json({ message: 'Failed to retrieve artist statistics', data: null });
+     }
+   },
+ 
+@@ -203,14 +164,12 @@ const SongController = {
+       },
+     ];
+ 
+-    // Seed the sample data
+     try {
+-      await Song.deleteMany(); // Clear existing data
+-      const songs = await Song.insertMany(sampleData);
+-      return res.json(songs);
++      const songs = await songService.seedSongs(sampleData);
++      return res.json({ message: 'Sample data seeded successfully', data: songs });
+     } catch (err) {
+       console.error('Failed to seed sample data:', err);
+-      return res.status(500).json({ error: 'Failed to seed sample data' });
++      return res.status(500).json({ message: 'Failed to seed sample data', data: null });
+     }
+   },
+ };
+diff --git a/repository_after/SongService.js b/repository_after/SongService.js
+new file mode 100644
+index 00000000..4b1bcbe6
+--- /dev/null
++++ b/repository_after/SongService.js
+@@ -0,0 +1,115 @@
++const mongoose = require('mongoose');
++
++class SongService {
++  constructor(songModel) {
++    this.Song = songModel;
++  }
++
++  async createSong(songData) {
++    const song = new this.Song(songData);
++    return await song.save();
++  }
++
++  async getSongs(page = 1, limit = 10) {
++    const skip = (page - 1) * limit;
++    const songs = await this.Song.find().skip(skip).limit(limit);
++    const total = await this.Song.countDocuments();
++    return {
++      songs,
++      pagination: {
++        total,
++        page,
++        limit,
++        totalPages: Math.ceil(total / limit),
++      },
++    };
++  }
++
++  async updateSong(id, updateData) {
++    const filteredData = Object.fromEntries(
++      Object.entries(updateData).filter(([_, v]) => v !== undefined)
++    );
++    return await this.Song.findByIdAndUpdate(id, filteredData, {
++      new: true,
++      runValidators: true,
++    });
++  }
++
++  async deleteSong(id) {
++    return await this.Song.findByIdAndDelete(id);
++  }
++
++  async getTotal() {
++    const statistics = await this.Song.aggregate([
++      {
++        $group: {
++          _id: null,
++          totalSongs: { $sum: 1 },
++          totalArtists: { $addToSet: '$artist' },
++          totalAlbums: { $addToSet: '$album' },
++          totalGenres: { $addToSet: '$genre' },
++        },
++      },
++      {
++        $project: {
++          _id: 0,
++          totalSongs: 1,
++          totalArtists: { $size: '$totalArtists' },
++          totalAlbums: { $size: '$totalAlbums' },
++          totalGenres: { $size: '$totalGenres' },
++        },
++      },
++    ]);
++    return statistics.length > 0
++      ? statistics[0]
++      : { totalSongs: 0, totalArtists: 0, totalAlbums: 0, totalGenres: 0 };
++  }
++
++  async getGenre() {
++    return await this.Song.aggregate([
++      {
++        $group: {
++          _id: '$genre',
++          count: { $sum: 1 },
++        },
++      },
++    ]);
++  }
++
++  async getAlbums() {
++    return await this.Song.aggregate([
++      {
++        $group: {
++          _id: '$album',
++          count: { $sum: 1 },
++        },
++      },
++    ]);
++  }
++
++  async getArtists() {
++    return await this.Song.aggregate([
++      {
++        $group: {
++          _id: '$artist',
++          songs: { $sum: 1 },
++          albumNames: { $addToSet: '$album' },
++        },
++      },
++      {
++        $addFields: {
++          numberOfAlbums: {
++            $size: '$albumNames',
++          },
++        },
++      },
++    ]);
++  }
++
++  async seedSongs(sampleData) {
++    await this.Song.deleteMany();
++    return await this.Song.insertMany(sampleData);
++  }
++}
++
++module.exports = SongService;

@@ -1,0 +1,11 @@
+{
+            "instance_id": "83F1T8",
+            "problem_statement": "The current authentication infrastructure for a high-frequency fintech platform exhibits non-deterministic behavior, race conditions, and progressive resource degradation under concurrent load and extended runtime. During peak traffic and token expiration windows, the system experiences session inconsistencies, duplicated refresh attempts, unbounded memory growth, and incomplete cleanup during logout cycles. These issues threaten reliability, security guarantees, and operational stability in a production environment where deterministic behavior and constant resource usage are mandatory.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/83f1t8-enterprise-refactor-of-concurrent-jwt-authentication-client",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

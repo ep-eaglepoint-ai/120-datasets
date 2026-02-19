@@ -1,0 +1,11 @@
+{
+            "instance_id": "ODCFN7",
+            "problem_statement": "Modern e-commerce systems must process customer orders in a way that is reliable, consistent, and resistant to common failures such as invalid input, duplicate requests, and inventory conflicts. Generating a robust PostgreSQL function for order processing is necessary to ensure that business rules are enforced at the database level, transactions remain atomic, and errors are handled predictably in real-world scenarios where multiple operations must succeed or fail together. This function serves as a critical safeguard for data integrity, auditability, and system stability under production conditions.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/odcfn7-postgres-order-management-function",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

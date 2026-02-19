@@ -1,0 +1,17 @@
+services:
+  run_before:
+    build: .
+    command: go run -race ./repository_before/main.go ./repository_before/worker_pool.go
+
+  run_repository_before_tests:
+    build: .
+    command: sh -c "cp /app/tests/worker_pool_test.go /app/repository_before/ && cd /app/repository_before && go test -v -race ."
+
+  run_repository_after_tests:
+    build: .
+    command: sh -c "cp /app/tests/worker_pool_test.go /app/repository_after/ && cd /app/repository_after && go test -v -race ."
+  evaluation:
+    build: .
+    command: go run evaluation/evaluation.go
+    volumes:
+      - ./evaluation/reports:/app/evaluation/reports

@@ -1,0 +1,9 @@
+{
+    "instance_id": "7fc263",
+    "problem_statement": "This Python-based file transfer system requires creating a server script to concurrently handle multiple clients over TCP sockets, sending files with progress tracking and logging operations, and a client script to request files with robust error handling, real-time progress display, and integrity verification. The server must use threading to manage simultaneous connections on a configurable port, while the client must implement connection retry logic with exponential backoff and comprehensive error handling for network issues and interrupted transfers. Both components must efficiently manage binary data, maintain detailed logs, and ensure graceful shutdown upon receiving termination signals.ß",
+    "base_commit": "repository_before",
+    "test_patch": "tests/",
+    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/7fc263-socket-file-transfer-protocol",
+    "environment_setup": "Dockerfile"
+  }
+  

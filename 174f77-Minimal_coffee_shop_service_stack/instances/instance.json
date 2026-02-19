@@ -1,0 +1,8 @@
+{
+  "instance_id": "174f77",
+  "problem_statement": "Design and implement a minimal, high-performance service stack representing a single backend service in a coffee shop domain, built with Go and orchestrated alongside PostgreSQL and Redis. The system must emphasize modular architecture, minimal runtime footprint, and operational correctness, using only the Go standard library, environment-based configuration, and container-native health checks. The solution must be production-oriented, verifiable via CI, and explicitly enforce dependency health before execution.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/174f77-Minimal_coffee_shop_service_stack",
+  "environment_setup": "Dockerfile"
+}

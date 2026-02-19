@@ -1,0 +1,8 @@
+{
+  "instance_id": "27241e",
+  "problem_statement": "The existing authentication system stores passwords in plain text and uses mutable arrays and standard objects, leaving it vulnerable to password leaks, prototype pollution, and timing attacks. The goal is to refactor this module into a secure, zero-knowledge authentication system that never stores passwords in plain text. It must leverage the Web Crypto API for hashing, ensure immutability of the user store, prevent prototype pollution, and implement constant-time comparisons to defend against timing attacks, while strictly using Object.create(null) for objects and Map or Set for user storage.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/27241e-Hardened_zero_knowledge_authentication_module",
+  "environment_setup": "Dockerfile"
+}

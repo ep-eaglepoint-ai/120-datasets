@@ -1,0 +1,44 @@
+{
+  "instance_id": "351e96-base85-refactor",
+  "problem_statement": "The current implementation of the ASCII85 algorithm requires a comprehensive refactor to address its poor readability, inefficient recursive base conversion, and multiple performance bottlenecks, such as redundant string operations and the overuse of intermediate data structures. The revised code must achieve a minimum 2-3x performance improvement on datasets larger than 1KB while adhering to strict memory constraints, requiring iterative algorithms, precomputed caches, direct byte operations, and the elimination of all stack overflow risks. This refactoring must preserve full backward compatibility with the existing doctests, resulting in a production-quality module that prioritizes clarity, robustness, and execution efficiency.",
+  "requirements": [
+    "1. Replace the recursive _base10_to_85() function with an iterative implementation to eliminate stack overflow risk and reduce function call overhead",
+    "2. Eliminate all redundant string concatenations and conversions; use bytearray or buffer-based operations where appropriate to reduce memory allocations",
+    "3. Replace the complex zip(*[iter(data)] * n) pattern with explicit chunking functions that are more cache-friendly and easier for the interpreter to optimize",
+    "4. Pre-compute and cache the powers of 85 needed for base conversion rather than calculating 85**i repeatedly in list comprehensions",
+    "5. Reduce the number of intermediate data structures; combine transformation steps where possible without sacrificing readability",
+    "6. Use bytes objects directly instead of decoding to UTF-8 and re-encoding, avoiding unnecessary character encoding overhead",
+    "7. Replace multiple passes over data with single-pass algorithms where feasible (e.g., combine binary conversion and chunking)",
+    "8. Use struct module for binary packing/unpacking operations instead of string-based binary representations to improve both speed and memory usage",
+    "9. Ensure all helper functions are properly inlined or optimized by the interpreter; avoid excessive function call overhead for simple operations",
+    "10. Add input validation at function entry points to fail fast, preventing wasted computation on invalid inputs",
+    "11. All refactored code must pass the existing doctests without modification, ensuring zero regression in functionality",
+    "12. Target a minimum 2-3x performance improvement for both encoding and decoding operations on datasets larger than 1KB",
+    "13. Memory usage should not exceed 1.5x the input size at any point during processing (excluding the final output buffer)"
+  ],
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/sample-dataset/tree/main/351e96-base85-refactor",
+  "environment_setup": "Dockerfile",
+  "FAIL_TO_PASS": [
+    "tests/test_structure.py::test_helper_functions_exist",
+    "tests/test_structure.py::test_iterative_base_conversion",
+    "tests/test_structure.py::test_precomputed_powers",
+    "tests/test_structure.py::test_struct_module_usage",
+    "tests/test_structure.py::test_input_validation",
+    "tests/test_structure.py::test_efficient_chunking",
+    "tests/test_structure.py::test_reduced_string_operations",
+    "tests/test_performance.py::test_encode_performance_improvement",
+    "tests/test_performance.py::test_decode_performance_improvement",
+    "tests/test_performance.py::test_memory_efficiency",
+    "tests/test_performance.py::test_no_stack_overflow"
+  ],
+  "PASS_TO_PASS": [
+    "tests/test_equivalence.py::test_basic_functionality",
+    "tests/test_equivalence.py::test_empty_input_handling",
+    "tests/test_equivalence.py::test_function_names_exist",
+    "tests/test_structure.py::test_no_utf8_decode_encode_cycles",
+    "tests/test_structure.py::test_line_count_reasonable",
+    "tests/test_structure.py::test_docstring_preservation"
+  ]
+}

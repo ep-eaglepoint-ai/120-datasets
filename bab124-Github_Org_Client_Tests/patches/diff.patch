@@ -1,0 +1,278 @@
+diff --git a/repository_before/__pycache__/__init__.cpython-311.pyc b/repository_after/__pycache__/__init__.cpython-311.pyc
+index da9f532..310a8be 100644
+Binary files a/repository_before/__pycache__/__init__.cpython-311.pyc and b/repository_after/__pycache__/__init__.cpython-311.pyc differ
+diff --git a/repository_after/__pycache__/client.cpython-311.pyc b/repository_after/__pycache__/client.cpython-311.pyc
+new file mode 100644
+index 0000000..874ba64
+Binary files /dev/null and b/repository_after/__pycache__/client.cpython-311.pyc differ
+diff --git a/repository_after/__pycache__/test_client.cpython-311-pytest-7.4.3.pyc b/repository_after/__pycache__/test_client.cpython-311-pytest-7.4.3.pyc
+new file mode 100644
+index 0000000..e4f19a3
+Binary files /dev/null and b/repository_after/__pycache__/test_client.cpython-311-pytest-7.4.3.pyc differ
+diff --git a/repository_before/__pycache__/test_client.cpython-311-pytest-9.0.2.pyc b/repository_after/__pycache__/test_client.cpython-311-pytest-9.0.2.pyc
+index 2ef964e..e4f19a3 100644
+Binary files a/repository_before/__pycache__/test_client.cpython-311-pytest-9.0.2.pyc and b/repository_after/__pycache__/test_client.cpython-311-pytest-9.0.2.pyc differ
+diff --git a/repository_after/__pycache__/test_client.cpython-311.pyc b/repository_after/__pycache__/test_client.cpython-311.pyc
+new file mode 100644
+index 0000000..c6bb462
+Binary files /dev/null and b/repository_after/__pycache__/test_client.cpython-311.pyc differ
+diff --git a/repository_before/test_client.py b/repository_after/test_client.py
+index ee3b067..3d1b39d 100644
+--- a/repository_before/test_client.py
++++ b/repository_after/test_client.py
+@@ -92,6 +92,255 @@ class TestGithubOrgClient(unittest.TestCase):
+             expected_url = "https://api.github.com/orgs/testorg/repos"
+             self.assertEqual(result, expected_url)
+ 
++    @patch('client.get_json')
++    def test_public_repos(self, mock_get_json: MagicMock) -> None:
++        """
++        Test the public_repos method without license filtering.
++
++        This method verifies that public_repos returns the correct
++        list of repository names when no license filter is applied.
++
++        Args:
++            mock_get_json (MagicMock): Mock object for get_json function.
++
++        Returns:
++            None
++
++        Raises:
++            AssertionError: If the test fails.
++        """
++        # Mock repository data
++        mock_repos = [
++            {"name": "repo1", "license": {"key": "mit"}},
++            {"name": "repo2", "license": {"key": "apache-2.0"}},
++            {"name": "repo3", "license": None},
++        ]
++        mock_get_json.return_value = mock_repos
++
++        # Mock the org property to return repos_url
++        mock_payload = {"repos_url": "https://api.github.com/orgs/test/repos"}
++
++        with patch('client.GithubOrgClient.org', new_callable=PropertyMock(
++                return_value=mock_payload)):
++            client = GithubOrgClient("test")
++            result = client.public_repos()
++
++            # Should return all repo names
++            expected = ["repo1", "repo2", "repo3"]
++            self.assertEqual(result, expected)
++
++            # Verify get_json was called once with the repos_url
++            mock_get_json.assert_called_once_with(
++                "https://api.github.com/orgs/test/repos")
++
++    @patch('client.get_json')
++    def test_public_repos_with_license(self, mock_get_json: MagicMock) -> None:
++        """
++        Test the public_repos method with license filtering.
++
++        This method verifies that public_repos correctly filters
++        repositories by the specified license key.
++
++        Args:
++            mock_get_json (MagicMock): Mock object for get_json function.
++
++        Returns:
++            None
++
++        Raises:
++            AssertionError: If the test fails.
++        """
++        # Mock repository data with various licenses
++        mock_repos = [
++            {"name": "repo1", "license": {"key": "mit"}},
++            {"name": "repo2", "license": {"key": "apache-2.0"}},
++            {"name": "repo3", "license": {"key": "mit"}},
++            {"name": "repo4", "license": None},
++            {"name": "repo5"},  # No license field
++        ]
++        mock_get_json.return_value = mock_repos
++
++        # Mock the org property
++        mock_payload = {"repos_url": "https://api.github.com/orgs/test/repos"}
++
++        with patch('client.GithubOrgClient.org', new_callable=PropertyMock(
++                return_value=mock_payload)):
++            client = GithubOrgClient("test")
++            result = client.public_repos(license="mit")
++
++            # Should only return repos with MIT license
++            expected = ["repo1", "repo3"]
++            self.assertEqual(result, expected)
++
++    @parameterized.expand([
++        ({"license": {"key": "mit"}}, "mit", True),
++        ({"license": {"key": "apache-2.0"}}, "apache-2.0", True),
++        ({"license": {"key": "gpl-3.0"}}, "gpl-3.0", True),
++    ])
++    def test_has_license_true(
++        self, repo: Dict[str, Any], license_key: str, expected: bool
++    ) -> None:
++        """
++        Test the has_license method for cases that should return True.
++
++        This method verifies that has_license correctly identifies
++        repositories that have the specified license.
++
++        Args:
++            repo (Dict[str, Any]): Repository data dictionary.
++            license_key (str): The license key to check for.
++            expected (bool): The expected result (True).
++
++        Returns:
++            None
++
++        Raises:
++            AssertionError: If the test fails.
++        """
++        result = GithubOrgClient.has_license(repo, license_key)
++        self.assertEqual(result, expected)
++
++    @parameterized.expand([
++        ({"license": {"key": "mit"}}, "apache-2.0", False),
++        ({"license": {"key": "gpl-3.0"}}, "mit", False),
++        ({"license": None}, "mit", False),
++        ({}, "mit", False),
++    ])
++    def test_has_license_false(
++        self, repo: Dict[str, Any], license_key: str, expected: bool
++    ) -> None:
++        """
++        Test the has_license method for cases that should return False.
++
++        This method verifies that has_license correctly identifies
++        repositories that do not have the specified license, including
++        cases with None values and missing license fields.
++
++        Args:
++            repo (Dict[str, Any]): Repository data dictionary.
++            license_key (str): The license key to check for.
++            expected (bool): The expected result (False).
++
++        Returns:
++            None
++
++        Raises:
++            AssertionError: If the test fails.
++        """
++        result = GithubOrgClient.has_license(repo, license_key)
++        self.assertEqual(result, expected)
++
++    @patch('client.get_json')
++    def test_public_repos_empty(self, mock_get_json: MagicMock) -> None:
++        """
++        Test the public_repos method with empty repository data.
++
++        This method verifies that public_repos handles empty
++        repository lists correctly.
++
++        Args:
++            mock_get_json (MagicMock): Mock object for get_json function.
++
++        Returns:
++            None
++
++        Raises:
++            AssertionError: If the test fails.
++        """
++        # Mock empty repository list
++        mock_get_json.return_value = []
++
++        # Mock the org property
++        mock_payload = {"repos_url": "https://api.github.com/orgs/test/repos"}
++
++        with patch('client.GithubOrgClient.org', new_callable=PropertyMock(
++                return_value=mock_payload)):
++            client = GithubOrgClient("test")
++            result = client.public_repos()
++
++            # Should return empty list
++            self.assertEqual(result, [])
++
++    @patch('client.get_json')
++    def test_public_repos_missing_license_field(
++        self, mock_get_json: MagicMock
++    ) -> None:
++        """
++        Test public_repos with repositories missing the license field.
++
++        This method verifies that public_repos handles repositories
++        that don't have a license field at all.
++
++        Args:
++            mock_get_json (MagicMock): Mock object for get_json function.
++
++        Returns:
++            None
++
++        Raises:
++            AssertionError: If the test fails.
++        """
++        # Mock repos with missing license field
++        mock_repos = [
++            {"name": "repo1"},  # No license field
++            {"name": "repo2", "license": {"key": "mit"}},
++            {"name": "repo3"},  # No license field
++        ]
++        mock_get_json.return_value = mock_repos
++
++        # Mock the org property
++        mock_payload = {"repos_url": "https://api.github.com/orgs/test/repos"}
++
++        with patch('client.GithubOrgClient.org', new_callable=PropertyMock(
++                return_value=mock_payload)):
++            client = GithubOrgClient("test")
++
++            # Test without license filter - should return all repos
++            result = client.public_repos()
++            self.assertEqual(result, ["repo1", "repo2", "repo3"])
++
++            # Test with license filter - should only return repo2
++            result_mit = client.public_repos(license="mit")
++            self.assertEqual(result_mit, ["repo2"])
++
++    @patch('client.get_json')
++    def test_public_repos_none_license_value(
++        self, mock_get_json: MagicMock
++    ) -> None:
++        """
++        Test public_repos with repositories having None as license value.
++
++        This method verifies that public_repos handles repositories
++        where the license field is explicitly set to None.
++
++        Args:
++            mock_get_json (MagicMock): Mock object for get_json function.
++
++        Returns:
++            None
++
++        Raises:
++            AssertionError: If the test fails.
++        """
++        # Mock repos with None license values
++        mock_repos = [
++            {"name": "repo1", "license": None},
++            {"name": "repo2", "license": {"key": "mit"}},
++            {"name": "repo3", "license": None},
++        ]
++        mock_get_json.return_value = mock_repos
++
++        # Mock the org property
++        mock_payload = {"repos_url": "https://api.github.com/orgs/test/repos"}
++
++        with patch('client.GithubOrgClient.org', new_callable=PropertyMock(
++                return_value=mock_payload)):
++            client = GithubOrgClient("test")
++
++            # Test with license filter - should only return repo2
++            result = client.public_repos(license="mit")
++            self.assertEqual(result, ["repo2"])
++
+ 
+ if __name__ == '__main__':
+     unittest.main()

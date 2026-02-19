@@ -1,0 +1,11 @@
+{
+            "instance_id": "VZVMT4",
+            "problem_statement": "The product team needs to build a minimal viable product (MVP) for a URL shortening service that will be used internally by the marketing team to create trackable short links for campaign materials. The system must generate unique, collision-free short codes for long URLs and redirect users seamlessly when they visit the shortened links. This is the initial release which must focus exclusively on core shortening and redirection functionality.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/vzvmt4-url-shortening-service",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

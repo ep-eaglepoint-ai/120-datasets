@@ -1,0 +1,8 @@
+# Evaluation reports
+evaluation/20*/
+
+# Node modules
+node_modules/
+
+# Logs
+*.log

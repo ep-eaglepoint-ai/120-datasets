@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    volumes:
+      - .:/app
+    environment:
+      - TEST_IMPLEMENTATION=after
+    command: python evaluation/evaluation.py
+
+  run_before:
+    build: .
+    volumes:
+      - .:/app
+    environment:
+      - TEST_IMPLEMENTATION=before
+    command: sh -c "pytest tests/ -q --tb=no; true"

@@ -1,0 +1,72 @@
+[
+  {
+    "id": "1",
+    "title": "Bohemian Rhapsody",
+    "artist": "Queen",
+    "album": "A Night at the Opera",
+    "genre": "Rock"
+  },
+  {
+    "id": "2",
+    "title": "Hotel California",
+    "artist": "Eagles",
+    "album": "Hotel California",
+    "genre": "Rock"
+  },
+  {
+    "id": "3",
+    "title": "Imagine",
+    "artist": "John Lennon",
+    "album": "Imagine",
+    "genre": "Pop"
+  },
+  {
+    "id": "4",
+    "title": "Billie Jean",
+    "artist": "Michael Jackson",
+    "album": "Thriller",
+    "genre": "Pop"
+  },
+  {
+    "id": "5",
+    "title": "Stairway to Heaven",
+    "artist": "Led Zeppelin",
+    "album": "Led Zeppelin IV",
+    "genre": "Rock"
+  },
+  {
+    "id": "6",
+    "title": "Like a Rolling Stone",
+    "artist": "Bob Dylan",
+    "album": "Highway 61 Revisited",
+    "genre": "Folk Rock"
+  },
+  {
+    "id": "7",
+    "title": "Smells Like Teen Spirit",
+    "artist": "Nirvana",
+    "album": "Nevermind",
+    "genre": "Grunge"
+  },
+  {
+    "id": "8",
+    "title": "What's Going On",
+    "artist": "Marvin Gaye",
+    "album": "What's Going On",
+    "genre": "Soul"
+  },
+  {
+    "id": "9",
+    "title": "Purple Haze",
+    "artist": "Jimi Hendrix",
+    "album": "Are You Experienced",
+    "genre": "Rock"
+  },
+  {
+    "id": "10",
+    "title": "Good Vibrations",
+    "artist": "The Beach Boys",
+    "album": "Pet Sounds",
+    "genre": "Pop"
+  }
+]

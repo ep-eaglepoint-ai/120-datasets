@@ -1,0 +1,21 @@
+{
+  "name": "promocode-tests",
+  "version": "1.0.0",
+  "description": "Test suite for Promo Code Service",
+  "scripts": {
+    "test": "jest --runInBand --forceExit"
+  },
+  "dependencies": {
+    "mongodb": "^5.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "@shelf/jest-mongodb": "^4.1.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "rootDir": ".",
+    "testMatch": ["**/tests/**/*.test.js"],
+    "testPathIgnorePatterns": ["/node_modules/"]
+  }
+}

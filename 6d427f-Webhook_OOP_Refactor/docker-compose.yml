@@ -1,0 +1,28 @@
+services:
+  test-before:
+    build: .
+    command: pytest repository_before/tests -v --tb=no
+    environment:
+      - PYTHONPATH=repository_before
+    volumes:
+      - .:/app
+
+  test-after:
+    build: .
+    command: pytest repository_after/tests -v --tb=no
+    environment:
+      - PYTHONPATH=repository_after
+    volumes:
+      - .:/app
+
+  evaluation:
+    build: .
+    command: python evaluation/evaluation.py
+    volumes:
+      - .:/app
+
+  meta_test:
+    build: .
+    command: python tests/meta_test.py
+    volumes:
+      - .:/app

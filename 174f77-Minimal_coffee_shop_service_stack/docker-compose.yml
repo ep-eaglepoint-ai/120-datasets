@@ -1,0 +1,111 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-coffeeuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-coffeepass}
+      POSTGRES_DB: ${POSTGRES_DB:-coffeedb}
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d coffeedb"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: "8080"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER:-coffeeuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-coffeepass}
+      POSTGRES_DB: ${POSTGRES_DB:-coffeedb}
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8080/health",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Service to run Go tests in the tests/ folder
+  test-after:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER:-coffeeuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-coffeepass}
+      POSTGRES_DB: ${POSTGRES_DB:-coffeedb}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: go test -v ./tests/...
+
+  # Service to run the evaluation script
+  evaluation:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ${POSTGRES_USER:-coffeeuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-coffeepass}
+      POSTGRES_DB: ${POSTGRES_DB:-coffeedb}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: python3 evaluation/evaluation.py
+
+volumes:
+  postgres_data:

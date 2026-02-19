@@ -1,0 +1,11 @@
+{
+            "instance_id": "0DQUB1",
+            "problem_statement": "Noticed severe performance degradation in the blog API during load testing. The `/api/posts/` endpoint takes 15 seconds to return 50 posts while competitors return the same data in under 200ms. Database monitoring shows the endpoint making 2,547 individual SELECT queries for a single page instead of the expected 3-5 queries.\n\nAPM traces reveal fetching 50 posts triggers 50 queries for authors, 50 for categories, and 2,447 additional queries for comments, tags, and comment authors. Production database CPU hits 95% during peak traffic causing timeouts and 504 errors. The query count scales linearly—100 posts generates 5,000+ queries, making the endpoint unusable at scale.\n\nThe API must return paginated posts with nested author details, category names, comment counts, tag lists, and recent comments with author names while maintaining sub-500ms response times for 50 posts and keeping query count under 10 regardless of result size.",
+            "base_commit": "repository_before/",
+            "test_patch": "tests/",
+            "github_url": "https://github.com/ep-eaglepoint-ai/bd_datasets_002/tree/main/0dqub1-django-blog-api-n-1-query-performance-fix",
+            "environment_setup": "Dockerfile",
+            "FAIL_TO_PASS": [],
+            "PASS_TO_PASS": []
+        }
+        

@@ -1,0 +1,24 @@
+services:
+  tests-before:
+    build: .
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: sh -c "echo 'repository_before has no tests (code generation task - expected to fail)' && exit 1"
+
+  tests-after:
+    build: .
+    volumes:
+      - .:/app
+      - /app/repository_after/node_modules
+    working_dir: /app/repository_after
+    environment:
+      - NODE_ENV=test
+    command: sh -c "cp -r ../tests __tests__ && npm install && npm test || exit 1"
+
+  evaluation:
+    build: .
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: sh -c "python evaluation/evaluation.py || exit 0"

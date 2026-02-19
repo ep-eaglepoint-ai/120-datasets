@@ -1,0 +1,12 @@
+node_modules
+**/node_modules
+repository_after/client/node_modules
+repository_after/server/node_modules
+.git
+*.log
+.env
+.env.local
+.env.*.local
+repository_after/client/dist
+coverage
+evaluation

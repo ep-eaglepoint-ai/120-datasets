@@ -1,0 +1,44 @@
+services:
+  mongo:
+    image: mongo:latest
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  test-before:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+      args:
+        REPO_PATH: repository_before
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/cart_test_before
+      - BASE_PATH=..
+
+  test-after:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+      args:
+        REPO_PATH: repository_after
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/cart_test_after
+      - BASE_PATH=..
+
+  evaluate:
+    build:
+      context: .
+      dockerfile: evaluation/Dockerfile.evaluator
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - .:/app
+    depends_on:
+      - mongo

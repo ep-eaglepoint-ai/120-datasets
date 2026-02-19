@@ -1,0 +1,17 @@
+{
+  "name": "order-service-fix",
+  "version": "1.0.0",
+  "description": "Order Service Database Reliability Fix",
+  "main": "order.service.js",
+  "scripts": {
+    "test": "jest --runInBand --forceExit",
+    "test:watch": "jest --watch"
+  },
+  "dependencies": {
+    "mysql2": "^3.6.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
+

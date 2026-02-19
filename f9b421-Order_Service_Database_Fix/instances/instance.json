@@ -1,0 +1,9 @@
+{
+  "instance_id": "f9b421",
+  "problem_statement": "Fix the OrderService class to resolve production incidents: slow order pages (N+1 queries), SQL injection vulnerabilities, race conditions in stock management, connection leaks, and memory issues with large datasets.",
+  "base_commit": "repository_before",
+  "test_patch": "tests/",
+  "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/main/f9b421-Order_Service_Database_Fix",
+  "environment_setup": "Dockerfile"
+}
+

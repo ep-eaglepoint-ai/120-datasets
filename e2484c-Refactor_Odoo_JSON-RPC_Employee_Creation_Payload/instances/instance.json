@@ -1,0 +1,8 @@
+{
+    "instance_id": "e2484c-Refactor_Odoo_JSON-RPC_Employee_Creation_Payload",
+    "problem_statement": "The refactor is needed because the provided JSON-RPC request does not fully conform to Odoo’s JSON-RPC 2.0 specifications and data validation requirements, which would cause the employee creation call to fail or be rejected by the API. Specifically, the structure of the params.args array does not match Odoo’s expected argument order for the execute method, where database name, user ID, password, model name, method name, and method arguments must be correctly positioned, and the employee data dictionary must be passed as part of the create call. In addition, the mobile_phone value is not in international format, which violates the stated requirement and may fail validation or lead to inconsistent data storage. Correcting these issues ensures the request is syntactically valid, semantically correct for Odoo’s API, and capable of successfully creating an hr.employee record without modifying fields that are already valid.",
+    "base_commit": "repository_before",
+    "test_patch": "tests/",
+    "github_url": "https://github.com/eaglepoint-ai/bd_datasets_002/tree/refactor/json-rpc-payload-odoo/e2484c-Refactor_Odoo_JSON-RPC_Employee_Creation_Payload",
+    "environment_setup": "Dockerfile"
+}  
